@@ -13,6 +13,7 @@ import FinancialReports from "@/pages/financial-reports";
 import Compliance from "@/pages/compliance";
 import AuditTrail from "@/pages/audit-trail";
 import Reconciliation from "@/pages/reconciliation";
+import DataTables from "@/pages/data-tables";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/compliance" component={Compliance} />
           <Route path="/audit" component={AuditTrail} />
           <Route path="/reconciliation" component={Reconciliation} />
+          <Route path="/data-tables" component={DataTables} />
         </>
       )}
       <Route component={NotFound} />

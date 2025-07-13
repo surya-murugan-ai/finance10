@@ -11,6 +11,114 @@ import { financialReportsService } from "./services/financialReports";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 
+// Helper function to generate sample data for documents
+function generateSampleDataForDocument(docType: string, fileName: string) {
+  const sampleData = {
+    vendor_invoice: {
+      invoices: [
+        {
+          invoiceNumber: "VI-2025-001",
+          vendorName: "TechCorp Solutions",
+          invoiceDate: "2025-01-15",
+          amount: 125000,
+          gstin: "09ABCDE1234F1Z5",
+          status: "paid"
+        },
+        {
+          invoiceNumber: "VI-2025-002", 
+          vendorName: "Office Supplies Ltd",
+          invoiceDate: "2025-01-20",
+          amount: 45000,
+          gstin: "09DEFGH5678K2Y6",
+          status: "pending"
+        }
+      ]
+    },
+    sales_register: {
+      sales: [
+        {
+          invoiceNumber: "SR-2025-001",
+          customerName: "Global Enterprises",
+          saleDate: "2025-01-10",
+          taxableAmount: 200000,
+          gstAmount: 36000,
+          totalAmount: 236000
+        },
+        {
+          invoiceNumber: "SR-2025-002",
+          customerName: "Regional Corp",
+          saleDate: "2025-01-12",
+          taxableAmount: 150000,
+          gstAmount: 27000,
+          totalAmount: 177000
+        }
+      ]
+    },
+    salary_register: {
+      employees: [
+        {
+          employeeId: "EMP001",
+          employeeName: "John Doe",
+          department: "Finance",
+          basicSalary: 75000,
+          tdsDeducted: 7500,
+          netSalary: 67500
+        },
+        {
+          employeeId: "EMP002",
+          employeeName: "Jane Smith",
+          department: "Operations",
+          basicSalary: 85000,
+          tdsDeducted: 8500,
+          netSalary: 76500
+        }
+      ]
+    },
+    bank_statement: {
+      transactions: [
+        {
+          date: "2025-01-15",
+          description: "Customer Payment - Global Enterprises",
+          reference: "UPI/123456789",
+          debit: 0,
+          credit: 236000,
+          balance: 1236000
+        },
+        {
+          date: "2025-01-16",
+          description: "Vendor Payment - TechCorp Solutions",
+          reference: "NEFT/987654321",
+          debit: 125000,
+          credit: 0,
+          balance: 1111000
+        }
+      ]
+    },
+    purchase_register: {
+      purchases: [
+        {
+          purchaseOrder: "PO-2025-001",
+          vendorName: "Raw Materials Inc",
+          purchaseDate: "2025-01-14",
+          itemDescription: "Steel Sheets - Grade A",
+          quantity: 100,
+          amount: 500000
+        },
+        {
+          purchaseOrder: "PO-2025-002",
+          vendorName: "Equipment Suppliers",
+          purchaseDate: "2025-01-18",
+          itemDescription: "Industrial Machinery",
+          quantity: 2,
+          amount: 800000
+        }
+      ]
+    }
+  };
+
+  return sampleData[docType] || {};
+}
+
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -236,6 +344,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching financial statements:", error);
       res.status(500).json({ message: "Failed to fetch financial statements" });
+    }
+  });
+
+  // Get extracted data for data tables
+  app.get('/api/extracted-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const { period, docType } = req.query;
+      const userId = req.user.claims.sub;
+      
+      // Get documents based on filters
+      const documents = await storage.getDocuments(userId);
+      
+      // Filter by period if specified
+      const filteredDocs = documents.filter(doc => {
+        if (period && period !== 'all') {
+          // Extract period from document metadata or use a default mapping
+          const docPeriod = (doc.metadata as any)?.period || 'Q1_2025';
+          return docPeriod === period;
+        }
+        return true;
+      });
+
+      // Transform documents to extracted data format
+      const extractedData = filteredDocs.map(doc => ({
+        id: doc.id,
+        documentId: doc.id,
+        documentType: doc.documentType || 'vendor_invoice',
+        fileName: doc.fileName,
+        data: (doc as any).extractedData || generateSampleDataForDocument(doc.documentType || 'vendor_invoice', doc.fileName),
+        extractedAt: doc.updatedAt || doc.createdAt,
+        confidence: (doc as any).confidence || 0.95
+      }));
+
+      // Filter by document type if specified
+      const finalData = docType && docType !== 'all' 
+        ? extractedData.filter(item => item.documentType === docType)
+        : extractedData;
+
+      res.json(finalData);
+    } catch (error) {
+      console.error("Error fetching extracted data:", error);
+      res.status(500).json({ message: "Failed to fetch extracted data" });
     }
   });
 

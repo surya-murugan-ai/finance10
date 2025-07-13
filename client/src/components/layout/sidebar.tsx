@@ -8,7 +8,8 @@ import {
   History,
   TrendingUp,
   FolderOpen,
-  GitMerge
+  GitMerge,
+  Table
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Compliance", href: "/compliance", icon: Shield },
   { name: "Audit Trail", href: "/audit", icon: History },
   { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
+  { name: "Data Tables", href: "/data-tables", icon: Table },
 ];
 
 const agents = [
