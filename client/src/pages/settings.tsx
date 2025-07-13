@@ -373,17 +373,11 @@ export default function SettingsPage() {
 
   if (settingsLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <div className="ml-64">
-          <TopBar />
-          <main className="p-8">
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          </main>
+      <PageLayout title="Settings">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
