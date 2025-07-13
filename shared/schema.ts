@@ -157,6 +157,71 @@ export const auditTrail = pgTable("audit_trail", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+// Reconciliation tables
+export const reconciliationRules = pgTable("reconciliation_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  entityPairs: text("entity_pairs").array().notNull(),
+  accountCodes: text("account_codes").array().notNull(),
+  tolerancePercent: decimal("tolerance_percent", { precision: 5, scale: 4 }).notNull().default("0.0100"),
+  toleranceAmount: decimal("tolerance_amount", { precision: 15, scale: 2 }).notNull().default("100.00"),
+  autoReconcile: boolean("auto_reconcile").notNull().default(false),
+  priority: integer("priority").notNull().default(1),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const reconciliationMatches = pgTable("reconciliation_matches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  entityA: varchar("entity_a").notNull(),
+  entityB: varchar("entity_b").notNull(),
+  transactionAId: uuid("transaction_a_id").references(() => journalEntries.id).notNull(),
+  transactionBId: uuid("transaction_b_id").references(() => journalEntries.id).notNull(),
+  matchScore: decimal("match_score", { precision: 5, scale: 4 }).notNull(),
+  matchType: varchar("match_type").notNull(), // exact, partial, suspected
+  variance: decimal("variance", { precision: 15, scale: 2 }).notNull().default("0.00"),
+  varianceReasons: text("variance_reasons").array().notNull(),
+  reconciliationDate: timestamp("reconciliation_date").notNull(),
+  status: varchar("status").notNull().default("matched"), // matched, unmatched, disputed
+  ruleId: uuid("rule_id").references(() => reconciliationRules.id),
+  period: varchar("period").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const intercompanyTransactions = pgTable("intercompany_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  parentEntity: varchar("parent_entity").notNull(),
+  childEntity: varchar("child_entity").notNull(),
+  transactionType: varchar("transaction_type").notNull(), // transfer, loan, service, dividend, expense_allocation
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency").notNull().default("INR"),
+  transactionDate: timestamp("transaction_date").notNull(),
+  description: text("description"),
+  documentIds: text("document_ids").array().notNull(),
+  isReconciled: boolean("is_reconciled").notNull().default(false),
+  reconciliationId: uuid("reconciliation_id").references(() => reconciliationMatches.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const reconciliationReports = pgTable("reconciliation_reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  period: varchar("period").notNull(),
+  totalTransactions: integer("total_transactions").notNull(),
+  matchedTransactions: integer("matched_transactions").notNull(),
+  unmatchedTransactions: integer("unmatched_transactions").notNull(),
+  disputedTransactions: integer("disputed_transactions").notNull(),
+  totalVariance: decimal("total_variance", { precision: 15, scale: 2 }).notNull(),
+  reconciliationRate: decimal("reconciliation_rate", { precision: 5, scale: 4 }).notNull(),
+  recommendations: text("recommendations").array().notNull(),
+  reportData: jsonb("report_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+});
+
 // Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
@@ -165,6 +230,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   financialStatements: many(financialStatements),
   complianceChecks: many(complianceChecks),
   auditTrail: many(auditTrail),
+  reconciliationReports: many(reconciliationReports),
 }));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
@@ -216,6 +282,39 @@ export const complianceChecksRelations = relations(complianceChecks, ({ one }) =
 export const auditTrailRelations = relations(auditTrail, ({ one }) => ({
   user: one(users, {
     fields: [auditTrail.userId],
+    references: [users.id],
+  }),
+}));
+
+export const reconciliationRulesRelations = relations(reconciliationRules, ({ many }) => ({
+  matches: many(reconciliationMatches),
+}));
+
+export const reconciliationMatchesRelations = relations(reconciliationMatches, ({ one }) => ({
+  rule: one(reconciliationRules, {
+    fields: [reconciliationMatches.ruleId],
+    references: [reconciliationRules.id],
+  }),
+  transactionA: one(journalEntries, {
+    fields: [reconciliationMatches.transactionAId],
+    references: [journalEntries.id],
+  }),
+  transactionB: one(journalEntries, {
+    fields: [reconciliationMatches.transactionBId],
+    references: [journalEntries.id],
+  }),
+}));
+
+export const intercompanyTransactionsRelations = relations(intercompanyTransactions, ({ one }) => ({
+  reconciliation: one(reconciliationMatches, {
+    fields: [intercompanyTransactions.reconciliationId],
+    references: [reconciliationMatches.id],
+  }),
+}));
+
+export const reconciliationReportsRelations = relations(reconciliationReports, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [reconciliationReports.createdBy],
     references: [users.id],
   }),
 }));
@@ -274,3 +373,15 @@ export type ComplianceCheck = typeof complianceChecks.$inferSelect;
 
 export type InsertAuditTrail = z.infer<typeof insertAuditTrailSchema>;
 export type AuditTrail = typeof auditTrail.$inferSelect;
+
+export type ReconciliationRule = typeof reconciliationRules.$inferSelect;
+export type InsertReconciliationRule = typeof reconciliationRules.$inferInsert;
+
+export type ReconciliationMatch = typeof reconciliationMatches.$inferSelect;
+export type InsertReconciliationMatch = typeof reconciliationMatches.$inferInsert;
+
+export type IntercompanyTransaction = typeof intercompanyTransactions.$inferSelect;
+export type InsertIntercompanyTransaction = typeof intercompanyTransactions.$inferInsert;
+
+export type ReconciliationReport = typeof reconciliationReports.$inferSelect;
+export type InsertReconciliationReport = typeof reconciliationReports.$inferInsert;

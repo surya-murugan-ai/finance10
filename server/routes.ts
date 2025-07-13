@@ -461,6 +461,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Static file serving for uploads
   app.use('/uploads', express.static('uploads'));
 
+  // Reconciliation routes
+  app.post('/api/reconciliation/run', isAuthenticated, async (req: any, res) => {
+    try {
+      const { period, entityList } = req.body;
+      const userId = req.user.claims.sub;
+      
+      const { reconciliationEngine } = await import('./services/reconciliationEngine');
+      const report = await reconciliationEngine.performReconciliation(period, entityList);
+      
+      // Save report to database
+      await storage.createReconciliationReport({
+        period,
+        totalTransactions: report.totalTransactions,
+        matchedTransactions: report.matchedTransactions,
+        unmatchedTransactions: report.unmatchedTransactions,
+        disputedTransactions: report.disputedTransactions,
+        totalVariance: report.totalVariance.toString(),
+        reconciliationRate: report.reconciliationRate.toString(),
+        recommendations: report.recommendations,
+        reportData: report,
+        createdBy: userId,
+      });
+      
+      res.json(report);
+    } catch (error) {
+      console.error('Error running reconciliation:', error);
+      res.status(500).json({ message: 'Failed to run reconciliation' });
+    }
+  });
+
+  app.get('/api/reconciliation/reports', isAuthenticated, async (req: any, res) => {
+    try {
+      const period = req.query.period as string;
+      const reports = await storage.getReconciliationReports(period);
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching reconciliation reports:', error);
+      res.status(500).json({ message: 'Failed to fetch reconciliation reports' });
+    }
+  });
+
+  app.get('/api/reconciliation/matches', isAuthenticated, async (req: any, res) => {
+    try {
+      const period = req.query.period as string;
+      const matches = await storage.getReconciliationMatches(period);
+      res.json(matches);
+    } catch (error) {
+      console.error('Error fetching reconciliation matches:', error);
+      res.status(500).json({ message: 'Failed to fetch reconciliation matches' });
+    }
+  });
+
+  app.get('/api/reconciliation/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const { reconciliationEngine } = await import('./services/reconciliationEngine');
+      const rules = await reconciliationEngine.getReconciliationRules();
+      res.json(rules);
+    } catch (error) {
+      console.error('Error fetching reconciliation rules:', error);
+      res.status(500).json({ message: 'Failed to fetch reconciliation rules' });
+    }
+  });
+
+  app.post('/api/reconciliation/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const { reconciliationEngine } = await import('./services/reconciliationEngine');
+      await reconciliationEngine.updateReconciliationRule(req.body);
+      res.json({ message: 'Rule updated successfully' });
+    } catch (error) {
+      console.error('Error updating reconciliation rule:', error);
+      res.status(500).json({ message: 'Failed to update reconciliation rule' });
+    }
+  });
+
+  app.get('/api/intercompany/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const period = req.query.period as string;
+      const transactions = await storage.getIntercompanyTransactions(period);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching intercompany transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch intercompany transactions' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

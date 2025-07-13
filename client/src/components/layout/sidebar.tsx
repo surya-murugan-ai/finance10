@@ -7,7 +7,8 @@ import {
   Shield, 
   History,
   TrendingUp,
-  FolderOpen
+  FolderOpen,
+  GitMerge
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Financial Reports", href: "/reports", icon: FileText },
   { name: "Compliance", href: "/compliance", icon: Shield },
   { name: "Audit Trail", href: "/audit", icon: History },
+  { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
 ];
 
 const agents = [

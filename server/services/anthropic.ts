@@ -255,6 +255,102 @@ export class AnthropicService {
     
     return JSON.parse(responseText.trim());
   }
+
+  async analyzeIntercompanyTransaction(entry: any): Promise<{
+    isIntercompany: boolean;
+    parentEntity: string;
+    counterpartyEntity: string;
+    transactionType: string;
+    confidence: number;
+  }> {
+    try {
+      const prompt = `Analyze this journal entry to determine if it's an intercompany transaction:
+      
+Journal Entry:
+- Account: ${entry.accountCode} - ${entry.accountName}
+- Amount: ${entry.debitAmount || entry.creditAmount}
+- Narration: ${entry.narration}
+- Entity: ${entry.entity}
+- Date: ${entry.date}
+
+Please analyze and respond with JSON containing:
+- isIntercompany: boolean (true if this appears to be an intercompany transaction)
+- parentEntity: string (the entity name from the entry)
+- counterpartyEntity: string (the likely counterparty entity if identifiable)
+- transactionType: string (transfer, loan, service, dividend, expense_allocation)
+- confidence: number (0-1 confidence score)`;
+
+      const response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const content = response.content[0];
+      if (content.type === 'text') {
+        return JSON.parse(content.text);
+      }
+      
+      throw new Error('Invalid response format');
+    } catch (error) {
+      console.error('Error analyzing intercompany transaction:', error);
+      return {
+        isIntercompany: false,
+        parentEntity: entry.entity,
+        counterpartyEntity: 'Unknown',
+        transactionType: 'unknown',
+        confidence: 0,
+      };
+    }
+  }
+
+  async analyzeReconciliationPatterns(entriesA: any[], entriesB: any[]): Promise<{
+    patterns: Array<{
+      id: string;
+      entityA: string;
+      entityB: string;
+      transactionA: any;
+      transactionB: any;
+      confidence: number;
+      variance: number;
+      reasons: string[];
+    }>;
+  }> {
+    try {
+      const prompt = `Analyze these journal entries from two entities to identify reconciliation patterns:
+
+Entity A Entries:
+${entriesA.map(e => `- ${e.accountCode}: ${e.debitAmount || e.creditAmount} - ${e.narration}`).join('\n')}
+
+Entity B Entries:
+${entriesB.map(e => `- ${e.accountCode}: ${e.debitAmount || e.creditAmount} - ${e.narration}`).join('\n')}
+
+Identify potential matches based on:
+1. Similar amounts (may have small variances)
+2. Related transaction descriptions
+3. Intercompany patterns
+4. Date proximity
+5. Account relationships
+
+Respond with JSON containing a "patterns" array with potential matches.`;
+
+      const response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const content = response.content[0];
+      if (content.type === 'text') {
+        return JSON.parse(content.text);
+      }
+      
+      throw new Error('Invalid response format');
+    } catch (error) {
+      console.error('Error analyzing reconciliation patterns:', error);
+      return { patterns: [] };
+    }
+  }
 }
 
 export const anthropicService = new AnthropicService();

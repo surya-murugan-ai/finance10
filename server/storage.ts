@@ -6,6 +6,9 @@ import {
   financialStatements,
   complianceChecks,
   auditTrail,
+  reconciliationReports,
+  reconciliationMatches,
+  intercompanyTransactions,
   type User,
   type UpsertUser,
   type Document,
@@ -20,6 +23,12 @@ import {
   type InsertComplianceCheck,
   type AuditTrail,
   type InsertAuditTrail,
+  type ReconciliationReport,
+  type InsertReconciliationReport,
+  type ReconciliationMatch,
+  type InsertReconciliationMatch,
+  type IntercompanyTransaction,
+  type InsertIntercompanyTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count } from "drizzle-orm";
@@ -69,6 +78,14 @@ export interface IStorage {
     validationErrors: number;
     complianceScore: number;
   }>;
+
+  // Reconciliation operations
+  createReconciliationReport(report: InsertReconciliationReport): Promise<ReconciliationReport>;
+  getReconciliationReports(period?: string): Promise<ReconciliationReport[]>;
+  getReconciliationMatches(period?: string): Promise<ReconciliationMatch[]>;
+  createReconciliationMatch(match: InsertReconciliationMatch): Promise<ReconciliationMatch>;
+  getIntercompanyTransactions(period?: string): Promise<IntercompanyTransaction[]>;
+  createIntercompanyTransaction(transaction: InsertIntercompanyTransaction): Promise<IntercompanyTransaction>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -316,6 +333,46 @@ export class DatabaseStorage implements IStorage {
       validationErrors: validationErrorCount.count,
       complianceScore,
     };
+  }
+
+  // Reconciliation operations
+  async createReconciliationReport(report: InsertReconciliationReport): Promise<ReconciliationReport> {
+    const [newReport] = await db.insert(reconciliationReports).values(report).returning();
+    return newReport;
+  }
+
+  async getReconciliationReports(period?: string): Promise<ReconciliationReport[]> {
+    if (period) {
+      return await db.select().from(reconciliationReports).where(eq(reconciliationReports.period, period));
+    }
+    return await db.select().from(reconciliationReports).orderBy(desc(reconciliationReports.createdAt));
+  }
+
+  async getReconciliationMatches(period?: string): Promise<ReconciliationMatch[]> {
+    if (period) {
+      return await db.select().from(reconciliationMatches).where(eq(reconciliationMatches.period, period));
+    }
+    return await db.select().from(reconciliationMatches).orderBy(desc(reconciliationMatches.createdAt));
+  }
+
+  async createReconciliationMatch(match: InsertReconciliationMatch): Promise<ReconciliationMatch> {
+    const [newMatch] = await db.insert(reconciliationMatches).values(match).returning();
+    return newMatch;
+  }
+
+  async getIntercompanyTransactions(period?: string): Promise<IntercompanyTransaction[]> {
+    if (period) {
+      // Extract year from period (e.g., "Q1_2025" -> "2025")
+      const year = period.split('_')[1];
+      return await db.select().from(intercompanyTransactions)
+        .where(sql`EXTRACT(YEAR FROM ${intercompanyTransactions.transactionDate}) = ${year}`);
+    }
+    return await db.select().from(intercompanyTransactions).orderBy(desc(intercompanyTransactions.createdAt));
+  }
+
+  async createIntercompanyTransaction(transaction: InsertIntercompanyTransaction): Promise<IntercompanyTransaction> {
+    const [newTransaction] = await db.insert(intercompanyTransactions).values(transaction).returning();
+    return newTransaction;
   }
 }
 
