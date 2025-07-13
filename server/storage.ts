@@ -58,6 +58,7 @@ export interface IStorage {
   createJournalEntry(entry: InsertJournalEntry): Promise<JournalEntry>;
   getJournalEntries(documentId?: string): Promise<JournalEntry[]>;
   getJournalEntriesByPeriod(period: string): Promise<JournalEntry[]>;
+  deleteJournalEntry(id: string): Promise<void>;
 
   // Financial statement operations
   createFinancialStatement(statement: InsertFinancialStatement): Promise<FinancialStatement>;
@@ -239,6 +240,10 @@ export class DatabaseStorage implements IStorage {
       .from(journalEntries)
       .where(sql`DATE_PART('year', ${journalEntries.date}) = ${period.split('_')[1]}`)
       .orderBy(desc(journalEntries.date));
+  }
+
+  async deleteJournalEntry(id: string): Promise<void> {
+    await db.delete(journalEntries).where(eq(journalEntries.id, id));
   }
 
   // Financial statement operations

@@ -639,6 +639,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete journal entry
+  app.delete('/api/journal-entries/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      await storage.deleteJournalEntry(id);
+      
+      // Create audit trail
+      await storage.createAuditTrail({
+        entityType: 'journal_entry',
+        entityId: id,
+        action: 'delete',
+        userId,
+        details: { deletedBy: userId }
+      });
+      
+      res.json({ message: "Journal entry deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting journal entry:", error);
+      res.status(500).json({ message: "Failed to delete journal entry" });
+    }
+  });
+
   // Get financial statements
   app.get('/api/financial-statements', isAuthenticated, async (req: any, res) => {
     try {

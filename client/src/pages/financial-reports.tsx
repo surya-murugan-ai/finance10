@@ -114,6 +114,39 @@ export default function FinancialReports() {
     },
   });
 
+  const deleteJournalEntryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/journal-entries/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Journal Entry Deleted",
+        description: "Journal entry deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/journal-entries"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Deletion Failed",
+        description: error.message || "Failed to delete journal entry",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -464,6 +497,7 @@ export default function FinancialReports() {
                             <TableHead className="text-right">Debit</TableHead>
                             <TableHead className="text-right">Credit</TableHead>
                             <TableHead>Narration</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -481,6 +515,17 @@ export default function FinancialReports() {
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {entry.narration}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteJournalEntryMutation.mutate(entry.id)}
+                                  disabled={deleteJournalEntryMutation.isPending}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))}
