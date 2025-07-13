@@ -6,13 +6,15 @@ import {
   FileText, 
   Shield, 
   History,
-  TrendingUp 
+  TrendingUp,
+  FolderOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Document Upload", href: "/documents", icon: Upload },
+  { name: "Document Management", href: "/document-management", icon: FolderOpen },
   { name: "Agent Workflows", href: "/workflows", icon: Bot },
   { name: "Financial Reports", href: "/reports", icon: FileText },
   { name: "Compliance", href: "/compliance", icon: Shield },

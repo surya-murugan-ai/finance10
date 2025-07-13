@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import DocumentUpload from "@/pages/document-upload";
+import DocumentManagement from "@/pages/document-management";
 import AgentWorkflows from "@/pages/agent-workflows";
 import FinancialReports from "@/pages/financial-reports";
 import Compliance from "@/pages/compliance";
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/documents" component={DocumentUpload} />
           <Route path="/document-upload" component={DocumentUpload} />
+          <Route path="/document-management" component={DocumentManagement} />
           <Route path="/workflows" component={AgentWorkflows} />
           <Route path="/reports" component={FinancialReports} />
           <Route path="/compliance" component={Compliance} />
