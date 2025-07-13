@@ -92,6 +92,23 @@ export interface IStorage {
   createSettings(settings: any): Promise<any>;
   updateSettings(id: string, settings: any): Promise<any>;
   testConnection(): Promise<boolean>;
+
+  // Company profile operations
+  createCompanyProfile(profile: any): Promise<any>;
+  getCompanyProfile(userId: string): Promise<any>;
+  updateCompanyProfile(userId: string, profile: any): Promise<any>;
+
+  // User flow tracking
+  createUserFlowEntry(entry: any): Promise<any>;
+  getUserFlowEntries(userId: string): Promise<any[]>;
+
+  // Close calendar operations
+  getCloseCalendar(userId: string): Promise<any>;
+  updateCloseCalendar(userId: string, calendar: any): Promise<any>;
+
+  // User roles operations
+  getUserRoles(userId: string): Promise<any[]>;
+  createUserRole(role: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -408,6 +425,133 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       return false;
     }
+  }
+
+  // Company profile operations
+  async createCompanyProfile(profile: any): Promise<any> {
+    const profileData = {
+      id: `profile_${profile.userId}`,
+      userId: profile.userId,
+      data: JSON.stringify(profile),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    // Store company profile in audit trail for now
+    await this.createAuditTrail({
+      userId: profile.userId,
+      action: "company_profile_created",
+      entityType: "company",
+      entityId: profile.userId,
+      details: JSON.stringify(profile),
+    });
+    
+    return profileData;
+  }
+
+  async getCompanyProfile(userId: string): Promise<any> {
+    // Get the latest company profile from audit trail
+    const auditEntries = await this.getAuditTrail(userId);
+    const profileEntry = auditEntries.find(entry => entry.action === "company_profile_created");
+    
+    if (!profileEntry) {
+      return null;
+    }
+    
+    return JSON.parse(profileEntry.details as string);
+  }
+
+  async updateCompanyProfile(userId: string, profile: any): Promise<any> {
+    await this.createAuditTrail({
+      userId,
+      action: "company_profile_updated",
+      entityType: "company",
+      entityId: userId,
+      details: JSON.stringify(profile),
+    });
+    
+    return profile;
+  }
+
+  // User flow tracking
+  async createUserFlowEntry(entry: any): Promise<any> {
+    const flowEntry = {
+      id: `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId: entry.userId,
+      step: entry.step,
+      action: entry.action,
+      metadata: entry.metadata || '{}',
+      timestamp: entry.timestamp || new Date(),
+    };
+    
+    await this.createAuditTrail({
+      userId: entry.userId,
+      action: "user_flow_tracked",
+      entityType: "flow",
+      entityId: flowEntry.id,
+      details: JSON.stringify(flowEntry),
+    });
+    
+    return flowEntry;
+  }
+
+  async getUserFlowEntries(userId: string): Promise<any[]> {
+    const auditEntries = await this.getAuditTrail(userId);
+    return auditEntries
+      .filter(entry => entry.action === "user_flow_tracked")
+      .map(entry => JSON.parse(entry.details as string));
+  }
+
+  // Close calendar operations
+  async getCloseCalendar(userId: string): Promise<any> {
+    const auditEntries = await this.getAuditTrail(userId);
+    const calendarEntry = auditEntries.find(entry => entry.action === "calendar_created" || entry.action === "calendar_updated");
+    
+    if (!calendarEntry) {
+      return null;
+    }
+    
+    return JSON.parse(calendarEntry.details as string);
+  }
+
+  async updateCloseCalendar(userId: string, calendar: any): Promise<any> {
+    await this.createAuditTrail({
+      userId,
+      action: "calendar_updated",
+      entityType: "calendar",
+      entityId: userId,
+      details: JSON.stringify(calendar),
+    });
+    
+    return calendar;
+  }
+
+  // User roles operations
+  async getUserRoles(userId: string): Promise<any[]> {
+    const auditEntries = await this.getAuditTrail(userId);
+    return auditEntries
+      .filter(entry => entry.action === "user_role_created")
+      .map(entry => JSON.parse(entry.details as string));
+  }
+
+  async createUserRole(role: any): Promise<any> {
+    const roleData = {
+      id: `role_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId: role.userId,
+      ...role,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    await this.createAuditTrail({
+      userId: role.userId,
+      action: "user_role_created",
+      entityType: "role",
+      entityId: roleData.id,
+      details: JSON.stringify(roleData),
+    });
+    
+    return roleData;
   }
 }
 

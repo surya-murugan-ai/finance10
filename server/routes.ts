@@ -11,6 +11,24 @@ import { financialReportsService } from "./services/financialReports";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 
+// Helper functions for dashboard stats
+function getCurrentQuarter(): string {
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  
+  if (month < 3) return `Q4_${year - 1}`;
+  if (month < 6) return `Q1_${year}`;
+  if (month < 9) return `Q2_${year}`;
+  return `Q3_${year}`;
+}
+
+function getNextDueDate(): string {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+  return nextMonth.toISOString().split('T')[0];
+}
+
 // Helper function to infer document type from filename
 function inferDocumentType(fileName: string): string {
   const name = fileName.toLowerCase();
@@ -152,6 +170,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Onboarding API endpoints
+  app.post("/api/onboarding", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const onboardingData = req.body;
+      
+      // Store company information
+      await storage.createCompanyProfile({
+        userId,
+        ...onboardingData.company,
+        entities: onboardingData.entities,
+        users: onboardingData.users,
+        calendar: onboardingData.calendar,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      
+      // Track user flow
+      await storage.createUserFlowEntry({
+        userId,
+        step: "onboarding_complete",
+        action: "completed_setup",
+        metadata: JSON.stringify({ entitiesCount: onboardingData.entities.length, usersCount: onboardingData.users.length }),
+        timestamp: new Date(),
+      });
+      
+      res.json({ message: "Onboarding completed successfully" });
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      res.status(500).json({ error: "Failed to complete onboarding" });
+    }
+  });
+
+  app.get("/api/company", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const company = await storage.getCompanyProfile(userId);
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      res.status(500).json({ error: "Failed to fetch company profile" });
+    }
+  });
+
+  // User flow tracking endpoints
+  app.post("/api/user-flow", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { step, action, metadata } = req.body;
+      
+      await storage.createUserFlowEntry({
+        userId,
+        step,
+        action,
+        metadata: JSON.stringify(metadata),
+        timestamp: new Date(),
+      });
+      
+      res.json({ message: "User flow tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking user flow:", error);
+      res.status(500).json({ error: "Failed to track user flow" });
+    }
+  });
+
+  app.get("/api/user-flow", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const flows = await storage.getUserFlowEntries(userId);
+      res.json(flows);
+    } catch (error) {
+      console.error("Error fetching user flows:", error);
+      res.status(500).json({ error: "Failed to fetch user flows" });
+    }
+  });
+
+  // Close calendar endpoints
+  app.get("/api/close-calendar", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const calendar = await storage.getCloseCalendar(userId);
+      res.json(calendar);
+    } catch (error) {
+      console.error("Error fetching close calendar:", error);
+      res.status(500).json({ error: "Failed to fetch close calendar" });
+    }
+  });
+
+  app.put("/api/close-calendar", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const calendarData = req.body;
+      
+      const updatedCalendar = await storage.updateCloseCalendar(userId, calendarData);
+      res.json(updatedCalendar);
+    } catch (error) {
+      console.error("Error updating close calendar:", error);
+      res.status(500).json({ error: "Failed to update close calendar" });
+    }
+  });
+
+  // User roles endpoints
+  app.get("/api/user-roles", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const roles = await storage.getUserRoles(userId);
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      res.status(500).json({ error: "Failed to fetch user roles" });
+    }
+  });
+
+  app.post("/api/user-roles", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const roleData = req.body;
+      
+      const role = await storage.createUserRole({
+        userId,
+        ...roleData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      
+      res.json(role);
+    } catch (error) {
+      console.error("Error creating user role:", error);
+      res.status(500).json({ error: "Failed to create user role" });
+    }
+  });
+
+  // Enhanced dashboard stats with user journey tracking
+  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getDashboardStats(userId);
+      
+      // Add user journey progress
+      const company = await storage.getCompanyProfile(userId);
+      const onboardingComplete = !!company;
+      
+      const enhancedStats = {
+        ...stats,
+        onboardingComplete,
+        currentQuarter: getCurrentQuarter(),
+        nextDueDate: getNextDueDate(),
+      };
+      
+      res.json(enhancedStats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard stats" });
     }
   });
 
