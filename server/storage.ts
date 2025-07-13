@@ -177,6 +177,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDocument(id: string): Promise<void> {
+    // First delete all related agent jobs
+    await db.delete(agentJobs).where(eq(agentJobs.documentId, id));
+    
+    // Then delete all related journal entries
+    await db.delete(journalEntries).where(eq(journalEntries.documentId, id));
+    
+    // Finally delete the document
     await db.delete(documents).where(eq(documents.id, id));
   }
 
