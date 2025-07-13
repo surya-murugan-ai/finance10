@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
+import TopBar from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,8 +45,24 @@ import type { Document } from "@shared/schema";
 export default function DocumentManagement() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  const { data: documents, isLoading, refetch } = useQuery({
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  const { data: documents, isLoading: documentsLoading, refetch } = useQuery({
     queryKey: ["/api/documents"],
     retry: false,
   });
@@ -131,27 +151,45 @@ export default function DocumentManagement() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (documentsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <div className="ml-64">
+          <TopBar />
+          <main className="p-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Document Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            View and manage all uploaded documents
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <div className="ml-64">
+        <TopBar />
+        <main className="p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Document Management
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                View and manage all uploaded documents
+              </p>
+            </div>
         <Button
           onClick={() => refetch()}
           variant="outline"
@@ -416,6 +454,8 @@ export default function DocumentManagement() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+        </main>
+      </div>
     </div>
   );
 }

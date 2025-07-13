@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Sidebar Layout Standardization (July 13, 2025)**: Added consistent left navigation sidebar to all pages:
+  - Updated reconciliation.tsx with proper sidebar layout and authentication handling
+  - Updated data-tables.tsx with sidebar layout and authentication guards
+  - Updated document-management.tsx with sidebar integration and user authentication
+  - All pages now have consistent structure with Sidebar, TopBar, and main content areas
+  - Unified authentication redirect behavior across all pages
+  - Implemented proper loading states with sidebar layout maintained
+
 - **Agent Chat Interface (July 13, 2025)**: Created comprehensive autonomous agent interaction system with cleaner UX:
   - Redesigned as tabbed interface (Chat, Workflow, Agent Actions) for better organization
   - Added Quick Start section with document selection and common commands

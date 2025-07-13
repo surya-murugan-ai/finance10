@@ -1,5 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
+import TopBar from "@/components/layout/topbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,11 +27,28 @@ interface ExtractedData {
 }
 
 export default function DataTables() {
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("Q1_2025");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocType, setSelectedDocType] = useState("all");
 
-  const { data: extractedData, isLoading, error } = useQuery<ExtractedData[]>({
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  const { data: extractedData, isLoading: dataLoading, error } = useQuery<ExtractedData[]>({
     queryKey: [`/api/extracted-data?period=${selectedPeriod}&docType=${selectedDocType}`],
   });
 
@@ -294,36 +316,54 @@ export default function DataTables() {
     </div>
   );
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Data Tables</h1>
-            <p className="text-muted-foreground">View extracted data from financial documents</p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <div className="ml-64">
+          <TopBar />
+          <main className="p-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Data Tables</h1>
+                <p className="text-muted-foreground">View extracted data from financial documents</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Data Tables</h1>
-          <p className="text-muted-foreground">View extracted data from financial documents</p>
-        </div>
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Export Data
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <div className="ml-64">
+        <TopBar />
+        <main className="p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Data Tables</h1>
+              <p className="text-muted-foreground">View extracted data from financial documents</p>
+            </div>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export Data
+            </Button>
+          </div>
 
       {/* Filters */}
       <Card>
@@ -466,6 +506,8 @@ export default function DataTables() {
           </div>
         </Card>
       )}
+        </main>
+      </div>
     </div>
   );
 }
