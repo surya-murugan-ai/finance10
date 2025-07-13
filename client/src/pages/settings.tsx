@@ -51,6 +51,57 @@ interface SettingsConfig {
     enableStreaming: boolean;
     responseFormat: string;
   };
+  agentConfigs: {
+    classifierBot: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    journalBot: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    gstValidator: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    tdsValidator: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    dataExtractor: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    consoAI: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+    auditAgent: {
+      temperature: number;
+      maxTokens: number;
+      model: string;
+      systemPrompt: string;
+      enabled: boolean;
+    };
+  };
   vectorDatabase: {
     provider: string;
     indexName: string;
@@ -135,6 +186,57 @@ export default function SettingsPage() {
       systemPrompt: "You are a helpful AI assistant specialized in financial document processing and analysis.",
       enableStreaming: true,
       responseFormat: "json",
+    },
+    agentConfigs: {
+      classifierBot: {
+        temperature: 0.1,
+        maxTokens: 2000,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are ClassifierBot, an expert at identifying and classifying financial documents. Your role is to analyze document content and accurately categorize them into types like vendor invoices, sales registers, bank statements, GST returns, TDS certificates, and salary registers. Focus on precision and consistency in classification.",
+        enabled: true,
+      },
+      journalBot: {
+        temperature: 0.3,
+        maxTokens: 3000,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are JournalBot, specialized in creating accurate double-entry journal entries from financial documents. You understand Indian accounting standards (IndAS), GST implications, and TDS provisions. Generate precise debit/credit entries with proper account codes and ensure all transactions balance.",
+        enabled: true,
+      },
+      gstValidator: {
+        temperature: 0.2,
+        maxTokens: 2500,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are GSTValidator, an expert in Indian GST compliance. Validate GST calculations, HSN codes, tax rates, input tax credit eligibility, and ensure compliance with GSTR-1, GSTR-3B requirements. Check for reverse charge mechanism and interstate vs intrastate transactions.",
+        enabled: true,
+      },
+      tdsValidator: {
+        temperature: 0.2,
+        maxTokens: 2500,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are TDSValidator, focused on TDS compliance per Indian Income Tax Act. Validate TDS rates, PAN requirements, nature of payments, quarterly return compliance (Form 26Q), and ensure proper TDS deduction and deposit timelines.",
+        enabled: true,
+      },
+      dataExtractor: {
+        temperature: 0.4,
+        maxTokens: 4000,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are DataExtractor, specialized in extracting structured data from financial documents. Extract key information like amounts, dates, vendor details, invoice numbers, tax components, and payment terms. Ensure data accuracy and completeness for downstream processing.",
+        enabled: true,
+      },
+      consoAI: {
+        temperature: 0.3,
+        maxTokens: 3500,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are ConsoAI, responsible for consolidating financial data and generating comprehensive financial statements. Create trial balances, profit & loss statements, balance sheets, and cash flow statements. Ensure compliance with Indian accounting standards and regulatory requirements.",
+        enabled: true,
+      },
+      auditAgent: {
+        temperature: 0.1,
+        maxTokens: 3000,
+        model: "claude-sonnet-4-20250514",
+        systemPrompt: "You are AuditAgent, the final validation layer for all financial processing. Perform comprehensive audit checks, identify discrepancies, validate calculations, ensure regulatory compliance, and provide detailed audit trails. Flag any anomalies or compliance issues.",
+        enabled: true,
+      },
     },
     vectorDatabase: {
       provider: "pinecone",
@@ -318,7 +420,7 @@ export default function SettingsPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="api-keys" className="flex items-center gap-2">
                 <Key className="w-4 h-4" />
                 API Keys
@@ -326,6 +428,10 @@ export default function SettingsPage() {
               <TabsTrigger value="ai-settings" className="flex items-center gap-2">
                 <Brain className="w-4 h-4" />
                 AI Settings
+              </TabsTrigger>
+              <TabsTrigger value="agent-configs" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Agent Configs
               </TabsTrigger>
               <TabsTrigger value="vector-db" className="flex items-center gap-2">
                 <Database className="w-4 h-4" />
@@ -417,16 +523,16 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="w-5 h-5" />
-                    AI Model Configuration
+                    Global AI Model Configuration
                   </CardTitle>
                   <CardDescription>
-                    Fine-tune AI model parameters for optimal performance in financial document processing.
+                    Default AI model parameters that apply to all agents unless overridden individually.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="model">AI Model</Label>
+                      <Label htmlFor="model">Default AI Model</Label>
                       <Select
                         value={formData.aiSettings.model}
                         onValueChange={(value) => updateFormData("aiSettings", "model", value)}
@@ -495,7 +601,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="systemPrompt">System Prompt</Label>
+                      <Label htmlFor="systemPrompt">Default System Prompt</Label>
                       <Textarea
                         id="systemPrompt"
                         value={formData.aiSettings.systemPrompt}
@@ -514,6 +620,159 @@ export default function SettingsPage() {
                       <Label htmlFor="enableStreaming">Enable Streaming Responses</Label>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Agent Configs Tab */}
+            <TabsContent value="agent-configs" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Individual Agent Configuration
+                  </CardTitle>
+                  <CardDescription>
+                    Configure AI model settings for each specialized agent in the QRT closure workflow.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {Object.entries(formData.agentConfigs).map(([agentKey, config]) => {
+                    const agentNames = {
+                      classifierBot: "ClassifierBot",
+                      journalBot: "JournalBot", 
+                      gstValidator: "GST Validator",
+                      tdsValidator: "TDS Validator",
+                      dataExtractor: "Data Extractor",
+                      consoAI: "ConsoAI",
+                      auditAgent: "Audit Agent"
+                    };
+                    
+                    const agentDescriptions = {
+                      classifierBot: "Identifies and classifies financial documents into appropriate categories",
+                      journalBot: "Creates accurate double-entry journal entries from financial data",
+                      gstValidator: "Validates GST compliance and calculations per Indian regulations",
+                      tdsValidator: "Ensures TDS compliance according to Income Tax Act requirements",
+                      dataExtractor: "Extracts structured data from various financial document formats",
+                      consoAI: "Consolidates data and generates comprehensive financial statements",
+                      auditAgent: "Performs final validation and compliance checks on all processed data"
+                    };
+
+                    return (
+                      <div key={agentKey} className="border rounded-lg p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">
+                              {agentNames[agentKey as keyof typeof agentNames]}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {agentDescriptions[agentKey as keyof typeof agentDescriptions]}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`${agentKey}-enabled`}
+                              checked={config.enabled}
+                              onCheckedChange={(checked) => {
+                                const newConfig = { ...formData.agentConfigs };
+                                newConfig[agentKey as keyof typeof newConfig].enabled = checked;
+                                setFormData(prev => ({ ...prev, agentConfigs: newConfig }));
+                                setHasChanges(true);
+                              }}
+                            />
+                            <Label htmlFor={`${agentKey}-enabled`} className="text-sm">
+                              {config.enabled ? "Enabled" : "Disabled"}
+                            </Label>
+                          </div>
+                        </div>
+                        
+                        {config.enabled && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${agentKey}-model`}>AI Model</Label>
+                              <Select
+                                value={config.model}
+                                onValueChange={(value) => {
+                                  const newConfig = { ...formData.agentConfigs };
+                                  newConfig[agentKey as keyof typeof newConfig].model = value;
+                                  setFormData(prev => ({ ...prev, agentConfigs: newConfig }));
+                                  setHasChanges(true);
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select AI model" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="claude-sonnet-4-20250514">Claude 4.0 Sonnet</SelectItem>
+                                  <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
+                                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`${agentKey}-maxTokens`}>Max Tokens</Label>
+                              <Input
+                                id={`${agentKey}-maxTokens`}
+                                type="number"
+                                value={config.maxTokens}
+                                onChange={(e) => {
+                                  const newConfig = { ...formData.agentConfigs };
+                                  newConfig[agentKey as keyof typeof newConfig].maxTokens = parseInt(e.target.value);
+                                  setFormData(prev => ({ ...prev, agentConfigs: newConfig }));
+                                  setHasChanges(true);
+                                }}
+                                placeholder="2000"
+                                min="100"
+                                max="8000"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2 space-y-2">
+                              <Label htmlFor={`${agentKey}-temperature`}>
+                                Temperature: {config.temperature}
+                              </Label>
+                              <Slider
+                                value={[config.temperature]}
+                                onValueChange={(value) => {
+                                  const newConfig = { ...formData.agentConfigs };
+                                  newConfig[agentKey as keyof typeof newConfig].temperature = value[0];
+                                  setFormData(prev => ({ ...prev, agentConfigs: newConfig }));
+                                  setHasChanges(true);
+                                }}
+                                max={2}
+                                min={0}
+                                step={0.1}
+                                className="w-full"
+                              />
+                              <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>Precise (0.0)</span>
+                                <span>Balanced (1.0)</span>
+                                <span>Creative (2.0)</span>
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-2 space-y-2">
+                              <Label htmlFor={`${agentKey}-systemPrompt`}>System Prompt</Label>
+                              <Textarea
+                                id={`${agentKey}-systemPrompt`}
+                                value={config.systemPrompt}
+                                onChange={(e) => {
+                                  const newConfig = { ...formData.agentConfigs };
+                                  newConfig[agentKey as keyof typeof newConfig].systemPrompt = e.target.value;
+                                  setFormData(prev => ({ ...prev, agentConfigs: newConfig }));
+                                  setHasChanges(true);
+                                }}
+                                placeholder={`Enter system prompt for ${agentNames[agentKey as keyof typeof agentNames]}`}
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             </TabsContent>

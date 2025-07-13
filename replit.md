@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Individual Agent Configuration (July 13, 2025)**: Enhanced settings with separate AI configuration for each agent:
+  - Added Agent Configs tab with 7 specialized agents (ClassifierBot, JournalBot, GST Validator, TDS Validator, Data Extractor, ConsoAI, Audit Agent)
+  - Implemented individual temperature controls (0.1-2.0) for each agent
+  - Added custom system prompts tailored to each agent's specialized role
+  - Built model selection dropdown for each agent (Claude 4.0, GPT-4o, etc.)
+  - Added max tokens configuration and enable/disable toggles
+  - Updated backend API to include agent configurations in settings
+  - Each agent now has fine-tuned parameters for optimal performance in their specific tasks
+
 - **Sidebar Layout Standardization (July 13, 2025)**: Added consistent left navigation sidebar to all pages:
   - Updated reconciliation.tsx with proper sidebar layout and authentication handling
   - Updated data-tables.tsx with sidebar layout and authentication guards
