@@ -4,8 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,36 +186,25 @@ export default function ReconciliationPage() {
 
   if (reportsLoading || matchesLoading || rulesLoading || transactionsLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <div className="ml-64">
-          <TopBar />
-          <main className="p-8">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading reconciliation data...</p>
-              </div>
-            </div>
-          </main>
+      <PageLayout title="Intercompany Reconciliation">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading reconciliation data...</p>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-64">
-        <TopBar />
-        <main className="p-8">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Intercompany Reconciliation</h1>
-              <p className="text-gray-600 mt-2">
-                Advanced reconciliation algorithms for complex intercompany transactions
-              </p>
-            </div>
+    <PageLayout title="Intercompany Reconciliation">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <p className="text-gray-600 mt-2">
+            Advanced reconciliation algorithms for complex intercompany transactions
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-40">
@@ -702,8 +690,6 @@ export default function ReconciliationPage() {
           </Card>
         </TabsContent>
       </Tabs>
-        </main>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

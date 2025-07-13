@@ -35,8 +35,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+import PageLayout from "@/components/layout/PageLayout";
 
 interface ChatMessage {
   id: string;
@@ -428,12 +427,8 @@ export default function AgentChat() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-64">
-        <TopBar />
-        <main className="p-8">
-          <div className="flex-1 space-y-6">
+    <PageLayout title="Agent Chat">
+      <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">Agent Chat</h2>
@@ -781,9 +776,7 @@ export default function AgentChat() {
           </Card>
         </div>
       )}
-          </div>
-        </main>
       </div>
-    </div>
+    </PageLayout>
   );
 }

@@ -33,7 +33,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
-import Sidebar from '@/components/layout/sidebar';
+import PageLayout from '@/components/layout/PageLayout';
 
 interface DataSource {
   id: string;

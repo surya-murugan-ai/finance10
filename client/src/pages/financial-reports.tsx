@@ -4,8 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -154,13 +153,8 @@ export default function FinancialReports() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 ml-64">
-        <TopBar />
-        
-        <div className="p-6">
+    <PageLayout title="Financial Reports">
+      <div className="space-y-6">
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -582,8 +576,7 @@ export default function FinancialReports() {
               </Card>
             </TabsContent>
           </Tabs>
-        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

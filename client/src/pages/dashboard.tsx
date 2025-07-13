@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+import PageLayout from "@/components/layout/PageLayout";
 import StatusCards from "@/components/dashboard/status-cards";
 import FileUploadCard from "@/components/dashboard/file-upload-card";
 import AgentWorkflowCard from "@/components/dashboard/agent-workflow-card";
@@ -60,19 +59,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 ml-64">
-        <TopBar />
-        
-        <div className="p-6">
-          {/* Status Cards */}
-          <StatusCards stats={stats} isLoading={statsLoading} />
+    <PageLayout title="Dashboard">
+      {/* Status Cards */}
+      <StatusCards stats={stats} isLoading={statsLoading} />
 
-          {/* Onboarding Card */}
-          <Card className="mb-6 border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
-            <CardHeader>
+      {/* Onboarding Card */}
+      <Card className="mb-6 border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Building className="w-5 h-5 text-primary" />
                 <span>Company Setup & Onboarding</span>
@@ -123,13 +116,11 @@ export default function Dashboard() {
           {/* Financial Reports Section */}
           <FinancialReportsSection />
 
-          {/* Compliance and Audit Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ComplianceCard />
-            <AuditTrailCard auditTrail={auditTrail} isLoading={auditLoading} />
-          </div>
-        </div>
+      {/* Compliance and Audit Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ComplianceCard />
+        <AuditTrailCard auditTrail={auditTrail} isLoading={auditLoading} />
       </div>
-    </div>
+    </PageLayout>
   );
 }
