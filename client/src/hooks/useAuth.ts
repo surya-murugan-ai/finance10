@@ -9,6 +9,7 @@ export function useAuth() {
   // Initialize token from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('access_token');
+    console.log('Stored token on mount:', storedToken);
     if (storedToken) {
       setToken(storedToken);
     }
@@ -63,6 +64,8 @@ export function useAuth() {
     }
   };
 
+  console.log('useAuth state:', { user, isLoading, token, hasStoredToken: !!localStorage.getItem('access_token') });
+  
   return {
     user,
     isLoading: isLoading && (!!token || !!localStorage.getItem('access_token')),

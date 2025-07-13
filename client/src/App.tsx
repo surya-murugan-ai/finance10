@@ -24,7 +24,9 @@ import ComplianceTutorial from "@/pages/compliance-tutorial";
 import DataSourceConfig from "@/pages/data-source-config";
 
 function Router() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
+
+  console.log('Router render:', { isAuthenticated, isLoading, user });
 
   // Show loading state
   if (isLoading) {
@@ -41,7 +43,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/logout" component={Landing} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
