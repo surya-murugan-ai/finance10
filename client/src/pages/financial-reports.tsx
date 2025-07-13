@@ -173,51 +173,78 @@ export default function FinancialReports() {
     }).format(amount);
   };
 
-  const mockTrialBalance = {
-    entries: [
-      { accountCode: "1000", accountName: "Cash in Hand", debitBalance: 50000, creditBalance: 0 },
-      { accountCode: "1001", accountName: "Bank Account", debitBalance: 500000, creditBalance: 0 },
-      { accountCode: "1200", accountName: "Accounts Receivable", debitBalance: 200000, creditBalance: 0 },
-      { accountCode: "2000", accountName: "Accounts Payable", debitBalance: 0, creditBalance: 150000 },
-      { accountCode: "3000", accountName: "Capital Account", debitBalance: 0, creditBalance: 600000 },
-    ],
-    totalDebits: 750000,
-    totalCredits: 750000,
-    isBalanced: true,
+  // Calculate real trial balance from journal entries
+  const calculateTrialBalance = () => {
+    if (!journalEntries || journalEntries.length === 0) {
+      return { totalDebits: 0, totalCredits: 0, isBalanced: true };
+    }
+    
+    const totalDebits = journalEntries.reduce((sum, entry) => sum + entry.debitAmount, 0);
+    const totalCredits = journalEntries.reduce((sum, entry) => sum + entry.creditAmount, 0);
+    
+    return {
+      totalDebits,
+      totalCredits,
+      isBalanced: Math.abs(totalDebits - totalCredits) < 0.01, // Allow for small rounding differences
+    };
   };
 
-  const mockProfitLoss = {
-    revenue: [
-      { accountCode: "4000", accountName: "Sales Revenue", amount: 1000000, type: "revenue" },
-      { accountCode: "4100", accountName: "Service Revenue", amount: 200000, type: "revenue" },
-    ],
-    expenses: [
-      { accountCode: "6000", accountName: "Cost of Goods Sold", amount: 600000, type: "expense" },
-      { accountCode: "6100", accountName: "Operating Expenses", amount: 150000, type: "expense" },
-    ],
-    totalRevenue: 1200000,
-    totalExpenses: 750000,
-    netProfit: 450000,
+  const trialBalance = calculateTrialBalance();
+
+  // Calculate real profit and loss from journal entries
+  const calculateProfitLoss = () => {
+    if (!journalEntries || journalEntries.length === 0) {
+      return { totalRevenue: 0, totalExpenses: 0, netProfit: 0 };
+    }
+    
+    // Revenue accounts typically have account codes starting with 4
+    // Expense accounts typically have account codes starting with 5 or 6
+    const totalRevenue = journalEntries
+      .filter(entry => entry.accountCode.startsWith('4'))
+      .reduce((sum, entry) => sum + entry.creditAmount, 0);
+    
+    const totalExpenses = journalEntries
+      .filter(entry => entry.accountCode.startsWith('5') || entry.accountCode.startsWith('6'))
+      .reduce((sum, entry) => sum + entry.debitAmount, 0);
+    
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+    };
   };
 
-  const mockBalanceSheet = {
-    assets: [
-      { accountCode: "1000", accountName: "Current Assets", amount: 800000, type: "asset", subType: "current" },
-      { accountCode: "1500", accountName: "Fixed Assets", amount: 500000, type: "asset", subType: "fixed" },
-    ],
-    liabilities: [
-      { accountCode: "2000", accountName: "Current Liabilities", amount: 200000, type: "liability", subType: "current" },
-      { accountCode: "2500", accountName: "Long-term Liabilities", amount: 300000, type: "liability", subType: "long_term" },
-    ],
-    equity: [
-      { accountCode: "3000", accountName: "Share Capital", amount: 500000, type: "equity", subType: "capital" },
-      { accountCode: "3100", accountName: "Retained Earnings", amount: 300000, type: "equity", subType: "retained" },
-    ],
-    totalAssets: 1300000,
-    totalLiabilities: 500000,
-    totalEquity: 800000,
-    isBalanced: true,
+  const profitLoss = calculateProfitLoss();
+
+  // Calculate real balance sheet from journal entries
+  const calculateBalanceSheet = () => {
+    if (!journalEntries || journalEntries.length === 0) {
+      return { totalAssets: 0, totalLiabilities: 0, totalEquity: 0 };
+    }
+    
+    // Assets typically have account codes starting with 1
+    // Liabilities typically have account codes starting with 2
+    // Equity typically have account codes starting with 3
+    const totalAssets = journalEntries
+      .filter(entry => entry.accountCode.startsWith('1'))
+      .reduce((sum, entry) => sum + entry.debitAmount - entry.creditAmount, 0);
+    
+    const totalLiabilities = journalEntries
+      .filter(entry => entry.accountCode.startsWith('2'))
+      .reduce((sum, entry) => sum + entry.creditAmount - entry.debitAmount, 0);
+    
+    const totalEquity = journalEntries
+      .filter(entry => entry.accountCode.startsWith('3'))
+      .reduce((sum, entry) => sum + entry.creditAmount - entry.debitAmount, 0);
+    
+    return {
+      totalAssets,
+      totalLiabilities,
+      totalEquity,
+    };
   };
+
+  const balanceSheet = calculateBalanceSheet();
 
   return (
     <PageLayout title="Financial Reports">
@@ -280,16 +307,16 @@ export default function FinancialReports() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Debits</span>
-                        <span className="font-semibold">{formatCurrency(mockTrialBalance.totalDebits)}</span>
+                        <span className="font-semibold">{formatCurrency(trialBalance.totalDebits)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Credits</span>
-                        <span className="font-semibold">{formatCurrency(mockTrialBalance.totalCredits)}</span>
+                        <span className="font-semibold">{formatCurrency(trialBalance.totalCredits)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="text-sm font-medium">Balance</span>
                         <span className="font-semibold text-secondary">
-                          {formatCurrency(mockTrialBalance.totalDebits - mockTrialBalance.totalCredits)}
+                          {formatCurrency(trialBalance.totalDebits - trialBalance.totalCredits)}
                         </span>
                       </div>
                     </div>
@@ -315,16 +342,16 @@ export default function FinancialReports() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Revenue</span>
-                        <span className="font-semibold">{formatCurrency(mockProfitLoss.totalRevenue)}</span>
+                        <span className="font-semibold">{formatCurrency(profitLoss.totalRevenue)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Expenses</span>
-                        <span className="font-semibold">{formatCurrency(mockProfitLoss.totalExpenses)}</span>
+                        <span className="font-semibold">{formatCurrency(profitLoss.totalExpenses)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="text-sm font-medium">Net Profit</span>
                         <span className="font-semibold text-secondary">
-                          {formatCurrency(mockProfitLoss.netProfit)}
+                          {formatCurrency(profitLoss.netProfit)}
                         </span>
                       </div>
                     </div>
@@ -350,16 +377,16 @@ export default function FinancialReports() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Assets</span>
-                        <span className="font-semibold">{formatCurrency(mockBalanceSheet.totalAssets)}</span>
+                        <span className="font-semibold">{formatCurrency(balanceSheet.totalAssets)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Liabilities</span>
-                        <span className="font-semibold">{formatCurrency(mockBalanceSheet.totalLiabilities)}</span>
+                        <span className="font-semibold">{formatCurrency(balanceSheet.totalLiabilities)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="text-sm font-medium">Total Equity</span>
                         <span className="font-semibold text-secondary">
-                          {formatCurrency(mockBalanceSheet.totalEquity)}
+                          {formatCurrency(balanceSheet.totalEquity)}
                         </span>
                       </div>
                     </div>
@@ -550,8 +577,8 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Trial Balance - {selectedPeriod}</CardTitle>
-                    <Badge className={mockTrialBalance.isBalanced ? "badge-compliant" : "badge-non-compliant"}>
-                      {mockTrialBalance.isBalanced ? "Balanced" : "Unbalanced"}
+                    <Badge className={trialBalance.isBalanced ? "badge-compliant" : "badge-non-compliant"}>
+                      {trialBalance.isBalanced ? "Balanced" : "Unbalanced"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -567,25 +594,33 @@ export default function FinancialReports() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {mockTrialBalance.entries.map((entry) => (
-                          <TableRow key={entry.accountCode}>
-                            <TableCell className="font-mono">{entry.accountCode}</TableCell>
-                            <TableCell>{entry.accountName}</TableCell>
-                            <TableCell className="text-right font-mono">
-                              {entry.debitBalance > 0 ? formatCurrency(entry.debitBalance) : '-'}
-                            </TableCell>
-                            <TableCell className="text-right font-mono">
-                              {entry.creditBalance > 0 ? formatCurrency(entry.creditBalance) : '-'}
+                        {journalEntries && journalEntries.length > 0 ? (
+                          journalEntries.map((entry) => (
+                            <TableRow key={entry.id}>
+                              <TableCell className="font-mono">{entry.accountCode}</TableCell>
+                              <TableCell>{entry.accountName}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.debitAmount > 0 ? formatCurrency(entry.debitAmount) : '-'}
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.creditAmount > 0 ? formatCurrency(entry.creditAmount) : '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              No journal entries found
                             </TableCell>
                           </TableRow>
-                        ))}
+                        )}
                         <TableRow className="border-t-2 font-semibold">
                           <TableCell colSpan={2}>Total</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(mockTrialBalance.totalDebits)}
+                            {formatCurrency(trialBalance.totalDebits)}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(mockTrialBalance.totalCredits)}
+                            {formatCurrency(trialBalance.totalCredits)}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -614,19 +649,29 @@ export default function FinancialReports() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {mockProfitLoss.revenue.map((item) => (
-                              <TableRow key={item.accountCode}>
-                                <TableCell className="font-mono">{item.accountCode}</TableCell>
-                                <TableCell>{item.accountName}</TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {formatCurrency(item.amount)}
+                            {journalEntries && journalEntries.length > 0 ? (
+                              journalEntries
+                                .filter(entry => entry.accountCode.startsWith('4'))
+                                .map((entry) => (
+                                  <TableRow key={entry.id}>
+                                    <TableCell className="font-mono">{entry.accountCode}</TableCell>
+                                    <TableCell>{entry.accountName}</TableCell>
+                                    <TableCell className="text-right font-mono">
+                                      {formatCurrency(entry.creditAmount)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                  No revenue entries found
                                 </TableCell>
                               </TableRow>
-                            ))}
+                            )}
                             <TableRow className="border-t font-semibold">
                               <TableCell colSpan={2}>Total Revenue</TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(mockProfitLoss.totalRevenue)}
+                                {formatCurrency(profitLoss.totalRevenue)}
                               </TableCell>
                             </TableRow>
                           </TableBody>
@@ -646,19 +691,29 @@ export default function FinancialReports() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {mockProfitLoss.expenses.map((item) => (
-                              <TableRow key={item.accountCode}>
-                                <TableCell className="font-mono">{item.accountCode}</TableCell>
-                                <TableCell>{item.accountName}</TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {formatCurrency(item.amount)}
+                            {journalEntries && journalEntries.length > 0 ? (
+                              journalEntries
+                                .filter(entry => entry.accountCode.startsWith('5') || entry.accountCode.startsWith('6'))
+                                .map((entry) => (
+                                  <TableRow key={entry.id}>
+                                    <TableCell className="font-mono">{entry.accountCode}</TableCell>
+                                    <TableCell>{entry.accountName}</TableCell>
+                                    <TableCell className="text-right font-mono">
+                                      {formatCurrency(entry.debitAmount)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                  No expense entries found
                                 </TableCell>
                               </TableRow>
-                            ))}
+                            )}
                             <TableRow className="border-t font-semibold">
                               <TableCell colSpan={2}>Total Expenses</TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(mockProfitLoss.totalExpenses)}
+                                {formatCurrency(profitLoss.totalExpenses)}
                               </TableCell>
                             </TableRow>
                           </TableBody>
@@ -670,7 +725,7 @@ export default function FinancialReports() {
                       <div className="flex justify-between items-center text-lg font-bold">
                         <span>Net Profit</span>
                         <span className="text-secondary">
-                          {formatCurrency(mockProfitLoss.netProfit)}
+                          {formatCurrency(profitLoss.netProfit)}
                         </span>
                       </div>
                     </div>
@@ -684,8 +739,8 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Balance Sheet - {selectedPeriod}</CardTitle>
-                    <Badge className={mockBalanceSheet.isBalanced ? "badge-compliant" : "badge-non-compliant"}>
-                      {mockBalanceSheet.isBalanced ? "Balanced" : "Unbalanced"}
+                    <Badge className={Math.abs(balanceSheet.totalAssets - (balanceSheet.totalLiabilities + balanceSheet.totalEquity)) < 0.01 ? "badge-compliant" : "badge-non-compliant"}>
+                      {Math.abs(balanceSheet.totalAssets - (balanceSheet.totalLiabilities + balanceSheet.totalEquity)) < 0.01 ? "Balanced" : "Unbalanced"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -694,18 +749,26 @@ export default function FinancialReports() {
                     <div>
                       <h3 className="text-lg font-semibold mb-3">Assets</h3>
                       <div className="space-y-3">
-                        {mockBalanceSheet.assets.map((asset) => (
-                          <div key={asset.accountCode} className="flex justify-between py-2 border-b">
-                            <div>
-                              <p className="font-medium">{asset.accountName}</p>
-                              <p className="text-xs text-muted-foreground">{asset.accountCode}</p>
-                            </div>
-                            <p className="font-mono">{formatCurrency(asset.amount)}</p>
+                        {journalEntries && journalEntries.length > 0 ? (
+                          journalEntries
+                            .filter(entry => entry.accountCode.startsWith('1'))
+                            .map((entry) => (
+                              <div key={entry.id} className="flex justify-between py-2 border-b">
+                                <div>
+                                  <p className="font-medium">{entry.accountName}</p>
+                                  <p className="text-xs text-muted-foreground">{entry.accountCode}</p>
+                                </div>
+                                <p className="font-mono">{formatCurrency(entry.debitAmount - entry.creditAmount)}</p>
+                              </div>
+                            ))
+                        ) : (
+                          <div className="flex justify-center py-8 text-muted-foreground">
+                            No asset entries found
                           </div>
-                        ))}
+                        )}
                         <div className="flex justify-between py-2 border-t-2 font-semibold">
                           <span>Total Assets</span>
-                          <span>{formatCurrency(mockBalanceSheet.totalAssets)}</span>
+                          <span>{formatCurrency(balanceSheet.totalAssets)}</span>
                         </div>
                       </div>
                     </div>
@@ -715,33 +778,49 @@ export default function FinancialReports() {
                       <div className="space-y-3">
                         <div>
                           <h4 className="font-medium text-muted-foreground mb-2">Liabilities</h4>
-                          {mockBalanceSheet.liabilities.map((liability) => (
-                            <div key={liability.accountCode} className="flex justify-between py-2 border-b">
-                              <div>
-                                <p className="font-medium">{liability.accountName}</p>
-                                <p className="text-xs text-muted-foreground">{liability.accountCode}</p>
-                              </div>
-                              <p className="font-mono">{formatCurrency(liability.amount)}</p>
+                          {journalEntries && journalEntries.length > 0 ? (
+                            journalEntries
+                              .filter(entry => entry.accountCode.startsWith('2'))
+                              .map((entry) => (
+                                <div key={entry.id} className="flex justify-between py-2 border-b">
+                                  <div>
+                                    <p className="font-medium">{entry.accountName}</p>
+                                    <p className="text-xs text-muted-foreground">{entry.accountCode}</p>
+                                  </div>
+                                  <p className="font-mono">{formatCurrency(entry.creditAmount - entry.debitAmount)}</p>
+                                </div>
+                              ))
+                          ) : (
+                            <div className="flex justify-center py-4 text-muted-foreground">
+                              No liability entries found
                             </div>
-                          ))}
+                          )}
                         </div>
                         
                         <div>
                           <h4 className="font-medium text-muted-foreground mb-2">Equity</h4>
-                          {mockBalanceSheet.equity.map((equity) => (
-                            <div key={equity.accountCode} className="flex justify-between py-2 border-b">
-                              <div>
-                                <p className="font-medium">{equity.accountName}</p>
-                                <p className="text-xs text-muted-foreground">{equity.accountCode}</p>
-                              </div>
-                              <p className="font-mono">{formatCurrency(equity.amount)}</p>
+                          {journalEntries && journalEntries.length > 0 ? (
+                            journalEntries
+                              .filter(entry => entry.accountCode.startsWith('3'))
+                              .map((entry) => (
+                                <div key={entry.id} className="flex justify-between py-2 border-b">
+                                  <div>
+                                    <p className="font-medium">{entry.accountName}</p>
+                                    <p className="text-xs text-muted-foreground">{entry.accountCode}</p>
+                                  </div>
+                                  <p className="font-mono">{formatCurrency(entry.creditAmount - entry.debitAmount)}</p>
+                                </div>
+                              ))
+                          ) : (
+                            <div className="flex justify-center py-4 text-muted-foreground">
+                              No equity entries found
                             </div>
-                          ))}
+                          )}
                         </div>
                         
                         <div className="flex justify-between py-2 border-t-2 font-semibold">
                           <span>Total Liabilities & Equity</span>
-                          <span>{formatCurrency(mockBalanceSheet.totalLiabilities + mockBalanceSheet.totalEquity)}</span>
+                          <span>{formatCurrency(balanceSheet.totalLiabilities + balanceSheet.totalEquity)}</span>
                         </div>
                       </div>
                     </div>
