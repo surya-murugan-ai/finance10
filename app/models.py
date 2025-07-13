@@ -13,10 +13,16 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, unique=True, index=True)
-    first_name = Column(String)
-    last_name = Column(String)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    company_name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
     profile_image_url = Column(String)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -24,6 +30,22 @@ class User(Base):
     documents = relationship("Document", back_populates="uploader")
     audit_trails = relationship("AuditTrail", back_populates="user")
     compliance_checks = relationship("ComplianceCheck", back_populates="checker")
+    sessions = relationship("UserSession", back_populates="user")
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    access_token = Column(String, nullable=False, index=True)
+    refresh_token = Column(String, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="sessions")
 
 class Document(Base):
     __tablename__ = "documents"

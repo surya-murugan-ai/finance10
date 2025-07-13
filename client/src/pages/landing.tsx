@@ -1,57 +1,33 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, FileText, Bot, Shield, TrendingUp, Users } from "lucide-react";
-import { useState } from "react";
-
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Bot, 
+  FileText, 
+  Calculator, 
+  Shield,
+  TrendingUp,
+  Users,
+  Clock,
+  CheckCircle,
+  ArrowRight,
+  Brain,
+  Database,
+  Globe,
+  LogIn,
+  UserPlus
+} from 'lucide-react';
+import LoginModal from '@/components/auth/login-modal';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Landing() {
-  const [showLogin, setShowLogin] = useState(false);
-  const { toast } = useToast();
-  
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { login } = useAuth();
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormData) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      localStorage.setItem('auth_token', data.access_token);
-      window.location.reload();
-    },
-    onError: (error) => {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data);
+  const handleLoginSuccess = (user: any, token: string) => {
+    login(user, token);
+    setIsLoginModalOpen(false);
   };
 
   return (
@@ -69,192 +45,224 @@ export default function Landing() {
                 <p className="text-sm text-gray-500">Agent Platform</p>
               </div>
             </div>
-            <Button 
-              onClick={() => setShowLogin(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
-              Sign In
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline"
+                onClick={() => setIsLoginModalOpen(true)}
+                className="hidden sm:inline-flex"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+              <Button 
+                onClick={() => setIsLoginModalOpen(true)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Get Started
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Login Modal */}
-      {showLogin && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader>
-              <CardTitle>Sign In</CardTitle>
-              <CardDescription>
-                Enter your credentials to access the QRT Closure platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Enter your password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex gap-2">
-                    <Button 
-                      type="submit" 
-                      className="flex-1"
-                      disabled={loginMutation.isPending}
-                    >
-                      {loginMutation.isPending ? "Signing In..." : "Sign In"}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setShowLogin(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge className="mb-4 bg-primary/10 text-primary">
-            AI-Powered Financial Automation
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Automate Your <span className="text-primary">QRT Closure</span> Process
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Streamline quarterly financial closure with LangGraph-powered AI agents. 
-            Ensure compliance with Indian accounting standards while reducing manual effort by 90%.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={() => setShowLogin(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
-              Get Started Free
-            </Button>
-            <Button size="lg" variant="outline">
-              Watch Demo
-            </Button>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20">
+              AI-Powered Financial Automation
+            </Badge>
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              Automate Your Quarterly
+              <br />
+              <span className="text-primary">Closure Process</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Streamline compliance, reduce manual work, and ensure accuracy with our 
+              intelligent AI agents designed specifically for Indian financial regulations.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setIsLoginModalOpen(true)}
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+              <Button size="lg" variant="outline">
+                Watch Demo
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Features Grid */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Complete Financial Automation Suite
+              Complete Automation Suite
             </h2>
-            <p className="text-xl text-gray-600">
-              Powered by LangGraph agents for intelligent workflow orchestration
+            <p className="text-lg text-gray-600">
+              Everything you need for quarterly closure compliance
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg">
+            <Card className="border-2 hover:border-primary/20 transition-colors">
               <CardHeader>
-                <FileText className="w-12 h-12 text-primary mb-4" />
-                <CardTitle>Document Processing</CardTitle>
+                <Bot className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>AI Agent Orchestration</CardTitle>
                 <CardDescription>
-                  Upload Excel, CSV, and PDF documents. AI automatically classifies and extracts financial data.
+                  7 specialized AI agents working together to classify, validate, and process your financial documents
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Multi-format support</span>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Document Classification
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">OCR & table extraction</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Data Extraction
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Automatic classification</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Validation & Compliance
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-2 hover:border-primary/20 transition-colors">
               <CardHeader>
-                <Bot className="w-12 h-12 text-primary mb-4" />
-                <CardTitle>LangGraph Agents</CardTitle>
+                <FileText className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>Smart Document Processing</CardTitle>
                 <CardDescription>
-                  Specialized AI agents handle different aspects of financial processing with intelligent orchestration.
+                  Upload Excel, CSV, or PDF documents and let AI handle the rest
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">ClassifierBot</span>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Multi-format Support
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">GSTValidator</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Automated Processing
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">ConsoAI & AuditAgent</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Error Detection
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-2 hover:border-primary/20 transition-colors">
               <CardHeader>
-                <Shield className="w-12 h-12 text-primary mb-4" />
-                <CardTitle>Compliance Assurance</CardTitle>
+                <Shield className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>Compliance Engine</CardTitle>
                 <CardDescription>
-                  Automatic validation against Ind AS 2025, Companies Act 2013, and GST/TDS regulations.
+                  Automated GST, TDS, and Companies Act compliance validation
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Ind AS 2025 compliance</span>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    GST Compliance
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Schedule III format</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    TDS Validation
                   </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">GST/TDS validation</span>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    IndAS Standards
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/20 transition-colors">
+              <CardHeader>
+                <Calculator className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>Financial Reporting</CardTitle>
+                <CardDescription>
+                  Generate trial balance, P&L, balance sheet, and cash flow statements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Automated Reports
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Real-time Updates
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Export Options
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/20 transition-colors">
+              <CardHeader>
+                <Brain className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>ML Anomaly Detection</CardTitle>
+                <CardDescription>
+                  Machine learning algorithms to detect unusual patterns and potential errors
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Pattern Recognition
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Risk Assessment
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Predictive Analytics
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/20 transition-colors">
+              <CardHeader>
+                <Database className="w-8 h-8 text-primary mb-2" />
+                <CardTitle>Data Integration</CardTitle>
+                <CardDescription>
+                  Connect to multiple data sources including ERP, banking APIs, and government portals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    ERP Integration
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Banking APIs
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    Government Portals
                   </li>
                 </ul>
               </CardContent>
@@ -264,97 +272,112 @@ export default function Landing() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-primary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold mb-2">90%</div>
-              <div className="text-primary-foreground/80">Time Reduction</div>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-primary mb-2">95%</div>
+              <div className="text-gray-600">Time Reduction</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">99.9%</div>
-              <div className="text-primary-foreground/80">Accuracy Rate</div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-primary mb-2">99.9%</div>
+              <div className="text-gray-600">Accuracy Rate</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">500+</div>
-              <div className="text-primary-foreground/80">Companies</div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-primary mb-2">24/7</div>
+              <div className="text-gray-600">Processing</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-primary-foreground/80">Processing</div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-primary mb-2">100%</div>
+              <div className="text-gray-600">Compliance</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-primary text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">
             Ready to Transform Your Financial Processes?
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Join leading enterprises using QRT Closure Agent Platform for automated financial compliance.
+          <p className="text-xl mb-8 opacity-90">
+            Join leading companies that have automated their quarterly closure with our AI platform
           </p>
-          <Button 
-            size="lg" 
-            onClick={() => window.location.href = '/api/login'}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Users className="w-5 h-5 mr-2" />
-            Start Your Free Trial
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              variant="secondary"
+              onClick={() => setIsLoginModalOpen(true)}
+            >
+              Start Free Trial
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
+              Contact Sales
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="py-12 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-lg font-semibold">QRT Closure</span>
+                <div>
+                  <h3 className="font-bold">QRT Closure</h3>
+                  <p className="text-sm text-gray-400">Agent Platform</p>
+                </div>
               </div>
-              <p className="text-gray-400">
-                AI-powered platform for automated quarterly financial closure processes.
+              <p className="text-gray-400 text-sm">
+                Automating quarterly closure processes with AI-powered intelligence for Indian enterprises.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Features</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Document Processing</li>
-                <li>LangGraph Agents</li>
-                <li>Compliance Checks</li>
-                <li>Financial Reports</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Compliance</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Ind AS 2025</li>
-                <li>Companies Act 2013</li>
-                <li>GST Regulations</li>
-                <li>TDS Compliance</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-400">
+              <h4 className="font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>Features</li>
+                <li>Pricing</li>
+                <li>API</li>
                 <li>Documentation</li>
-                <li>API Reference</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Company</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>About</li>
+                <li>Careers</li>
+                <li>Blog</li>
+                <li>Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Support</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
                 <li>Help Center</li>
-                <li>Contact Us</li>
+                <li>Status</li>
+                <li>Security</li>
+                <li>Privacy</li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 QRT Closure Agent Platform. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+            © 2025 QRT Closure Agent Platform. All rights reserved.
           </div>
         </div>
       </footer>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }

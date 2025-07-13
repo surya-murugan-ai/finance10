@@ -32,6 +32,7 @@ from app.api.ml_endpoints import router as ml_router
 from app.api.mca_filing_endpoints import router as mca_router
 from app.api.compliance_tutorial_endpoints import router as compliance_tutorial_router
 from app.api.data_source_endpoints import router as data_source_router
+from app.api.auth_endpoints import router as auth_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -59,6 +60,9 @@ document_processor = DocumentProcessor()
 ai_orchestrator = AIOrchestrator()
 compliance_checker = ComplianceChecker()
 financial_reports = FinancialReportsService()
+
+# Include authentication endpoints
+app.include_router(auth_router, tags=["Authentication"])
 
 # Include ML endpoints
 app.include_router(ml_router, prefix="/api", tags=["Machine Learning"])

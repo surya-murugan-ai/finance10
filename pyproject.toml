@@ -30,4 +30,5 @@ dependencies = [
     "scipy>=1.16.0",
     "joblib>=1.5.1",
     "requests>=2.32.4",
+    "email-validator>=2.2.0",
 ]
