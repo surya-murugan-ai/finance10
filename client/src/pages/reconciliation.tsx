@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
   TableBody, 
@@ -46,7 +47,12 @@ import {
   TrendingUp,
   Calendar,
   Filter,
-  Download
+  Download,
+  Brain,
+  Target,
+  Lightbulb,
+  TrendingDown,
+  TrendingUp as TrendingUpIcon
 } from "lucide-react";
 
 export default function ReconciliationPage() {
@@ -55,6 +61,9 @@ export default function ReconciliationPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("Q1_2025");
   const [isRunning, setIsRunning] = useState(false);
   const [currentReport, setCurrentReport] = useState<any>(null);
+  const [useAdvanced, setUseAdvanced] = useState(false);
+  const [selectedEntityList, setSelectedEntityList] = useState<string[]>([]);
+  const [showInsights, setShowInsights] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -96,23 +105,34 @@ export default function ReconciliationPage() {
 
   // Run reconciliation mutation
   const runReconciliation = useMutation({
-    mutationFn: async (data: { period: string; entityList?: string[] }) => {
-      return apiRequest('/api/reconciliation/run', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (data: { period: string; entityList?: string[]; useAdvanced?: boolean }) => {
+      const response = await apiRequest('POST', '/api/reconciliation/run', data);
+      return response.json();
     },
     onSuccess: (data) => {
       setCurrentReport(data);
+      setShowInsights(data.algorithmType === 'advanced');
       toast({
-        title: "Reconciliation Complete",
-        description: `Found ${data.matches.length} matches with ${data.reconciliationRate.toFixed(1)}% reconciliation rate`,
+        title: `${data.algorithmType === 'advanced' ? 'Advanced' : 'Standard'} Reconciliation Complete`,
+        description: `Found ${data.matchedTransactions} matches with ${data.reconciliationRate.toFixed(1)}% reconciliation rate`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/reconciliation/reports'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reconciliation/matches'] });
       setIsRunning(false);
     },
     onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
       toast({
         title: "Reconciliation Failed",
         description: error.message,
@@ -124,7 +144,11 @@ export default function ReconciliationPage() {
 
   const handleRunReconciliation = async () => {
     setIsRunning(true);
-    runReconciliation.mutate({ period: selectedPeriod });
+    runReconciliation.mutate({ 
+      period: selectedPeriod,
+      entityList: selectedEntityList.length > 0 ? selectedEntityList : undefined,
+      useAdvanced 
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -205,13 +229,25 @@ export default function ReconciliationPage() {
               <SelectItem value="Q4_2025">Q4 2025</SelectItem>
             </SelectContent>
           </Select>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="advanced-mode"
+              checked={useAdvanced}
+              onCheckedChange={setUseAdvanced}
+            />
+            <Label htmlFor="advanced-mode" className="text-sm font-medium">
+              Advanced Algorithms
+            </Label>
+          </div>
+          
           <Button 
             onClick={handleRunReconciliation}
             disabled={isRunning}
             className="flex items-center gap-2"
           >
-            <Play className="w-4 h-4" />
-            {isRunning ? 'Running...' : 'Run Reconciliation'}
+            {useAdvanced ? <Brain className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isRunning ? 'Running...' : (useAdvanced ? 'Run Advanced' : 'Run Standard')}
           </Button>
         </div>
       </div>
@@ -346,6 +382,126 @@ export default function ReconciliationPage() {
                       </ul>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Advanced Insights (only shown for advanced reconciliation) */}
+          {showInsights && currentReport && currentReport.insights && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5 text-yellow-500" />
+                    AI Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {currentReport.insights.map((insight, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm text-gray-700">{insight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-green-500" />
+                    Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {currentReport.recommendations.map((rec, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-sm text-gray-700">{rec}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {currentReport.riskAreas && currentReport.riskAreas.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      Risk Areas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {currentReport.riskAreas.map((risk, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700">{risk}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentReport.dataQualityIssues && currentReport.dataQualityIssues.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-500" />
+                      Data Quality Issues
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {currentReport.dataQualityIssues.map((issue, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700">{issue}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Algorithm Information */}
+          {currentReport && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Algorithm Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Algorithm Type</p>
+                    <Badge variant={currentReport.algorithmType === 'advanced' ? 'default' : 'secondary'}>
+                      {currentReport.algorithmType === 'advanced' ? 'Advanced AI' : 'Standard'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Execution Time</p>
+                    <p className="text-sm text-gray-600">
+                      {currentReport.timestamp 
+                        ? new Date(currentReport.timestamp).toLocaleString()
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Features Used</p>
+                    <p className="text-sm text-gray-600">
+                      {currentReport.algorithmType === 'advanced' 
+                        ? 'Fuzzy Matching, ML Patterns, AI Analysis'
+                        : 'Exact & Tolerance Matching'}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

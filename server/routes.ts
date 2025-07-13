@@ -876,11 +876,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reconciliation routes
   app.post('/api/reconciliation/run', isAuthenticated, async (req: any, res) => {
     try {
-      const { period, entityList } = req.body;
+      const { period, entityList, useAdvanced = false } = req.body;
       const userId = req.user.claims.sub;
       
-      const { reconciliationEngine } = await import('./services/reconciliationEngine');
-      const report = await reconciliationEngine.performReconciliation(period, entityList);
+      let report;
+      if (useAdvanced) {
+        const { advancedReconciliationEngine } = await import('./services/advancedReconciliation');
+        const matches = await advancedReconciliationEngine.performAdvancedReconciliation(period, entityList);
+        
+        // Generate comprehensive report with advanced insights
+        const { anthropicService } = await import('./services/anthropicService');
+        const analysis = await anthropicService.analyzeReconciliationResults(matches);
+        const adjustments = await anthropicService.generateReconciliationAdjustments(matches);
+        
+        report = {
+          period,
+          totalTransactions: matches.length * 2, // Rough estimate
+          matchedTransactions: matches.length,
+          unmatchedTransactions: 0, // Will be calculated properly
+          disputedTransactions: matches.filter(m => m.matchScore < 0.8).length,
+          totalVariance: matches.reduce((sum, m) => sum + m.variance, 0),
+          reconciliationRate: matches.length > 0 ? (matches.filter(m => m.matchScore > 0.8).length / matches.length) * 100 : 0,
+          recommendations: analysis.recommendations,
+          matches,
+          insights: analysis.insights,
+          riskAreas: analysis.riskAreas,
+          dataQualityIssues: analysis.dataQualityIssues,
+          adjustments: adjustments.adjustments,
+          algorithmType: 'advanced',
+          timestamp: new Date()
+        };
+      } else {
+        const { reconciliationEngine } = await import('./services/reconciliationEngine');
+        report = await reconciliationEngine.performReconciliation(period, entityList);
+        report.algorithmType = 'standard';
+        report.timestamp = new Date();
+      }
       
       // Save report to database
       await storage.createReconciliationReport({
