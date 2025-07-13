@@ -909,8 +909,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         const { reconciliationEngine } = await import('./services/reconciliationEngine');
         report = await reconciliationEngine.performReconciliation(period, entityList);
-        report.algorithmType = 'standard';
-        report.timestamp = new Date();
+        (report as any).algorithmType = 'standard';
+        (report as any).timestamp = new Date();
       }
       
       // Save report to database
