@@ -28,6 +28,7 @@ const navigation = [
   { name: "Data Tables", href: "/data-tables", icon: Table },
   { name: "Agent Chat", href: "/agent-chat", icon: MessageCircle },
   { name: "ML Anomaly Detection", href: "/ml-anomaly-detection", icon: Brain },
+  { name: "MCA Filing", href: "/mca-filing", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

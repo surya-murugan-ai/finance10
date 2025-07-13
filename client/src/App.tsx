@@ -19,6 +19,7 @@ import NotFound from "@/pages/not-found";
 import Onboarding from "@/pages/onboarding";
 import Settings from "@/pages/settings";
 import MLAnomalyDetection from "@/pages/ml-anomaly-detection";
+import MCAFiling from "@/pages/mca-filing";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/data-tables" component={DataTables} />
           <Route path="/agent-chat" component={AgentChat} />
           <Route path="/ml-anomaly-detection" component={MLAnomalyDetection} />
+          <Route path="/mca-filing" component={MCAFiling} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/settings" component={Settings} />
         </>
