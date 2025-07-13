@@ -571,8 +571,8 @@ export default function MLAnomalyDetection() {
                       <div className="flex items-center space-x-3">
                         <div className={`h-3 w-3 rounded-full ${anomaly.is_anomaly ? 'bg-red-500' : 'bg-green-500'}`}></div>
                         <div>
-                          <p className="font-medium">Transaction {anomaly.transaction_id.slice(0, 8)}</p>
-                          <p className="text-sm text-gray-600">Score: {anomaly.anomaly_score.toFixed(4)}</p>
+                          <p className="font-medium">Transaction {(anomaly.transaction_id || anomaly.transactionId || 'Unknown').slice(0, 8)}</p>
+                          <p className="text-sm text-gray-600">Score: {anomaly.anomaly_score ? anomaly.anomaly_score.toFixed(4) : 'N/A'}</p>
                         </div>
                       </div>
                       <Badge variant={anomaly.is_anomaly ? "destructive" : "secondary"}>
@@ -669,13 +669,13 @@ export default function MLAnomalyDetection() {
                     <div className="flex items-center space-x-4">
                       <div className={`h-4 w-4 rounded-full ${anomaly.is_anomaly ? 'bg-red-500' : 'bg-green-500'}`}></div>
                       <div>
-                        <h3 className="font-medium">Transaction {anomaly.transaction_id.slice(0, 8)}</h3>
+                        <h3 className="font-medium">Transaction {(anomaly.transaction_id || anomaly.transactionId || 'Unknown').slice(0, 8)}</h3>
                         <p className="text-sm text-gray-600">
-                          Score: {anomaly.anomaly_score.toFixed(4)} | 
-                          Confidence: {(anomaly.confidence_level * 100).toFixed(1)}%
+                          Score: {anomaly.anomaly_score ? anomaly.anomaly_score.toFixed(4) : 'N/A'} | 
+                          Confidence: {anomaly.confidence_level ? (anomaly.confidence_level * 100).toFixed(1) : 'N/A'}%
                         </p>
                         <p className="text-xs text-gray-500">
-                          {anomaly.anomaly_reasons?.join(", ")}
+                          {anomaly.anomaly_reasons?.join(", ") || 'No reasons provided'}
                         </p>
                       </div>
                     </div>
@@ -842,18 +842,22 @@ export default function MLAnomalyDetection() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {performance?.slice(0, 10).map((metric: PerformanceMetric, idx: number) => (
+                  {performance && Array.isArray(performance) ? performance.slice(0, 10).map((metric: PerformanceMetric, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 border rounded">
                       <div>
-                        <p className="font-medium">{metric.model_name}</p>
-                        <p className="text-sm text-gray-600">{metric.metric_type}: {metric.metric_value.toFixed(4)}</p>
+                        <p className="font-medium">{metric.model_name || 'Unknown Model'}</p>
+                        <p className="text-sm text-gray-600">{metric.metric_type || 'metric'}: {metric.metric_value ? metric.metric_value.toFixed(4) : 'N/A'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm">{metric.samples_processed} samples</p>
-                        <p className="text-xs text-gray-500">{metric.processing_time_ms.toFixed(0)}ms</p>
+                        <p className="text-sm">{metric.samples_processed || 0} samples</p>
+                        <p className="text-xs text-gray-500">{metric.processing_time_ms ? metric.processing_time_ms.toFixed(0) : 'N/A'}ms</p>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No performance metrics available</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -909,7 +913,7 @@ export default function MLAnomalyDetection() {
                   <SelectContent>
                     {documents?.map((doc: any) => (
                       <SelectItem key={doc.id} value={doc.id}>
-                        {doc.filename || doc.file_name || doc.name || `Document ${doc.id.slice(0, 8)}`}
+                        {doc.filename || doc.file_name || doc.name || `Document ${doc.id ? doc.id.slice(0, 8) : 'Unknown'}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
