@@ -1254,6 +1254,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Data Source Configuration API endpoints
+  app.get('/api/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const dataSources = await storage.getDataSources(userId);
+      res.json(dataSources);
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      res.status(500).json({ message: "Failed to fetch data sources" });
+    }
+  });
+
+  app.get('/api/data-source-types', isAuthenticated, async (req: any, res) => {
+    try {
+      const types = await storage.getDataSourceTypes();
+      res.json(types);
+    } catch (error) {
+      console.error("Error fetching data source types:", error);
+      res.status(500).json({ message: "Failed to fetch data source types" });
+    }
+  });
+
+  app.get('/api/database-types', isAuthenticated, async (req: any, res) => {
+    try {
+      const types = await storage.getDatabaseTypes();
+      res.json(types);
+    } catch (error) {
+      console.error("Error fetching database types:", error);
+      res.status(500).json({ message: "Failed to fetch database types" });
+    }
+  });
+
+  app.post('/api/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const dataSourceData = {
+        ...req.body,
+        userId,
+      };
+      
+      const dataSource = await storage.createDataSource(dataSourceData);
+      
+      // Log audit trail
+      await storage.createAuditTrail({
+        action: 'data_source_created',
+        entityType: 'data_source',
+        entityId: dataSource.id,
+        userId,
+        details: {
+          name: dataSource.name,
+          type: dataSource.type,
+        },
+      });
+
+      res.json(dataSource);
+    } catch (error) {
+      console.error("Error creating data source:", error);
+      res.status(500).json({ message: "Failed to create data source" });
+    }
+  });
+
+  app.put('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      const updates = req.body;
+      
+      const dataSource = await storage.updateDataSource(id, updates);
+      
+      // Log audit trail
+      await storage.createAuditTrail({
+        action: 'data_source_updated',
+        entityType: 'data_source',
+        entityId: id,
+        userId,
+        details: updates,
+      });
+
+      res.json(dataSource);
+    } catch (error) {
+      console.error("Error updating data source:", error);
+      res.status(500).json({ message: "Failed to update data source" });
+    }
+  });
+
+  app.delete('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      await storage.deleteDataSource(id);
+      
+      // Log audit trail
+      await storage.createAuditTrail({
+        action: 'data_source_deleted',
+        entityType: 'data_source',
+        entityId: id,
+        userId,
+        details: { deleted: true },
+      });
+
+      res.json({ message: "Data source deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting data source:", error);
+      res.status(500).json({ message: "Failed to delete data source" });
+    }
+  });
+
+  app.post('/api/data-sources/:id/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const result = await storage.testDataSourceConnection(id);
+      
+      // Log audit trail
+      await storage.createAuditTrail({
+        action: 'data_source_tested',
+        entityType: 'data_source',
+        entityId: id,
+        userId,
+        details: result,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing data source:", error);
+      res.status(500).json({ message: "Failed to test data source connection" });
+    }
+  });
+
+  app.get('/api/data-sources/:id/statistics', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Mock statistics for now - in real implementation would query actual data
+      const statistics = {
+        totalRecords: Math.floor(Math.random() * 10000) + 1000,
+        lastSync: new Date().toISOString(),
+        avgResponseTime: Math.floor(Math.random() * 500) + 50,
+        errorRate: Math.random() * 5,
+        uptime: 99.5 + Math.random() * 0.5
+      };
+
+      res.json(statistics);
+    } catch (error) {
+      console.error("Error fetching data source statistics:", error);
+      res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

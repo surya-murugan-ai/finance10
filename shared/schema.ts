@@ -352,9 +352,59 @@ export const insertAuditTrailSchema = createInsertSchema(auditTrail).omit({
   timestamp: true,
 });
 
+// Data source types enum
+export const dataSourceTypeEnum = pgEnum("data_source_type", [
+  "database",
+  "api", 
+  "file_system",
+  "ftp",
+  "cloud_storage",
+  "erp_system",
+  "banking_api",
+  "gst_portal",
+  "mca_portal",
+  "sftp",
+  "webhook"
+]);
+
+// Data source status enum
+export const dataSourceStatusEnum = pgEnum("data_source_status", [
+  "connected",
+  "disconnected",
+  "error",
+  "testing",
+  "configured"
+]);
+
+// Data sources table
+export const dataSources = pgTable("data_sources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: dataSourceTypeEnum("type").notNull(),
+  description: text("description"),
+  config: jsonb("config").notNull().default({}),
+  isActive: boolean("is_active").default(true).notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  status: dataSourceStatusEnum("status").default("configured").notNull(),
+  lastTested: timestamp("last_tested"),
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata").default({}),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDataSourceSchema = createInsertSchema(dataSources).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
@@ -385,3 +435,7 @@ export type InsertIntercompanyTransaction = typeof intercompanyTransactions.$inf
 
 export type ReconciliationReport = typeof reconciliationReports.$inferSelect;
 export type InsertReconciliationReport = typeof reconciliationReports.$inferInsert;
+
+export type InsertDataSource = z.infer<typeof insertDataSourceSchema>;
+export type DataSource = typeof dataSources.$inferSelect;
+export type UpsertDataSource = typeof dataSources.$inferInsert;

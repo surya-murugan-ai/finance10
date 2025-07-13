@@ -9,6 +9,7 @@ import {
   reconciliationReports,
   reconciliationMatches,
   intercompanyTransactions,
+  dataSources,
   type User,
   type UpsertUser,
   type Document,
@@ -29,6 +30,8 @@ import {
   type InsertReconciliationMatch,
   type IntercompanyTransaction,
   type InsertIntercompanyTransaction,
+  type DataSource,
+  type InsertDataSource,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count } from "drizzle-orm";
@@ -92,6 +95,16 @@ export interface IStorage {
   createSettings(settings: any): Promise<any>;
   updateSettings(id: string, settings: any): Promise<any>;
   testConnection(): Promise<boolean>;
+
+  // Data source operations
+  createDataSource(dataSource: InsertDataSource): Promise<DataSource>;
+  getDataSource(id: string): Promise<DataSource | undefined>;
+  getDataSources(userId: string): Promise<DataSource[]>;
+  updateDataSource(id: string, updates: Partial<DataSource>): Promise<DataSource>;
+  deleteDataSource(id: string): Promise<void>;
+  testDataSourceConnection(id: string): Promise<{ success: boolean; error?: string }>;
+  getDataSourceTypes(): Promise<Array<{ value: string; name: string; description: string }>>;
+  getDatabaseTypes(): Promise<Array<{ value: string; name: string; default_port: number }>>;
 
   // Company profile operations
   createCompanyProfile(profile: any): Promise<any>;
@@ -552,6 +565,112 @@ export class DatabaseStorage implements IStorage {
     });
     
     return roleData;
+  }
+
+  // Data source operations
+  async createDataSource(dataSource: InsertDataSource): Promise<DataSource> {
+    const [newDataSource] = await db.insert(dataSources).values(dataSource).returning();
+    return newDataSource;
+  }
+
+  async getDataSource(id: string): Promise<DataSource | undefined> {
+    const [dataSource] = await db.select().from(dataSources).where(eq(dataSources.id, id));
+    return dataSource;
+  }
+
+  async getDataSources(userId: string): Promise<DataSource[]> {
+    return await db.select().from(dataSources)
+      .where(eq(dataSources.userId, userId))
+      .orderBy(desc(dataSources.createdAt));
+  }
+
+  async updateDataSource(id: string, updates: Partial<DataSource>): Promise<DataSource> {
+    const [dataSource] = await db
+      .update(dataSources)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(dataSources.id, id))
+      .returning();
+    return dataSource;
+  }
+
+  async deleteDataSource(id: string): Promise<void> {
+    await db.delete(dataSources).where(eq(dataSources.id, id));
+  }
+
+  async testDataSourceConnection(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const dataSource = await this.getDataSource(id);
+      if (!dataSource) {
+        return { success: false, error: "Data source not found" };
+      }
+
+      // Update last tested timestamp
+      await this.updateDataSource(id, {
+        lastTested: new Date(),
+        status: 'testing' as any
+      });
+
+      // Mock connection test based on data source type
+      let testResult = { success: true };
+
+      switch (dataSource.type) {
+        case 'database':
+          // In real implementation, would test actual database connection
+          testResult = { success: true };
+          break;
+        case 'api':
+          // In real implementation, would test API endpoint
+          testResult = { success: true };
+          break;
+        case 'file_system':
+          // In real implementation, would test file system access
+          testResult = { success: true };
+          break;
+        default:
+          testResult = { success: true };
+      }
+
+      // Update status based on test result
+      await this.updateDataSource(id, {
+        status: testResult.success ? 'connected' : 'error',
+        errorMessage: testResult.success ? null : 'Connection failed'
+      });
+
+      return testResult;
+    } catch (error) {
+      await this.updateDataSource(id, {
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  async getDataSourceTypes(): Promise<Array<{ value: string; name: string; description: string }>> {
+    return [
+      { value: 'database', name: 'Database', description: 'Connect to SQL/NoSQL databases' },
+      { value: 'api', name: 'REST API', description: 'Connect to REST API endpoints' },
+      { value: 'file_system', name: 'File System', description: 'Access local or network file systems' },
+      { value: 'ftp', name: 'FTP/SFTP', description: 'File transfer protocol connections' },
+      { value: 'cloud_storage', name: 'Cloud Storage', description: 'AWS S3, Google Cloud, Azure Blob' },
+      { value: 'erp_system', name: 'ERP System', description: 'SAP, Oracle, Tally integrations' },
+      { value: 'banking_api', name: 'Banking API', description: 'Bank account and transaction data' },
+      { value: 'gst_portal', name: 'GST Portal', description: 'Indian GST filing system' },
+      { value: 'mca_portal', name: 'MCA Portal', description: 'Ministry of Corporate Affairs' },
+      { value: 'sftp', name: 'SFTP', description: 'Secure file transfer protocol' },
+      { value: 'webhook', name: 'Webhook', description: 'Receive data via HTTP webhooks' }
+    ];
+  }
+
+  async getDatabaseTypes(): Promise<Array<{ value: string; name: string; default_port: number }>> {
+    return [
+      { value: 'postgresql', name: 'PostgreSQL', default_port: 5432 },
+      { value: 'mysql', name: 'MySQL', default_port: 3306 },
+      { value: 'sqlite', name: 'SQLite', default_port: 0 },
+      { value: 'oracle', name: 'Oracle Database', default_port: 1521 },
+      { value: 'sqlserver', name: 'SQL Server', default_port: 1433 },
+      { value: 'mongodb', name: 'MongoDB', default_port: 27017 }
+    ];
   }
 }
 
