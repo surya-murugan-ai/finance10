@@ -12,7 +12,8 @@ import {
   Table,
   MessageCircle,
   Settings,
-  Brain
+  Brain,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Agent Workflows", href: "/workflows", icon: Bot },
   { name: "Financial Reports", href: "/reports", icon: FileText },
   { name: "Compliance", href: "/compliance", icon: Shield },
+  { name: "Compliance Tutorial", href: "/compliance-tutorial", icon: BookOpen },
   { name: "Audit Trail", href: "/audit", icon: History },
   { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
   { name: "Data Tables", href: "/data-tables", icon: Table },

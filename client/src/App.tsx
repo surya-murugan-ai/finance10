@@ -20,6 +20,7 @@ import Onboarding from "@/pages/onboarding";
 import Settings from "@/pages/settings";
 import MLAnomalyDetection from "@/pages/ml-anomaly-detection";
 import MCAFiling from "@/pages/mca-filing";
+import ComplianceTutorial from "@/pages/compliance-tutorial";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/agent-chat" component={AgentChat} />
           <Route path="/ml-anomaly-detection" component={MLAnomalyDetection} />
           <Route path="/mca-filing" component={MCAFiling} />
+          <Route path="/compliance-tutorial" component={ComplianceTutorial} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/settings" component={Settings} />
         </>
