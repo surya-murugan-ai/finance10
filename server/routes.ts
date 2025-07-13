@@ -158,6 +158,10 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure JSON middleware is set up
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  
   // Auth middleware
   await setupAuth(app);
   
@@ -226,17 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, message: 'Logged out successfully' });
   });
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Remove duplicate route - already defined above
 
   // Onboarding API endpoints
   app.post("/api/onboarding", isAuthenticated, async (req: any, res) => {
