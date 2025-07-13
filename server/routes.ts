@@ -38,6 +38,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Document upload route
   app.post('/api/documents/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
+      console.log('Upload request received', {
+        hasFile: !!req.file,
+        body: req.body,
+        files: req.files,
+        contentType: req.headers['content-type']
+      });
+      
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
@@ -45,6 +52,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const file = req.file;
       const fileName = `${nanoid()}_${file.originalname}`;
+
+      console.log('Processing file:', {
+        originalName: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        userId
+      });
+
+      // Validate file first
+      const validation = await fileProcessorService.validateFile(file);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
 
       // Process and save file
       const fileResult = await fileProcessorService.saveFile(file, fileName);

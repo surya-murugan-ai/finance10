@@ -24,6 +24,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/documents" component={DocumentUpload} />
+          <Route path="/document-upload" component={DocumentUpload} />
           <Route path="/workflows" component={AgentWorkflows} />
           <Route path="/reports" component={FinancialReports} />
           <Route path="/compliance" component={Compliance} />
