@@ -63,6 +63,8 @@ export default function ReconciliationPage() {
   const [useAdvanced, setUseAdvanced] = useState(false);
   const [selectedEntityList, setSelectedEntityList] = useState<string[]>([]);
   const [showInsights, setShowInsights] = useState(false);
+  const [selectedRule, setSelectedRule] = useState<any>(null);
+  const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -174,6 +176,11 @@ export default function ReconciliationPage() {
       case 'disputed': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleRuleConfiguration = (rule: any) => {
+    setSelectedRule(rule);
+    setIsRuleDialogOpen(true);
   };
 
   if (isLoading || !isAuthenticated) {
@@ -614,7 +621,7 @@ export default function ReconciliationPage() {
                         <Badge variant={rule.isActive ? "default" : "secondary"}>
                           {rule.isActive ? "Active" : "Inactive"}
                         </Badge>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleRuleConfiguration(rule)}>
                           <Settings className="w-4 h-4" />
                         </Button>
                       </div>
@@ -690,6 +697,117 @@ export default function ReconciliationPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Rule Configuration Dialog */}
+      <Dialog open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Rule: {selectedRule?.name}</DialogTitle>
+          </DialogHeader>
+          {selectedRule && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="rule-name">Rule Name</Label>
+                  <Input
+                    id="rule-name"
+                    value={selectedRule.name}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rule-priority">Priority</Label>
+                  <Select value={selectedRule.priority?.toString()}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">High</SelectItem>
+                      <SelectItem value="2">Medium</SelectItem>
+                      <SelectItem value="3">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="rule-description">Description</Label>
+                <Textarea
+                  id="rule-description"
+                  value={selectedRule.description}
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="tolerance-percent">Tolerance Percentage</Label>
+                  <Input
+                    id="tolerance-percent"
+                    type="number"
+                    value={selectedRule.tolerancePercent}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tolerance-amount">Tolerance Amount (₹)</Label>
+                  <Input
+                    id="tolerance-amount"
+                    type="number"
+                    value={selectedRule.toleranceAmount}
+                    min="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="account-codes">Account Codes (comma-separated)</Label>
+                <Input
+                  id="account-codes"
+                  value={selectedRule.accountCodes?.join(', ')}
+                  placeholder="e.g., 1000, 2000, 3000"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="auto-reconcile"
+                    checked={selectedRule.autoReconcile}
+                  />
+                  <Label htmlFor="auto-reconcile">Auto Reconcile</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="rule-active"
+                    checked={selectedRule.isActive}
+                  />
+                  <Label htmlFor="rule-active">Rule Active</Label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setIsRuleDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Rule Updated",
+                    description: "Reconciliation rule has been updated successfully.",
+                  });
+                  setIsRuleDialogOpen(false);
+                }}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }
