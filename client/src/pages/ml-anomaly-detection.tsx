@@ -617,21 +617,23 @@ export default function MLAnomalyDetection() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {models?.map((model: AnomalyModel) => (
+                {models && models.length > 0 ? models.map((model: AnomalyModel) => (
                   <div key={model.id} className="flex items-center justify-between p-4 border rounded">
                     <div className="flex items-center space-x-4">
                       <div className={`h-3 w-3 rounded-full ${model.is_active ? 'bg-green-500' : 'bg-gray-500'}`}></div>
                       <div>
                         <h3 className="font-medium">{model.model_name}</h3>
-                        <p className="text-sm text-gray-600">{model.model_type} - v{model.version}</p>
+                        <p className="text-sm text-gray-600">{model.modelType || model.model_type || 'Unknown'} - v{model.version}</p>
                         <p className="text-xs text-gray-500">
-                          Trained: {new Date(model.training_date).toLocaleDateString()}
+                          Trained: {model.lastTrained ? new Date(model.lastTrained).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <p className="text-sm font-medium">{model.training_data_size.toLocaleString()} samples</p>
+                        <p className="text-sm font-medium">
+                          {(model.training_data_size && typeof model.training_data_size === 'number') ? model.training_data_size.toLocaleString() : 'Unknown'} samples
+                        </p>
                         <Badge variant={model.is_active ? "secondary" : "outline"}>
                           {model.is_active ? "Active" : "Inactive"}
                         </Badge>
@@ -645,7 +647,11 @@ export default function MLAnomalyDetection() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No models available</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

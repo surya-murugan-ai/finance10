@@ -919,12 +919,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const models = [
         {
           id: '1',
+          model_name: 'Default Anomaly Model',
           name: 'Default Anomaly Model',
           version: '1.0.0',
           status: 'active',
           accuracy: 85.5,
           lastTrained: new Date().toISOString(),
-          modelType: 'isolation_forest'
+          modelType: 'isolation_forest',
+          model_type: 'isolation_forest',
+          training_data_size: 1000,
+          training_date: new Date().toISOString(),
+          is_active: true,
+          created_at: new Date().toISOString(),
+          performance_metrics: {
+            accuracy: 85.5,
+            precision: 87.2,
+            recall: 83.1
+          }
         }
       ];
       res.json(models);
