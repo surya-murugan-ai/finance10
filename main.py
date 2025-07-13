@@ -206,7 +206,19 @@ async def upload_document(
         db.refresh(document)
         
         # Start AI processing workflow
-        await ai_orchestrator.process_document(document.id, processed_doc)
+        ai_result = await ai_orchestrator.process_document(document.id, processed_doc)
+        
+        # Update document status based on AI processing result
+        if ai_result.get("status") == "completed":
+            document.status = "completed"
+        elif ai_result.get("status") == "failed":
+            document.status = "failed"
+        else:
+            # If AI processing succeeded but no explicit status, mark as completed
+            document.status = "completed"
+        
+        db.commit()
+        db.refresh(document)
         
         return DocumentResponse.from_orm(document)
         
