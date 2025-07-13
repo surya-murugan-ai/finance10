@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Send, 
   Bot, 
@@ -24,7 +25,11 @@ import {
   Shield,
   Calculator,
   BarChart3,
-  Search
+  Search,
+  MessageSquare,
+  Settings,
+  Info,
+  Zap
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -113,10 +118,18 @@ const agentDefinitions = [
 ];
 
 export default function AgentChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      type: 'system',
+      content: 'Welcome to the QRT Closure Agent Chat! I can help you process financial documents and automate quarterly closures. Type "help" to see available commands.',
+      timestamp: new Date()
+    }
+  ]);
   const [newMessage, setNewMessage] = useState("");
   const [isRunning, setIsRunning] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<'chat' | 'workflow' | 'actions'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -392,275 +405,349 @@ export default function AgentChat() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Agent Chat</h2>
           <p className="text-muted-foreground">
-            Interact with AI agents and monitor autonomous workflows
+            Chat with AI agents to automate your quarterly closure process
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Badge variant={workflowStatus.status === 'running' ? 'default' : 'secondary'}>
+            <Activity className="w-3 h-3 mr-1" />
             {workflowStatus.status}
           </Badge>
           {isRunning && (
             <Button onClick={() => stopWorkflowMutation.mutate()} variant="destructive" size="sm">
               <Square className="w-4 h-4 mr-2" />
-              Stop
+              Stop Workflow
             </Button>
           )}
         </div>
       </div>
 
-      {/* Workflow Diagram */}
-      <Card>
+      {/* Quick Start Section */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="w-5 h-5 mr-2" />
-            Workflow Status
+          <CardTitle className="flex items-center text-blue-800">
+            <Zap className="w-5 h-5 mr-2" />
+            Quick Start
           </CardTitle>
-          <CardDescription>
-            Real-time agent workflow monitoring
+          <CardDescription className="text-blue-600">
+            Get started with common commands or start an autonomous workflow
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {workflowStatus.completedSteps} / {workflowStatus.totalSteps} steps
-              </span>
-            </div>
-            <Progress value={workflowStatus.progress} className="w-full" />
-            
-            <div className="grid grid-cols-7 gap-2">
-              {agentDefinitions.map((agent, index) => {
-                const Icon = agent.icon;
-                const isActive = workflowStatus.currentAgent === agent.name;
-                const isCompleted = workflowStatus.completedSteps > index;
-                
-                return (
-                  <div
-                    key={agent.name}
-                    className={`
-                      relative p-3 rounded-lg border-2 transition-all duration-200
-                      ${isActive ? 'border-blue-500 bg-blue-50' : ''}
-                      ${isCompleted ? 'border-green-500 bg-green-50' : 'border-gray-200'}
-                    `}
-                  >
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className={`p-2 rounded-full ${agent.color} text-white`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span className="text-xs font-medium text-center">{agent.name}</span>
-                      <span className="text-xs text-muted-foreground text-center">{agent.description}</span>
-                    </div>
-                    {isActive && (
-                      <div className="absolute -top-1 -right-1">
-                        <Activity className="w-3 h-3 text-blue-500 animate-spin" />
-                      </div>
-                    )}
-                    {isCompleted && (
-                      <div className="absolute -top-1 -right-1">
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Chat Interface */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Agent Chat Interface</CardTitle>
-          <CardDescription>
-            Send commands and receive updates from AI agents
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 mb-4">
-            <Input
-              placeholder="Select a document to process..."
-              value={selectedDocument || ""}
-              onChange={(e) => setSelectedDocument(e.target.value)}
-              className="flex-1"
-            />
+          <div className="flex items-center space-x-4">
+            <Select value={selectedDocument} onValueChange={setSelectedDocument}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select documents to process" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Documents</SelectItem>
+                {documents?.map((doc: any) => (
+                  <SelectItem key={doc.id} value={doc.id}>{doc.fileName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               onClick={() => startWorkflowMutation.mutate({ 
-                message: "Start processing document", 
-                documentId: selectedDocument || undefined 
+                message: "Start processing documents", 
+                documentId: selectedDocument === "all" ? undefined : selectedDocument 
               })}
               disabled={isRunning}
+              className="bg-blue-600 hover:bg-blue-700"
             >
               <Play className="w-4 h-4 mr-2" />
               Start Workflow
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Split View */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Agent Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bot className="w-5 h-5 mr-2" />
-              Agent Actions
-            </CardTitle>
-            <CardDescription>
-              Real-time agent activity and progress
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-96">
-              <div className="space-y-3">
-                {agentActions.map((action) => {
-                  const Icon = getAgentIcon(action.agentName);
-                  return (
-                    <div
-                      key={action.id}
-                      className="flex items-start space-x-3 p-3 rounded-lg border bg-card"
-                    >
-                      <div className={`p-2 rounded-full ${getAgentColor(action.agentName)} text-white`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium">{action.agentName}</p>
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(action.status)}
-                            <span className="text-xs text-muted-foreground">
-                              {action.timestamp.toLocaleTimeString()}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{action.action}</p>
-                        {action.duration && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Completed in {(action.duration / 1000).toFixed(1)}s
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Right: Agent Outputs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="w-5 h-5 mr-2" />
-              Agent Outputs
-            </CardTitle>
-            <CardDescription>
-              Results and data from agent processing
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-96">
-              <div className="space-y-3">
-                {agentOutputs.map((output) => {
-                  const Icon = getAgentIcon(output.agentName);
-                  return (
-                    <div
-                      key={output.id}
-                      className="p-3 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <div className={`p-1 rounded-full ${getAgentColor(output.agentName)} text-white`}>
-                            <Icon className="w-3 h-3" />
-                          </div>
-                          <span className="font-medium">{output.agentName}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {output.outputType}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {output.confidence && (
-                            <Badge variant="secondary" className="text-xs">
-                              {(output.confidence * 100).toFixed(1)}%
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {output.timestamp.toLocaleTimeString()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded">
-                          {JSON.stringify(output.content, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chat Messages */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chat Messages</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-64 mb-4">
-            <div className="space-y-3">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`
-                      max-w-xs lg:max-w-md px-3 py-2 rounded-lg
-                      ${message.type === 'user' 
-                        ? 'bg-blue-500 text-white' 
-                        : message.type === 'system'
-                        ? 'bg-gray-100 text-gray-800'
-                        : 'bg-gray-200 text-gray-800'
-                      }
-                    `}
-                  >
-                    {message.agentName && (
-                      <div className="text-xs font-medium mb-1">{message.agentName}</div>
-                    )}
-                    <div className="text-sm">{message.content}</div>
-                    <div className="text-xs opacity-75 mt-1">
-                      {message.timestamp.toLocaleTimeString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-          
-          <div className="flex items-center space-x-2">
-            <Input
-              placeholder="Type a message or command..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            <Button
+              variant="outline"
+              onClick={() => setNewMessage("help")}
             >
-              <Send className="w-4 h-4" />
+              <Info className="w-4 h-4 mr-2" />
+              Help
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Tab Navigation */}
+      <div className="flex space-x-1 bg-muted p-1 rounded-lg">
+        <Button
+          variant={activeTab === 'chat' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('chat')}
+          className="flex-1"
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Chat
+        </Button>
+        <Button
+          variant={activeTab === 'workflow' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('workflow')}
+          className="flex-1"
+        >
+          <Activity className="w-4 h-4 mr-2" />
+          Workflow
+        </Button>
+        <Button
+          variant={activeTab === 'actions' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('actions')}
+          className="flex-1"
+        >
+          <Bot className="w-4 h-4 mr-2" />
+          Agent Actions
+        </Button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'chat' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              Chat with AI Agents
+            </CardTitle>
+            <CardDescription>
+              Send commands and receive updates from AI agents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-96 mb-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`
+                        max-w-xs lg:max-w-md px-4 py-3 rounded-lg
+                        ${message.type === 'user' 
+                          ? 'bg-blue-500 text-white' 
+                          : message.type === 'system'
+                          ? 'bg-green-100 text-green-800 border border-green-200'
+                          : 'bg-gray-100 text-gray-800 border border-gray-200'
+                        }
+                      `}
+                    >
+                      {message.agentName && (
+                        <div className="text-xs font-medium mb-1 flex items-center">
+                          <Bot className="w-3 h-3 mr-1" />
+                          {message.agentName}
+                        </div>
+                      )}
+                      <div className="text-sm">{message.content}</div>
+                      <div className="text-xs opacity-75 mt-1">
+                        {message.timestamp.toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+            
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Type 'help' for commands or 'start' to begin processing..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'workflow' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="w-5 h-5 mr-2" />
+              Workflow Status
+            </CardTitle>
+            <CardDescription>
+              Real-time agent workflow monitoring
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Progress</span>
+                <span className="text-sm text-muted-foreground">
+                  {workflowStatus.completedSteps} / {workflowStatus.totalSteps} steps
+                </span>
+              </div>
+              <Progress value={workflowStatus.progress} className="w-full" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {agentDefinitions.map((agent, index) => {
+                  const Icon = agent.icon;
+                  const isActive = workflowStatus.currentAgent === agent.name;
+                  const isCompleted = workflowStatus.completedSteps > index;
+                  
+                  return (
+                    <div
+                      key={agent.name}
+                      className={`
+                        relative p-4 rounded-lg border-2 transition-all duration-200
+                        ${isActive ? 'border-blue-500 bg-blue-50' : ''}
+                        ${isCompleted ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'}
+                      `}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className={`p-3 rounded-full ${agent.color} text-white`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="text-sm font-medium text-center">{agent.name}</span>
+                        <span className="text-xs text-muted-foreground text-center">{agent.description}</span>
+                      </div>
+                      {isActive && (
+                        <div className="absolute -top-1 -right-1">
+                          <Activity className="w-4 h-4 text-blue-500 animate-spin" />
+                        </div>
+                      )}
+                      {isCompleted && (
+                        <div className="absolute -top-1 -right-1">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'actions' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Agent Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Bot className="w-5 h-5 mr-2" />
+                Agent Actions
+              </CardTitle>
+              <CardDescription>
+                Real-time agent activity and progress
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-96">
+                <div className="space-y-3">
+                  {agentActions.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No agent actions yet</p>
+                      <p className="text-sm">Start a workflow to see agent activity</p>
+                    </div>
+                  ) : (
+                    agentActions.map((action) => {
+                      const Icon = getAgentIcon(action.agentName);
+                      return (
+                        <div
+                          key={action.id}
+                          className="flex items-start space-x-3 p-3 rounded-lg border bg-card"
+                        >
+                          <div className={`p-2 rounded-full ${getAgentColor(action.agentName)} text-white`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium">{action.agentName}</p>
+                              <div className="flex items-center space-x-2">
+                                {getStatusIcon(action.status)}
+                                <span className="text-xs text-muted-foreground">
+                                  {action.timestamp.toLocaleTimeString()}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{action.action}</p>
+                            {action.duration && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Completed in {(action.duration / 1000).toFixed(1)}s
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Agent Outputs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Agent Outputs
+              </CardTitle>
+              <CardDescription>
+                Results and data from agent processing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-96">
+                <div className="space-y-3">
+                  {agentOutputs.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No agent outputs yet</p>
+                      <p className="text-sm">Process documents to see results</p>
+                    </div>
+                  ) : (
+                    agentOutputs.map((output) => {
+                      const Icon = getAgentIcon(output.agentName);
+                      return (
+                        <div
+                          key={output.id}
+                          className="p-3 rounded-lg border bg-card"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className={`p-1 rounded-full ${getAgentColor(output.agentName)} text-white`}>
+                                <Icon className="w-3 h-3" />
+                              </div>
+                              <span className="font-medium">{output.agentName}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {output.outputType}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {output.confidence && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {(output.confidence * 100).toFixed(1)}%
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {output.timestamp.toLocaleTimeString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-sm">
+                            <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded">
+                              {JSON.stringify(output.content, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

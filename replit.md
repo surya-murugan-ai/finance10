@@ -8,6 +8,16 @@ This is a financial automation platform built to streamline quarterly closure pr
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **Agent Chat Interface (July 13, 2025)**: Created comprehensive autonomous agent interaction system with cleaner UX:
+  - Redesigned as tabbed interface (Chat, Workflow, Agent Actions) for better organization
+  - Added Quick Start section with document selection and common commands
+  - Built real-time workflow visualization with 7 AI agents
+  - Implemented split-view monitoring for agent actions and outputs
+  - Added natural language chat interface for autonomous workflow control
+  - Created API endpoints for workflow management and agent communication
+
 ## Documentation
 
 - Created comprehensive USER_MANUAL.md covering all platform features
