@@ -123,14 +123,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
       
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.detail?.message || 'Login failed');
-      }
-      
       if (data.success) {
         // Store tokens
         localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
+        if (data.refresh_token) {
+          localStorage.setItem('refresh_token', data.refresh_token);
+        }
         
         toast({
           title: "Success",
@@ -140,7 +138,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
         onLoginSuccess(data.user, data.access_token);
         onClose();
       } else {
-        setErrors(data.errors || [data.message]);
+        setErrors([data.message || 'Login failed']);
       }
     } catch (error) {
       console.error('Login error:', error);

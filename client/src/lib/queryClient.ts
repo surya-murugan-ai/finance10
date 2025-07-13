@@ -15,10 +15,10 @@ export async function apiRequest(
   const isFormData = data instanceof FormData;
   
   // Get JWT token from localStorage
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('access_token');
   
-  // Determine the full URL - use Python backend on port 8000
-  const fullUrl = url.startsWith('http') ? url : `http://localhost:8000${url}`;
+  // Determine the full URL - use Express backend on same port
+  const fullUrl = url.startsWith('http') ? url : url;
   
   const headers: Record<string, string> = {};
   if (!isFormData && data) {
@@ -46,10 +46,10 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
-    const fullUrl = url.startsWith('http') ? url : `http://localhost:8000${url}`;
+    const fullUrl = url.startsWith('http') ? url : url;
     
     // Get JWT token from localStorage
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     
     const headers: Record<string, string> = {};
     if (token) {
