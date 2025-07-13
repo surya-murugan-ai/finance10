@@ -41,7 +41,7 @@ export default function FinancialReports() {
     retry: false,
   });
 
-  const { data: journalEntries, isLoading: journalEntriesLoading } = useQuery({
+  const { data: journalEntries, isLoading: journalEntriesLoading, refetch: refetchJournalEntries } = useQuery({
     queryKey: ["/api/journal-entries"],
     retry: false,
   });
@@ -182,7 +182,10 @@ export default function FinancialReports() {
                   </SelectContent>
                 </Select>
                 <Button
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/financial-statements"] })}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/financial-statements"] });
+                    refetchJournalEntries();
+                  }}
                   variant="outline"
                   size="sm"
                 >
