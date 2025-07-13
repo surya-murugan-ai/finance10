@@ -76,7 +76,15 @@ export class AnthropicService {
       model: DEFAULT_MODEL_STR,
     });
 
-    const result = JSON.parse(response.content[0].text);
+    let responseText = response.content[0].text;
+    
+    // Clean up response text to extract JSON
+    if (responseText.includes('```json')) {
+      responseText = responseText.substring(responseText.indexOf('```json') + 7);
+      responseText = responseText.substring(0, responseText.indexOf('```'));
+    }
+    
+    const result = JSON.parse(responseText.trim());
     return {
       documentType: result.documentType,
       confidence: Math.max(0, Math.min(1, result.confidence)),
@@ -126,7 +134,15 @@ export class AnthropicService {
       model: DEFAULT_MODEL_STR,
     });
 
-    const result = JSON.parse(response.content[0].text);
+    let responseText = response.content[0].text;
+    
+    // Clean up response text to extract JSON
+    if (responseText.includes('```json')) {
+      responseText = responseText.substring(responseText.indexOf('```json') + 7);
+      responseText = responseText.substring(0, responseText.indexOf('```'));
+    }
+    
+    const result = JSON.parse(responseText.trim());
     return {
       extractedData: result.extractedData,
       confidence: Math.max(0, Math.min(1, result.confidence)),
@@ -169,7 +185,15 @@ export class AnthropicService {
       model: DEFAULT_MODEL_STR,
     });
 
-    const result = JSON.parse(response.content[0].text);
+    let responseText = response.content[0].text;
+    
+    // Clean up response text to extract JSON
+    if (responseText.includes('```json')) {
+      responseText = responseText.substring(responseText.indexOf('```json') + 7);
+      responseText = responseText.substring(0, responseText.indexOf('```'));
+    }
+    
+    const result = JSON.parse(responseText.trim());
     return {
       isCompliant: result.isCompliant,
       violations: result.violations || [],
@@ -212,7 +236,15 @@ export class AnthropicService {
       model: DEFAULT_MODEL_STR,
     });
 
-    return JSON.parse(response.content[0].text);
+    let responseText = response.content[0].text;
+    
+    // Clean up response text to extract JSON
+    if (responseText.includes('```json')) {
+      responseText = responseText.substring(responseText.indexOf('```json') + 7);
+      responseText = responseText.substring(0, responseText.indexOf('```'));
+    }
+    
+    return JSON.parse(responseText.trim());
   }
 }
 
