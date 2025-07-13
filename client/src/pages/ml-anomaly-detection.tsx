@@ -6,10 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { isUnauthorizedError } from '@/lib/authUtils';
+import PageLayout from '@/components/layout/PageLayout';
 import { 
   Brain, 
   AlertTriangle, 
@@ -23,7 +25,13 @@ import {
   BarChart3,
   Shield,
   Target,
-  Zap
+  Zap,
+  Lightbulb,
+  MessageCircle,
+  Wrench,
+  Eye,
+  BarChart2,
+  Bot
 } from 'lucide-react';
 import { 
   Select,
@@ -100,6 +108,11 @@ export default function MLAnomalyDetection() {
   const [selectedResult, setSelectedResult] = useState<AnomalyResult | null>(null);
   const [reviewStatus, setReviewStatus] = useState('');
   const [reviewNotes, setReviewNotes] = useState('');
+  const [useAI, setUseAI] = useState(true);
+  const [anomalyAnalysis, setAnomalyAnalysis] = useState<any>(null);
+  const [explanation, setExplanation] = useState('');
+  const [selectedAnomalyForExplanation, setSelectedAnomalyForExplanation] = useState<any>(null);
+  const [userQuestion, setUserQuestion] = useState('');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -226,6 +239,62 @@ export default function MLAnomalyDetection() {
     },
   });
 
+  // Agentic Anomaly Analysis mutation
+  const analyzeAnomaliesMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('/api/ml/anomalies/analyze', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "AI Analysis Complete",
+        description: `Analyzed ${data.anomalies.length} anomalies with AI insights.`,
+      });
+      setAnomalyAnalysis(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/ml/anomalies'] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "AI Analysis Failed",
+        description: "AI-powered anomaly analysis failed. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Explain anomaly mutation
+  const explainAnomalyMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('/api/ml/anomalies/explain', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (data) => {
+      setExplanation(data.explanation);
+    },
+    onError: (error) => {
+      toast({
+        title: "Explanation Failed",
+        description: "Failed to get AI explanation. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Review anomaly mutation
   const reviewAnomalyMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -312,6 +381,30 @@ export default function MLAnomalyDetection() {
     });
   };
 
+  const handleAnalyzeAnomalies = () => {
+    if (!selectedDocuments.length) {
+      toast({
+        title: "No Documents Selected",
+        description: "Please select documents to analyze.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    analyzeAnomaliesMutation.mutate({
+      documents: selectedDocuments,
+      includeHistoricalData: true,
+      analysisType: 'comprehensive'
+    });
+  };
+
+  const handleExplainAnomaly = (anomaly: any, question: string) => {
+    explainAnomalyMutation.mutate({
+      anomaly_id: anomaly.id,
+      question: question || 'Why is this flagged as an anomaly?'
+    });
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-500';
@@ -343,13 +436,26 @@ export default function MLAnomalyDetection() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <PageLayout title="ML Anomaly Detection">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <Brain className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">ML Anomaly Detection</h1>
+          <div>
+            <h1 className="text-3xl font-bold">ML Anomaly Detection</h1>
+            <p className="text-gray-600">AI-powered financial anomaly detection and analysis</p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="ai-mode"
+              checked={useAI}
+              onCheckedChange={setUseAI}
+            />
+            <Label htmlFor="ai-mode" className="text-sm font-medium">
+              AI-Powered Analysis
+            </Label>
+          </div>
           <Badge variant="outline" className="flex items-center space-x-1">
             <Activity className="h-4 w-4" />
             <span>{models?.length || 0} Models</span>
@@ -360,6 +466,37 @@ export default function MLAnomalyDetection() {
           </Badge>
         </div>
       </div>
+
+      {/* AI Mode Information */}
+      {useAI && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-blue-600" />
+              Agentic AI Analysis Mode
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Advanced LLM-powered anomaly detection with intelligent pattern recognition and explanations
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-600" />
+                <span className="text-sm">Intelligent Pattern Analysis</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Natural Language Explanations</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Wrench className="h-4 w-4 text-orange-600" />
+                <span className="text-sm">Automated Remediation Suggestions</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -540,6 +677,20 @@ export default function MLAnomalyDetection() {
                       <Badge variant="outline" className={`${getStatusColor(anomaly.review_status)} text-white`}>
                         {anomaly.review_status}
                       </Badge>
+                      {useAI && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedAnomalyForExplanation(anomaly);
+                            handleExplainAnomaly(anomaly, 'Why is this flagged as an anomaly?');
+                          }}
+                          className="flex items-center space-x-1"
+                        >
+                          <MessageCircle className="h-3 w-3" />
+                          <span>AI Explain</span>
+                        </Button>
+                      )}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button 
@@ -589,6 +740,92 @@ export default function MLAnomalyDetection() {
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Analysis Results */}
+          {useAI && anomalyAnalysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-blue-600" />
+                  AI Analysis Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Risk Assessment</h4>
+                      <div className="text-2xl font-bold text-red-600">
+                        {anomalyAnalysis.insights?.overallRiskScore?.toFixed(1) || 'N/A'}
+                      </div>
+                      <p className="text-sm text-gray-600">Overall Risk Score</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Patterns Detected</h4>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {anomalyAnalysis.insights?.patternAnalysis?.detectedPatterns?.length || 0}
+                      </div>
+                      <p className="text-sm text-gray-600">Unique Patterns</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium">AI Recommendations</h4>
+                    {anomalyAnalysis.insights?.recommendations?.map((rec: any, idx: number) => (
+                      <div key={idx} className="p-3 border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className={`${rec.priority === 'HIGH' ? 'bg-red-100 text-red-700' : rec.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                            {rec.priority}
+                          </Badge>
+                          <span className="text-sm font-medium">{rec.category}</span>
+                        </div>
+                        <p className="text-sm text-gray-700">{rec.description}</p>
+                        <p className="text-xs text-gray-500 mt-1">Impact: {rec.impact}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* AI Explanation Dialog */}
+          {explanation && selectedAnomalyForExplanation && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-600" />
+                  AI Explanation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium">Transaction: {selectedAnomalyForExplanation.transaction_id}</p>
+                    <p className="text-xs text-gray-600">Score: {selectedAnomalyForExplanation.anomaly_score?.toFixed(4)}</p>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-sm">{explanation}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ask a follow-up question..."
+                      value={userQuestion}
+                      onChange={(e) => setUserQuestion(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={() => handleExplainAnomaly(selectedAnomalyForExplanation, userQuestion)}
+                      disabled={explainAnomalyMutation.isPending}
+                      size="sm"
+                    >
+                      {explainAnomalyMutation.isPending ? 'Asking...' : 'Ask'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="monitoring" className="space-y-6">
@@ -710,6 +947,27 @@ export default function MLAnomalyDetection() {
                     </>
                   )}
                 </Button>
+                
+                {useAI && (
+                  <Button 
+                    onClick={() => handleAnalyzeAnomalies()}
+                    disabled={analyzeAnomaliesMutation.isPending}
+                    variant="secondary"
+                    className="flex items-center space-x-2"
+                  >
+                    {analyzeAnomaliesMutation.isPending ? (
+                      <>
+                        <Pause className="h-4 w-4" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bot className="h-4 w-4" />
+                        <span>AI Analysis</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
 
               {isTraining && (
@@ -725,6 +983,6 @@ export default function MLAnomalyDetection() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PageLayout>
   );
 }

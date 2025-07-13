@@ -29,6 +29,45 @@ function getNextDueDate(): string {
   return nextMonth.toISOString().split('T')[0];
 }
 
+// Helper function for basic anomaly detection (fallback)
+async function performBasicAnomalyDetection(transactions: any[], document: any) {
+  const anomalies = [];
+  
+  if (transactions.length === 0) return anomalies;
+  
+  // Calculate basic statistics
+  const amounts = transactions.map(t => Math.abs(t.debitAmount || t.creditAmount || 0));
+  const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+  const variance = amounts.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / amounts.length;
+  const stdDev = Math.sqrt(variance);
+  
+  // Flag outliers (amounts > 2 standard deviations from mean)
+  transactions.forEach(transaction => {
+    const amount = Math.abs(transaction.debitAmount || transaction.creditAmount || 0);
+    if (amount > mean + 2 * stdDev) {
+      anomalies.push({
+        id: `anomaly_${transaction.id}`,
+        transactionId: transaction.id,
+        documentId: document.id,
+        anomalyScore: 75,
+        confidence: 0.8,
+        anomalyType: 'amount_anomaly',
+        severity: 'MEDIUM',
+        reasoning: `Transaction amount ${amount} is significantly higher than average (${mean.toFixed(2)})`,
+        evidence: [`Amount: ${amount}`, `Mean: ${mean.toFixed(2)}`, `Std Dev: ${stdDev.toFixed(2)}`],
+        recommendations: ['Review transaction for accuracy', 'Verify supporting documentation'],
+        businessContext: 'Statistical outlier detection',
+        riskFactors: ['Unusual amount'],
+        suggestedActions: [],
+        followUpQuestions: ['Is this amount correct?', 'Is there proper authorization?'],
+        relatedTransactions: []
+      });
+    }
+  });
+  
+  return anomalies;
+}
+
 // Helper function to infer document type from filename
 function inferDocumentType(fileName: string): string {
   const name = fileName.toLowerCase();
@@ -872,6 +911,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Static file serving for uploads
   app.use('/uploads', express.static('uploads'));
+
+  // Agentic Anomaly Detection endpoints
+  app.post('/api/ml/anomalies/analyze', isAuthenticated, async (req: any, res) => {
+    try {
+      const { documentId, useAI = true } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Get document and related transactions
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+      
+      const journalEntries = await storage.getJournalEntriesByDocument(documentId);
+      
+      if (useAI) {
+        const { anomalyDetectionAgent } = await import('./services/anomalyAgent');
+        
+        // Get historical data for context
+        const historicalData = await storage.getHistoricalTransactionData(userId);
+        
+        const analysisRequest = {
+          transactions: journalEntries,
+          document,
+          historicalData,
+          complianceRules: await storage.getComplianceRules(),
+          userContext: `User: ${userId}, Company: ${document.uploadedBy}`
+        };
+        
+        const anomalies = await anomalyDetectionAgent.analyzeTransactionAnomalies(analysisRequest);
+        
+        // Generate comprehensive insights
+        const insights = await anomalyDetectionAgent.generateAnomalyInsights(anomalies, {
+          document,
+          transactionCount: journalEntries.length,
+          userId
+        });
+        
+        res.json({
+          anomalies,
+          insights,
+          analysisType: 'agentic',
+          timestamp: new Date()
+        });
+      } else {
+        // Fallback to basic statistical analysis
+        const anomalies = await performBasicAnomalyDetection(journalEntries, document);
+        res.json({
+          anomalies,
+          analysisType: 'statistical',
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing anomalies:', error);
+      res.status(500).json({ message: 'Failed to analyze anomalies' });
+    }
+  });
+
+  app.post('/api/ml/anomalies/explain', isAuthenticated, async (req: any, res) => {
+    try {
+      const { anomalyId, question } = req.body;
+      
+      // Get anomaly details (would be stored in database in production)
+      const anomaly = await storage.getAnomalyResult(anomalyId);
+      if (!anomaly) {
+        return res.status(404).json({ message: 'Anomaly not found' });
+      }
+      
+      const { anomalyDetectionAgent } = await import('./services/anomalyAgent');
+      const explanation = await anomalyDetectionAgent.explainAnomalyToUser(anomaly, question);
+      
+      res.json({ explanation });
+    } catch (error) {
+      console.error('Error explaining anomaly:', error);
+      res.status(500).json({ message: 'Failed to explain anomaly' });
+    }
+  });
+
+  app.post('/api/ml/anomalies/remediate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { anomalyId } = req.body;
+      
+      const anomaly = await storage.getAnomalyResult(anomalyId);
+      if (!anomaly) {
+        return res.status(404).json({ message: 'Anomaly not found' });
+      }
+      
+      const { anomalyDetectionAgent } = await import('./services/anomalyAgent');
+      const actions = await anomalyDetectionAgent.suggestRemediationActions(anomaly);
+      
+      res.json({ actions });
+    } catch (error) {
+      console.error('Error suggesting remediation:', error);
+      res.status(500).json({ message: 'Failed to suggest remediation' });
+    }
+  });
+
+  app.get('/api/ml/anomalies/patterns', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const timeframe = req.query.timeframe as string || '30d';
+      
+      const { anomalyDetectionAgent } = await import('./services/anomalyAgent');
+      
+      // Get recent anomalies
+      const recentAnomalies = await storage.getRecentAnomalies(userId, timeframe);
+      
+      // Generate pattern insights
+      const insights = await anomalyDetectionAgent.generateAnomalyInsights(recentAnomalies, {
+        userId,
+        timeframe
+      });
+      
+      res.json({
+        patterns: insights.patternAnalysis,
+        riskScore: insights.overallRiskScore,
+        recommendations: insights.recommendations,
+        complianceIssues: insights.complianceIssues
+      });
+    } catch (error) {
+      console.error('Error getting anomaly patterns:', error);
+      res.status(500).json({ message: 'Failed to get anomaly patterns' });
+    }
+  });
 
   // Reconciliation routes
   app.post('/api/reconciliation/run', isAuthenticated, async (req: any, res) => {
