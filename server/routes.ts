@@ -408,6 +408,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test route to manually create journal entries for existing documents
+  app.post('/api/test/create-journal-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const documents = await storage.getDocuments(userId);
+      
+      let totalEntries = 0;
+      
+      for (const document of documents) {
+        // Create sample journal entries for each document
+        const defaultEntries = [
+          {
+            journalId: `JE${Date.now()}_${document.id}_1`,
+            date: new Date(),
+            accountCode: 'EXPENSE',
+            accountName: 'Document Processing Expense',
+            debitAmount: 1000,
+            creditAmount: 0,
+            narration: `Processing document: ${document.originalName}`,
+            entity: 'System',
+            documentId: document.id,
+            createdBy: userId,
+          },
+          {
+            journalId: `JE${Date.now()}_${document.id}_2`,
+            date: new Date(),
+            accountCode: 'PAYABLE',
+            accountName: 'Accounts Payable',
+            debitAmount: 0,
+            creditAmount: 1000,
+            narration: `Processing document: ${document.originalName}`,
+            entity: 'System',
+            documentId: document.id,
+            createdBy: userId,
+          }
+        ];
+        
+        for (const entry of defaultEntries) {
+          await storage.createJournalEntry(entry);
+          totalEntries++;
+        }
+      }
+      
+      res.json({ message: `Created ${totalEntries} journal entries`, documents: documents.length });
+    } catch (error) {
+      console.error("Error creating test journal entries:", error);
+      res.status(500).json({ message: "Failed to create journal entries" });
+    }
+  });
+
   // Static file serving for uploads
   app.use('/uploads', express.static('uploads'));
 

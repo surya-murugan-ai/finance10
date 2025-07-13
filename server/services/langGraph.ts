@@ -368,7 +368,14 @@ export class LangGraphOrchestrator {
       
       for (const entry of defaultEntries) {
         const journalEntry = await storage.createJournalEntry({
-          ...entry,
+          journalId: entry.journalId,
+          date: entry.date,
+          accountCode: entry.accountCode,
+          accountName: entry.accountName,
+          debitAmount: entry.debitAmount,
+          creditAmount: entry.creditAmount,
+          narration: entry.narration,
+          entity: entry.entity,
           documentId: document.id,
           createdBy: workflow.globalState.userId,
         });

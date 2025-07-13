@@ -41,6 +41,11 @@ export default function FinancialReports() {
     retry: false,
   });
 
+  const { data: journalEntries, isLoading: journalEntriesLoading } = useQuery({
+    queryKey: ["/api/journal-entries"],
+    retry: false,
+  });
+
   const generateReportMutation = useMutation({
     mutationFn: async (reportType: string) => {
       const response = await apiRequest('POST', `/api/reports/${reportType}`, {
@@ -189,8 +194,9 @@ export default function FinancialReports() {
           </div>
 
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="journal-entries">Journal Entries</TabsTrigger>
               <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
               <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>
               <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
@@ -303,6 +309,69 @@ export default function FinancialReports() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="journal-entries" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Journal Entries - {selectedPeriod}</CardTitle>
+                    <Badge variant="outline">
+                      {journalEntries ? journalEntries.length : 0} entries
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {journalEntriesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : journalEntries && journalEntries.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Journal ID</TableHead>
+                            <TableHead>Account Code</TableHead>
+                            <TableHead>Account Name</TableHead>
+                            <TableHead className="text-right">Debit</TableHead>
+                            <TableHead className="text-right">Credit</TableHead>
+                            <TableHead>Narration</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {journalEntries.map((entry) => (
+                            <TableRow key={entry.id}>
+                              <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                              <TableCell className="font-mono">{entry.journalId}</TableCell>
+                              <TableCell className="font-mono">{entry.accountCode}</TableCell>
+                              <TableCell>{entry.accountName}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.debitAmount > 0 ? formatCurrency(entry.debitAmount) : '-'}
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.creditAmount > 0 ? formatCurrency(entry.creditAmount) : '-'}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {entry.narration}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg font-medium">No journal entries found</p>
+                      <p className="text-sm text-muted-foreground">
+                        Upload documents to automatically generate journal entries
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="trial-balance" className="space-y-6">
