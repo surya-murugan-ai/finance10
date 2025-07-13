@@ -55,6 +55,7 @@ function Router() {
           <Route path="/document-management" component={DocumentManagement} />
           <Route path="/workflows" component={AgentWorkflows} />
           <Route path="/reports" component={FinancialReports} />
+          <Route path="/financial-reports" component={FinancialReports} />
           <Route path="/compliance" component={Compliance} />
           <Route path="/audit" component={AuditTrail} />
           <Route path="/reconciliation" component={Reconciliation} />
