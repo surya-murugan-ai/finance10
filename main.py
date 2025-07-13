@@ -31,6 +31,7 @@ from app.config import settings
 from app.api.ml_endpoints import router as ml_router
 from app.api.mca_filing_endpoints import router as mca_router
 from app.api.compliance_tutorial_endpoints import router as compliance_tutorial_router
+from app.api.data_source_endpoints import router as data_source_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -65,6 +66,7 @@ app.include_router(ml_router, prefix="/api", tags=["Machine Learning"])
 # Include MCA filing endpoints
 app.include_router(mca_router, prefix="/api", tags=["MCA Filing"])
 app.include_router(compliance_tutorial_router)
+app.include_router(data_source_router)
 
 # Initialize database
 @app.on_event("startup")

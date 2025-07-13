@@ -13,7 +13,8 @@ import {
   MessageCircle,
   Settings,
   Brain,
-  BookOpen
+  BookOpen,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Agent Chat", href: "/agent-chat", icon: MessageCircle },
   { name: "ML Anomaly Detection", href: "/ml-anomaly-detection", icon: Brain },
   { name: "MCA Filing", href: "/mca-filing", icon: FileText },
+  { name: "Data Source Config", href: "/data-source-config", icon: Database },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

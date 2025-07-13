@@ -21,6 +21,7 @@ import Settings from "@/pages/settings";
 import MLAnomalyDetection from "@/pages/ml-anomaly-detection";
 import MCAFiling from "@/pages/mca-filing";
 import ComplianceTutorial from "@/pages/compliance-tutorial";
+import DataSourceConfig from "@/pages/data-source-config";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,6 +46,7 @@ function Router() {
           <Route path="/ml-anomaly-detection" component={MLAnomalyDetection} />
           <Route path="/mca-filing" component={MCAFiling} />
           <Route path="/compliance-tutorial" component={ComplianceTutorial} />
+          <Route path="/data-source-config" component={DataSourceConfig} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/settings" component={Settings} />
         </>
