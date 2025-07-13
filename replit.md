@@ -8,6 +8,13 @@ This is a financial automation platform built to streamline quarterly closure pr
 
 Preferred communication style: Simple, everyday language.
 
+## Documentation
+
+- Created comprehensive USER_MANUAL.md covering all platform features
+- Includes step-by-step instructions for document upload, financial reporting, and compliance checking
+- Covers troubleshooting and best practices for users
+- Documents the AI agent workflow and journal entry creation process
+
 ## System Architecture
 
 The application follows a modern full-stack architecture with clear separation between frontend, backend, and shared components:
