@@ -33,6 +33,10 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
+import TopBar from "@/components/layout/topbar";
 
 interface ChatMessage {
   id: string;
@@ -118,6 +122,8 @@ const agentDefinitions = [
 ];
 
 export default function AgentChat() {
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -132,7 +138,21 @@ export default function AgentChat() {
   const [activeTab, setActiveTab] = useState<'chat' | 'workflow' | 'actions'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
 
   // Mock workflow status - in real implementation this would come from WebSocket
   const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus>({
@@ -399,28 +419,41 @@ export default function AgentChat() {
     }
   };
 
-  return (
-    <div className="flex-1 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Agent Chat</h2>
-          <p className="text-muted-foreground">
-            Chat with AI agents to automate your quarterly closure process
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={workflowStatus.status === 'running' ? 'default' : 'secondary'}>
-            <Activity className="w-3 h-3 mr-1" />
-            {workflowStatus.status}
-          </Badge>
-          {isRunning && (
-            <Button onClick={() => stopWorkflowMutation.mutate()} variant="destructive" size="sm">
-              <Square className="w-4 h-4 mr-2" />
-              Stop Workflow
-            </Button>
-          )}
-        </div>
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <div className="ml-64">
+        <TopBar />
+        <main className="p-8">
+          <div className="flex-1 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Agent Chat</h2>
+                <p className="text-muted-foreground">
+                  Chat with AI agents to automate your quarterly closure process
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant={workflowStatus.status === 'running' ? 'default' : 'secondary'}>
+                  <Activity className="w-3 h-3 mr-1" />
+                  {workflowStatus.status}
+                </Badge>
+                {isRunning && (
+                  <Button onClick={() => stopWorkflowMutation.mutate()} variant="destructive" size="sm">
+                    <Square className="w-4 h-4 mr-2" />
+                    Stop Workflow
+                  </Button>
+                )}
+              </div>
+            </div>
 
       {/* Quick Start Section */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
@@ -748,6 +781,9 @@ export default function AgentChat() {
           </Card>
         </div>
       )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
