@@ -59,7 +59,7 @@ export default function CollapsibleSidebar() {
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 z-50",
+      "h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 flex flex-col",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
