@@ -137,6 +137,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
         
         onLoginSuccess(data.user, data.access_token);
         onClose();
+        // Force a page refresh to ensure proper state update
+        window.location.reload();
       } else {
         setErrors([data.message || 'Login failed']);
       }

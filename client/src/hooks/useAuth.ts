@@ -43,6 +43,7 @@ export function useAuth() {
     }
     setToken(accessToken);
     queryClient.setQueryData(["/api/auth/user"], userData);
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
   };
 
   const logout = async () => {
