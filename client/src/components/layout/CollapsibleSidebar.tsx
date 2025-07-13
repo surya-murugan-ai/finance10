@@ -31,19 +31,19 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, description: 'Main dashboard' },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, description: 'Main dashboard' },
   { name: 'Document Upload', href: '/document-upload', icon: Upload, description: 'Upload financial documents' },
   { name: 'Document Management', href: '/document-management', icon: FileText, description: 'Manage uploaded documents' },
   { name: 'Agent Chat', href: '/agent-chat', icon: MessageSquare, description: 'Chat with AI agents' },
-  { name: 'Agent Workflows', href: '/agent-workflows', icon: Bot, description: 'Manage AI workflows' },
-  { name: 'Financial Reports', href: '/financial-reports', icon: BarChart3, description: 'Generate financial reports' },
+  { name: 'Agent Workflows', href: '/workflows', icon: Bot, description: 'Manage AI workflows' },
+  { name: 'Financial Reports', href: '/reports', icon: BarChart3, description: 'Generate financial reports' },
   { name: 'Reconciliation', href: '/reconciliation', icon: GitBranch, description: 'Reconcile transactions' },
   { name: 'Data Tables', href: '/data-tables', icon: FileSpreadsheet, description: 'View data tables' },
   { name: 'Compliance', href: '/compliance', icon: Shield, description: 'Compliance management' },
   { name: 'Compliance Tutorial', href: '/compliance-tutorial', icon: BookOpen, description: 'Learn compliance workflows' },
   { name: 'ML Anomaly Detection', href: '/ml-anomaly-detection', icon: TrendingUp, description: 'Detect anomalies' },
   { name: 'MCA Filing', href: '/mca-filing', icon: Building, description: 'MCA filing management' },
-  { name: 'Audit Trail', href: '/audit-trail', icon: UserCheck, description: 'View audit logs' },
+  { name: 'Audit Trail', href: '/audit', icon: UserCheck, description: 'View audit logs' },
   { name: 'Data Source Config', href: '/data-source-config', icon: Database, description: 'Configure data sources' },
   { name: 'Onboarding', href: '/onboarding', icon: Users, description: 'User onboarding' },
   { name: 'Settings', href: '/settings', icon: Settings, description: 'Application settings' },
