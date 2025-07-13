@@ -247,6 +247,84 @@ export default function ReconciliationPage() {
         </div>
       </div>
 
+      {/* Advanced Algorithm Details */}
+      {useAdvanced && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-600" />
+              Advanced Reconciliation Algorithms
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              AI-powered reconciliation with 5 specialized algorithms for complex intercompany transactions
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-green-600" />
+                  <h3 className="font-medium text-sm">Fuzzy Matching</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Multi-criteria scoring with 40% weight on amount similarity, date proximity, and narration analysis
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="h-4 w-4 text-purple-600" />
+                  <h3 className="font-medium text-sm">ML Pattern Recognition</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Clustering algorithms to group similar transactions and identify recurring patterns
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <h3 className="font-medium text-sm">Temporal Analysis</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Time-based pattern detection for recurring transactions and seasonal adjustments
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <GitMerge className="h-4 w-4 text-orange-600" />
+                  <h3 className="font-medium text-sm">Multi-leg Matching</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Complex intercompany flows with multiple entities and transaction splits
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-yellow-600" />
+                  <h3 className="font-medium text-sm">AI-Powered Analysis</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Anthropic Claude 4.0 for business logic understanding and automated adjustments
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-4 w-4 text-red-600" />
+                  <h3 className="font-medium text-sm">Risk Assessment</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Automated risk scoring and data quality issue detection with recommendations
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -375,6 +453,22 @@ export default function ReconciliationPage() {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  
+                  {/* Advanced Insights Toggle */}
+                  {useAdvanced && (
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <span className="text-sm font-medium">Advanced AI Insights</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowInsights(!showInsights)}
+                        className="flex items-center gap-2"
+                      >
+                        <Lightbulb className="w-4 h-4" />
+                        {showInsights ? 'Hide' : 'Show'} Insights
+                      </Button>
                     </div>
                   )}
                 </div>
