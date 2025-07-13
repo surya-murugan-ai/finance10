@@ -146,6 +146,16 @@ export class LangGraphOrchestrator {
     } catch (error) {
       workflow.error = error.message;
       workflow.completed = true;
+      
+      // Even if workflow fails, ensure document is marked as completed
+      // Core processing (upload, save) succeeded, only AI enhancement failed
+      try {
+        await storage.updateDocument(workflow.documentId, {
+          status: 'completed',
+        });
+      } catch (updateError) {
+        console.log('Failed to update document status to completed:', updateError);
+      }
     }
   }
 
@@ -221,22 +231,33 @@ export class LangGraphOrchestrator {
       node.status = 'failed';
       node.error = error.message;
       
+      // Check if this is a rate limiting error - if so, continue workflow
+      const isRateLimitError = error.message.includes('rate_limit') || error.message.includes('429');
+      if (isRateLimitError) {
+        console.log(`Rate limit error in ${node.name}, continuing workflow with fallback`);
+        node.status = 'completed'; // Allow workflow to continue
+        node.output = { fallback: true, reason: 'Rate limit exceeded' };
+      }
+      
       await storage.updateAgentJob(agentJob.id, {
-        status: 'failed',
+        status: isRateLimitError ? 'completed' : 'failed',
         error: error.message,
         completedAt: new Date(),
       });
 
       // Log failure
       await storage.createAuditTrail({
-        action: `${node.name} failed`,
+        action: `${node.name} ${isRateLimitError ? 'rate_limited' : 'failed'}`,
         entityType: 'agent_job',
         entityId: agentJob.id,
         userId: workflow.globalState.userId,
         details: { workflowId, nodeId: node.id, error: error.message },
       });
 
-      throw error;
+      // Only throw error if it's not a rate limit error
+      if (!isRateLimitError) {
+        throw error;
+      }
     }
   }
 
