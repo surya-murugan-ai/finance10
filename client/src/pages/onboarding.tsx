@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -733,7 +734,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <PageLayout title="Company Onboarding">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome to QRT Closure Platform</h1>
@@ -789,6 +790,6 @@ export default function Onboarding() {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
