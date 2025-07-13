@@ -903,11 +903,29 @@ export default function MLAnomalyDetection() {
                   <SelectContent>
                     {documents?.map((doc: any) => (
                       <SelectItem key={doc.id} value={doc.id}>
-                        {doc.filename}
+                        {doc.filename || doc.file_name || doc.name || `Document ${doc.id.slice(0, 8)}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {documents && documents.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {documents.length} document(s) available
+                  </p>
+                )}
+                {(!documents || documents.length === 0) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    No documents available. Please upload documents first.
+                  </p>
+                )}
+                {process.env.NODE_ENV === 'development' && documents && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-500 cursor-pointer">Debug: Documents Data</summary>
+                    <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-auto">
+                      {JSON.stringify(documents, null, 2)}
+                    </pre>
+                  </details>
+                )}
               </div>
 
               <div className="flex space-x-4">
