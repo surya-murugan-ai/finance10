@@ -9,7 +9,8 @@ import {
   TrendingUp,
   FolderOpen,
   GitMerge,
-  Table
+  Table,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Audit Trail", href: "/audit", icon: History },
   { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
   { name: "Data Tables", href: "/data-tables", icon: Table },
+  { name: "Agent Chat", href: "/agent-chat", icon: MessageCircle },
 ];
 
 const agents = [

@@ -725,6 +725,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Agent Chat API endpoints
+  app.post('/api/agent-chat/start', isAuthenticated, async (req: any, res) => {
+    try {
+      const { message, documentId } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Create a new workflow
+      const workflowId = `workflow-${Date.now()}`;
+      let documentName = 'All Documents';
+      
+      if (documentId) {
+        const document = await storage.getDocument(documentId);
+        documentName = document?.fileName || 'Unknown Document';
+      }
+      
+      // For now, return a mock response
+      res.json({
+        workflowId,
+        documentName,
+        status: 'started',
+        message: 'Workflow started successfully'
+      });
+    } catch (error) {
+      console.error("Error starting agent workflow:", error);
+      res.status(500).json({ message: "Failed to start workflow" });
+    }
+  });
+
+  app.post('/api/agent-chat/stop', isAuthenticated, async (req: any, res) => {
+    try {
+      // Stop the current workflow
+      res.json({
+        status: 'stopped',
+        message: 'Workflow stopped successfully'
+      });
+    } catch (error) {
+      console.error("Error stopping agent workflow:", error);
+      res.status(500).json({ message: "Failed to stop workflow" });
+    }
+  });
+
+  app.post('/api/agent-chat/message', isAuthenticated, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Simple message processing
+      let response = "I received your message. ";
+      let agentName = "System";
+      
+      if (message.toLowerCase().includes('status')) {
+        response += "All agents are currently operational. Use 'start' to begin processing documents.";
+        agentName = "StatusBot";
+      } else if (message.toLowerCase().includes('help')) {
+        response += "Available commands: 'start' to begin workflow, 'status' for agent status, 'stop' to halt processing.";
+        agentName = "HelpBot";
+      } else {
+        response += "I understand you want to work with the financial documents. Try saying 'start' to begin processing.";
+        agentName = "AssistantBot";
+      }
+      
+      res.json({
+        response,
+        agentName,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error processing chat message:", error);
+      res.status(500).json({ message: "Failed to process message" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

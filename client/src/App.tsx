@@ -14,6 +14,7 @@ import Compliance from "@/pages/compliance";
 import AuditTrail from "@/pages/audit-trail";
 import Reconciliation from "@/pages/reconciliation";
 import DataTables from "@/pages/data-tables";
+import AgentChat from "@/pages/agent-chat";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/audit" component={AuditTrail} />
           <Route path="/reconciliation" component={Reconciliation} />
           <Route path="/data-tables" component={DataTables} />
+          <Route path="/agent-chat" component={AgentChat} />
         </>
       )}
       <Route component={NotFound} />
