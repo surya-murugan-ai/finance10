@@ -86,6 +86,12 @@ export interface IStorage {
   createReconciliationMatch(match: InsertReconciliationMatch): Promise<ReconciliationMatch>;
   getIntercompanyTransactions(period?: string): Promise<IntercompanyTransaction[]>;
   createIntercompanyTransaction(transaction: InsertIntercompanyTransaction): Promise<IntercompanyTransaction>;
+
+  // Settings operations
+  getSettings(userId: string): Promise<any>;
+  createSettings(settings: any): Promise<any>;
+  updateSettings(id: string, settings: any): Promise<any>;
+  testConnection(): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -373,6 +379,35 @@ export class DatabaseStorage implements IStorage {
   async createIntercompanyTransaction(transaction: InsertIntercompanyTransaction): Promise<IntercompanyTransaction> {
     const [newTransaction] = await db.insert(intercompanyTransactions).values(transaction).returning();
     return newTransaction;
+  }
+
+  // Settings operations
+  async getSettings(userId: string): Promise<any> {
+    // For now, return null as we don't have a settings table yet
+    // In a real implementation, you'd query a settings table
+    return null;
+  }
+
+  async createSettings(settings: any): Promise<any> {
+    // For now, just return the settings as-is
+    // In a real implementation, you'd insert into a settings table
+    return settings;
+  }
+
+  async updateSettings(id: string, settings: any): Promise<any> {
+    // For now, just return the updated settings
+    // In a real implementation, you'd update the settings table
+    return settings;
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      // Simple test query to check database connectivity
+      await db.select().from(users).limit(1);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
 

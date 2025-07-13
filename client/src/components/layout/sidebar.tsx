@@ -10,7 +10,8 @@ import {
   FolderOpen,
   GitMerge,
   Table,
-  MessageCircle
+  MessageCircle,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
   { name: "Data Tables", href: "/data-tables", icon: Table },
   { name: "Agent Chat", href: "/agent-chat", icon: MessageCircle },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 const agents = [

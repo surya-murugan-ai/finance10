@@ -797,6 +797,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings routes
+  app.get('/api/settings', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub;
+      let settings = await storage.getSettings(userId);
+      
+      // Return default settings if none exist
+      if (!settings) {
+        settings = {
+          id: `settings_${userId}`,
+          userId,
+          apiKeys: {
+            openai: process.env.OPENAI_API_KEY ? "••••••••••••••••" : "",
+            anthropic: process.env.ANTHROPIC_API_KEY ? "••••••••••••••••" : "",
+            pinecone: process.env.PINECONE_API_KEY || "",
+            postgres: process.env.DATABASE_URL ? "••••••••••••••••" : "",
+          },
+          aiSettings: {
+            temperature: 0.7,
+            maxTokens: 4000,
+            model: "claude-sonnet-4-20250514",
+            systemPrompt: "You are a helpful AI assistant specialized in financial document processing and analysis for Indian enterprises. You understand GST, TDS, IndAS, and Companies Act 2013 compliance requirements.",
+            enableStreaming: true,
+            responseFormat: "json",
+          },
+          vectorDatabase: {
+            provider: "pinecone",
+            indexName: "financial-documents",
+            dimension: 1536,
+            metric: "cosine",
+            namespace: "default",
+            topK: 10,
+            enableHybridSearch: true,
+          },
+          security: {
+            enableRateLimit: true,
+            rateLimitRequests: 100,
+            rateLimitWindow: 60,
+            enableApiKeyRotation: false,
+            rotationInterval: 30,
+            enableAuditLog: true,
+          },
+          processing: {
+            enableParallelProcessing: true,
+            maxConcurrentJobs: 5,
+            retryAttempts: 3,
+            timeoutSeconds: 300,
+            enableAutoClassification: true,
+            confidenceThreshold: 0.8,
+          },
+          notifications: {
+            emailEnabled: false,
+            slackEnabled: false,
+            webhookUrl: "",
+            notifyOnCompletion: true,
+            notifyOnError: true,
+            notifyOnThreshold: false,
+          },
+          compliance: {
+            enableDataRetention: true,
+            retentionDays: 90,
+            enableEncryption: true,
+            enablePIIDetection: true,
+            enableComplianceReports: true,
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await storage.createSettings(settings);
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put('/api/settings', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub;
+      const settingsData = req.body;
+      
+      // Validate required fields
+      if (!settingsData.id) {
+        return res.status(400).json({ message: "Settings ID is required" });
+      }
+      
+      const updatedSettings = await storage.updateSettings(settingsData.id, {
+        ...settingsData,
+        userId,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  app.post('/api/settings/test-connection/:provider', isAuthenticated, async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const userId = (req as any).user?.claims?.sub;
+      
+      // Get current settings
+      const settings = await storage.getSettings(userId);
+      if (!settings) {
+        return res.status(404).json({ message: "Settings not found" });
+      }
+      
+      let connectionResult = { success: false, message: "" };
+      
+      switch (provider) {
+        case 'openai':
+          connectionResult = { success: !!process.env.OPENAI_API_KEY, message: process.env.OPENAI_API_KEY ? "OpenAI API key is configured" : "OpenAI API key not found" };
+          break;
+          
+        case 'anthropic':
+          connectionResult = { success: !!process.env.ANTHROPIC_API_KEY, message: process.env.ANTHROPIC_API_KEY ? "Anthropic API key is configured" : "Anthropic API key not found" };
+          break;
+          
+        case 'pinecone':
+          connectionResult = { success: true, message: "Pinecone connection test not implemented" };
+          break;
+          
+        case 'postgres':
+          connectionResult = { success: !!process.env.DATABASE_URL, message: process.env.DATABASE_URL ? "PostgreSQL connection is configured" : "PostgreSQL connection not found" };
+          break;
+          
+        default:
+          return res.status(400).json({ message: "Unknown provider" });
+      }
+      
+      res.json(connectionResult);
+    } catch (error) {
+      console.error("Error testing connection:", error);
+      res.status(500).json({ message: "Failed to test connection" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -16,6 +16,7 @@ import Reconciliation from "@/pages/reconciliation";
 import DataTables from "@/pages/data-tables";
 import AgentChat from "@/pages/agent-chat";
 import NotFound from "@/pages/not-found";
+import Settings from "@/pages/settings";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,6 +38,7 @@ function Router() {
           <Route path="/reconciliation" component={Reconciliation} />
           <Route path="/data-tables" component={DataTables} />
           <Route path="/agent-chat" component={AgentChat} />
+          <Route path="/settings" component={Settings} />
         </>
       )}
       <Route component={NotFound} />
