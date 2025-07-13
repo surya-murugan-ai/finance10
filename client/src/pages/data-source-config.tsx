@@ -643,35 +643,31 @@ export default function DataSourceConfig() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
+      <PageLayout title="Data Source Configuration">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-300">Loading...</p>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <PageLayout title="Data Source Configuration">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Data Source Configuration
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">
-                Configure and manage data sources for the QRT platform
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Data Source Configuration
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              Configure and manage data sources for the QRT platform
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
               <Button variant="outline" onClick={fetchDataSources}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -784,8 +780,7 @@ export default function DataSourceConfig() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {dataSources.map((source) => (
               <Card key={source.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
@@ -906,9 +901,7 @@ export default function DataSourceConfig() {
                 </CardContent>
               </Card>
             ))}
-          </div>
         </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }
