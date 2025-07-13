@@ -63,12 +63,38 @@ async def startup_event():
 
 # Authentication endpoints
 @app.post("/api/auth/login")
-async def login(email: str, password: str, db: Session = Depends(get_db)):
+async def login(credentials: dict, db: Session = Depends(get_db)):
     """User login endpoint"""
-    # Implementation for login logic
-    # For now, return a mock token
-    access_token = create_access_token(data={"sub": email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    email = credentials.get("email")
+    password = credentials.get("password")
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    
+    # For demo purposes, accept any valid email/password combination
+    # In production, you'd validate against the database
+    if "@" in email and len(password) >= 1:
+        # Create a mock user in the database if it doesn't exist
+        from app.models import User
+        from sqlalchemy.orm import Session
+        
+        existing_user = db.query(User).filter(User.email == email).first()
+        if not existing_user:
+            # Create user
+            new_user = User(
+                id=email.split("@")[0],  # Use email prefix as ID
+                email=email,
+                first_name="Demo",
+                last_name="User"
+            )
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
+        
+        access_token = create_access_token(data={"sub": email})
+        return {"access_token": access_token, "token_type": "bearer"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @app.get("/api/auth/user", response_model=UserResponse)
 async def get_current_user_info(

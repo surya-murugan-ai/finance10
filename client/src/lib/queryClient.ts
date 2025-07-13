@@ -14,9 +14,23 @@ export async function apiRequest(
 ): Promise<Response> {
   const isFormData = data instanceof FormData;
   
-  const res = await fetch(url, {
+  // Get JWT token from localStorage
+  const token = localStorage.getItem('auth_token');
+  
+  // Determine the full URL - use Python backend on port 8000
+  const fullUrl = url.startsWith('http') ? url : `http://localhost:8000${url}`;
+  
+  const headers: Record<string, string> = {};
+  if (!isFormData && data) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(fullUrl, {
     method,
-    headers: isFormData ? {} : (data ? { "Content-Type": "application/json" } : {}),
+    headers,
     body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     credentials: "include",
   });
@@ -31,7 +45,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const url = queryKey.join("/") as string;
+    const fullUrl = url.startsWith('http') ? url : `http://localhost:8000${url}`;
+    
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('auth_token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
+    const res = await fetch(fullUrl, {
+      headers,
       credentials: "include",
     });
 
