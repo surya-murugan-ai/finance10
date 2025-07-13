@@ -130,15 +130,23 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
           localStorage.setItem('refresh_token', data.refresh_token);
         }
         
+        console.log('Login successful, stored token:', data.access_token);
+        
+        // Call the login success callback first
+        onLoginSuccess(data.user, data.access_token);
+        
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
         
-        onLoginSuccess(data.user, data.access_token);
         onClose();
+        
         // Force a page refresh to ensure proper state update
-        window.location.reload();
+        setTimeout(() => {
+          console.log('Refreshing page after login');
+          window.location.href = '/';
+        }, 500);
       } else {
         setErrors([data.message || 'Login failed']);
       }

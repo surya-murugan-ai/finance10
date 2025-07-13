@@ -31,7 +31,7 @@ export function useAuth() {
         throw new Error(result.message || 'Failed to get user');
       }
     },
-    enabled: !!token,
+    enabled: !!token || !!localStorage.getItem('access_token'),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -65,8 +65,8 @@ export function useAuth() {
 
   return {
     user,
-    isLoading: isLoading && !!token,
-    isAuthenticated: !!user && !!token,
+    isLoading: isLoading && (!!token || !!localStorage.getItem('access_token')),
+    isAuthenticated: !!user && (!!token || !!localStorage.getItem('access_token')),
     login,
     logout,
     token,
