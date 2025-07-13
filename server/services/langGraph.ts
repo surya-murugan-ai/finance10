@@ -341,11 +341,11 @@ export class LangGraphOrchestrator {
         // Ensure date is properly formatted
         const journalEntry = await storage.createJournalEntry({
           journalId: entry.journalId || `JE${Date.now()}`,
-          date: entry.date || new Date().toISOString().split('T')[0],
+          date: entry.date ? new Date(entry.date) : new Date(),
           accountCode: entry.accountCode || 'MISC',
           accountName: entry.accountName || 'Miscellaneous',
-          debitAmount: parseFloat(entry.debitAmount) || 0,
-          creditAmount: parseFloat(entry.creditAmount) || 0,
+          debitAmount: String(entry.debitAmount || "0"),
+          creditAmount: String(entry.creditAmount || "0"),
           narration: entry.narration || 'Auto-generated journal entry',
           entity: entry.entity || 'System',
           documentId: document.id,
@@ -437,8 +437,8 @@ export class LangGraphOrchestrator {
   }
 
   private generateDefaultJournalEntries(document: any, extractedData: any): any[] {
-    const date = new Date().toISOString().split('T')[0];
-    const amount = extractedData?.extractedData?.totalAmount || 1000;
+    const date = new Date();
+    const amount = extractedData?.extractedData?.totalAmount || "1000";
     
     switch (document.documentType) {
       case 'vendor_invoice':
@@ -449,7 +449,7 @@ export class LangGraphOrchestrator {
             accountCode: 'EXPENSE',
             accountName: 'Vendor Expenses',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Vendor invoice - ${document.originalName}`,
             entity: 'System',
           },
@@ -458,7 +458,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'PAYABLE',
             accountName: 'Accounts Payable',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Vendor invoice - ${document.originalName}`,
             entity: 'System',
@@ -473,7 +473,7 @@ export class LangGraphOrchestrator {
             accountCode: 'RECEIVABLE',
             accountName: 'Accounts Receivable',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Sales register - ${document.originalName}`,
             entity: 'System',
           },
@@ -482,7 +482,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'SALES',
             accountName: 'Sales Revenue',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Sales register - ${document.originalName}`,
             entity: 'System',
@@ -497,7 +497,7 @@ export class LangGraphOrchestrator {
             accountCode: 'SALARY',
             accountName: 'Salary Expense',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Salary register - ${document.originalName}`,
             entity: 'System',
           },
@@ -506,7 +506,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'PAYABLE',
             accountName: 'Salary Payable',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Salary register - ${document.originalName}`,
             entity: 'System',
@@ -521,7 +521,7 @@ export class LangGraphOrchestrator {
             accountCode: 'BANK',
             accountName: 'Bank Account',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Bank statement - ${document.originalName}`,
             entity: 'System',
           },
@@ -530,7 +530,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'MISC',
             accountName: 'Miscellaneous Income',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Bank statement - ${document.originalName}`,
             entity: 'System',
@@ -545,7 +545,7 @@ export class LangGraphOrchestrator {
             accountCode: 'PURCHASE',
             accountName: 'Purchase Expense',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Purchase register - ${document.originalName}`,
             entity: 'System',
           },
@@ -554,7 +554,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'PAYABLE',
             accountName: 'Accounts Payable',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Purchase register - ${document.originalName}`,
             entity: 'System',
@@ -569,7 +569,7 @@ export class LangGraphOrchestrator {
             accountCode: 'MISC',
             accountName: 'Miscellaneous',
             debitAmount: amount,
-            creditAmount: 0,
+            creditAmount: "0",
             narration: `Document processing - ${document.originalName}`,
             entity: 'System',
           },
@@ -578,7 +578,7 @@ export class LangGraphOrchestrator {
             date,
             accountCode: 'MISC',
             accountName: 'Miscellaneous',
-            debitAmount: 0,
+            debitAmount: "0",
             creditAmount: amount,
             narration: `Document processing - ${document.originalName}`,
             entity: 'System',
