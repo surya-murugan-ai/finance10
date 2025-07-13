@@ -229,3 +229,64 @@ class ComplianceChecker:
         
         passed_checks = sum(1 for check in checks if check.get('passed', False))
         return (passed_checks / len(checks)) * 100
+    
+    def validate_gst(self, data: dict) -> dict:
+        """Validate GST calculations and compliance"""
+        try:
+            gst_number = data.get('gst_number', '')
+            cgst = float(data.get('cgst', 0))
+            sgst = float(data.get('sgst', 0))
+            igst = float(data.get('igst', 0))
+            total_tax = float(data.get('total_tax', cgst + sgst + igst))
+            
+            # Basic GST number format validation
+            gst_valid = len(gst_number) == 15 and gst_number.isalnum()
+            
+            # Tax calculation validation
+            calculated_total = cgst + sgst + igst
+            tax_valid = abs(calculated_total - total_tax) < 0.01
+            
+            return {
+                'valid': gst_valid and tax_valid,
+                'gst_number_valid': gst_valid,
+                'tax_calculation_valid': tax_valid,
+                'total_tax': calculated_total,
+                'details': {
+                    'cgst': cgst,
+                    'sgst': sgst,
+                    'igst': igst,
+                    'calculated_total': calculated_total
+                }
+            }
+        except Exception as e:
+            return {
+                'valid': False,
+                'error': str(e)
+            }
+    
+    def validate_tds(self, data: dict) -> dict:
+        """Validate TDS calculations and compliance"""
+        try:
+            transaction_amount = float(data.get('transaction_amount', 0))
+            tds_rate = float(data.get('tds_rate', 0))
+            deducted_amount = float(data.get('deducted_amount', 0))
+            
+            # Calculate expected TDS
+            expected_tds = (transaction_amount * tds_rate) / 100
+            
+            # Validate TDS calculation
+            tds_valid = abs(expected_tds - deducted_amount) < 0.01
+            
+            return {
+                'valid': tds_valid,
+                'expected_tds': expected_tds,
+                'actual_tds': deducted_amount,
+                'rate': tds_rate,
+                'base_amount': transaction_amount,
+                'variance': abs(expected_tds - deducted_amount)
+            }
+        except Exception as e:
+            return {
+                'valid': False,
+                'error': str(e)
+            }

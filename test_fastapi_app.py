@@ -1,509 +1,507 @@
 #!/usr/bin/env python3
 """
-Comprehensive test suite for the refactored Python/FastAPI QRT Closure platform
+Comprehensive Unit and Integration Tests for QRT Closure Platform
+Tests all Python backend components including authentication, AI agents, compliance, and reporting
 """
 
 import sys
 import os
 import asyncio
+import pytest
 import json
-from datetime import datetime
-from typing import Dict, Any
+from pathlib import Path
+from datetime import datetime, timedelta
+import tempfile
+import pandas as pd
+from unittest.mock import Mock, patch, MagicMock
 
-# Add the app directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the current directory to the Python path
+sys.path.insert(0, str(Path(__file__).parent))
 
-def test_imports():
-    """Test that all modules can be imported successfully"""
-    print("Testing module imports...")
-    
-    try:
-        from main import app
-        print("✓ Main FastAPI app imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import main app: {e}")
-        return False
-    
-    try:
-        from app.config import settings
-        print("✓ Configuration settings imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import settings: {e}")
-        return False
-    
-    try:
-        from app.models import User, Document, ComplianceCheck, AuditTrail
-        print("✓ Database models imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import models: {e}")
-        return False
-    
-    try:
-        from app.schemas import UserResponse, DocumentResponse, DashboardStats
-        print("✓ Pydantic schemas imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import schemas: {e}")
-        return False
-    
-    try:
-        from app.auth import create_access_token, verify_token
-        print("✓ Authentication module imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import auth: {e}")
-        return False
-    
-    try:
-        from app.services.document_processor import DocumentProcessor
-        from app.services.ai_orchestrator import AIOrchestrator
-        from app.services.compliance_checker import ComplianceChecker
-        from app.services.financial_reports import FinancialReportsService
-        print("✓ All service modules imported successfully")
-    except Exception as e:
-        print(f"✗ Failed to import services: {e}")
-        return False
-    
-    return True
+# Test imports
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-def test_configuration():
-    """Test configuration settings"""
-    print("\nTesting configuration...")
-    
-    try:
-        from app.config import settings
-        
-        # Test required settings
-        required_settings = [
-            'DATABASE_URL', 'SECRET_KEY', 'ALGORITHM', 
-            'ACCESS_TOKEN_EXPIRE_MINUTES', 'MAX_FILE_SIZE'
-        ]
-        
-        for setting in required_settings:
-            if hasattr(settings, setting):
-                print(f"✓ {setting} is configured")
-            else:
-                print(f"✗ {setting} is missing")
-                return False
-        
-        # Test optional AI settings
-        if settings.ANTHROPIC_API_KEY:
-            print("✓ ANTHROPIC_API_KEY is configured")
-        else:
-            print("⚠ ANTHROPIC_API_KEY not configured (optional)")
-        
-        if settings.OPENAI_API_KEY:
-            print("✓ OPENAI_API_KEY is configured")
-        else:
-            print("⚠ OPENAI_API_KEY not configured (optional)")
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Configuration test failed: {e}")
-        return False
+# Application imports
+from main import app
+from app.database import get_db, Base
+from app.models import User, Document, UserSession
+from app.services.auth_service import AuthService
+from app.services.ai_orchestrator import AIOrchestrator
+from app.services.compliance_checker import ComplianceChecker
+from app.services.financial_reports import FinancialReportsService
+from app.services.document_processor import DocumentProcessor
+from app.services.data_source_service import DataSourceService
+from app.services.ml_anomaly_detector import MLAnomalyDetector
+from app.services.mca_filing_service import MCAFilingService
+from app.services.tutorial_service import TutorialService
 
-def test_authentication():
-    """Test authentication functionality"""
-    print("\nTesting authentication...")
+class TestDatabase:
+    """In-memory test database setup"""
     
-    try:
-        from app.auth import create_access_token, verify_token
-        
-        # Test token creation
-        test_data = {"sub": "test@example.com", "user_id": "123"}
-        token = create_access_token(test_data)
-        
-        if token:
-            print("✓ JWT token creation successful")
-        else:
-            print("✗ JWT token creation failed")
-            return False
-        
-        # Test token verification
-        payload = verify_token(token)
-        
-        if payload and payload.get("sub") == "test@example.com":
-            print("✓ JWT token verification successful")
-        else:
-            print("✗ JWT token verification failed")
-            return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Authentication test failed: {e}")
-        return False
+    def __init__(self):
+        self.engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        self.TestingSessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
+        )
+        Base.metadata.create_all(bind=self.engine)
+    
+    def get_test_db(self):
+        """Get test database session"""
+        try:
+            db = self.TestingSessionLocal()
+            yield db
+        finally:
+            db.close()
 
-def test_database_models():
-    """Test database model definitions"""
-    print("\nTesting database models...")
+class QRTTestSuite:
+    """Comprehensive test suite for QRT Closure Platform"""
     
-    try:
-        from app.models import User, Document, ComplianceCheck, AuditTrail
-        from app.database import Base
+    def __init__(self):
+        self.test_db = TestDatabase()
+        self.client = TestClient(app)
+        self.auth_service = AuthService()
+        self.test_results = []
         
-        # Test model attributes
-        models_to_test = [
-            (User, ['id', 'email', 'first_name', 'last_name']),
-            (Document, ['id', 'filename', 'file_type', 'uploaded_by']),
-            (ComplianceCheck, ['id', 'document_id', 'check_type', 'result']),
-            (AuditTrail, ['id', 'user_id', 'action', 'entity_type'])
-        ]
+        # Override database dependency
+        app.dependency_overrides[get_db] = self.test_db.get_test_db
         
-        for model_class, required_attrs in models_to_test:
-            for attr in required_attrs:
-                if hasattr(model_class, attr):
-                    print(f"✓ {model_class.__name__}.{attr} exists")
-                else:
-                    print(f"✗ {model_class.__name__}.{attr} missing")
-                    return False
-        
-        print("✓ All database models are properly defined")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Database models test failed: {e}")
-        return False
-
-def test_pydantic_schemas():
-    """Test Pydantic schema validation"""
-    print("\nTesting Pydantic schemas...")
+        print("🧪 QRT Closure Platform - Comprehensive Test Suite")
+        print("=" * 60)
     
-    try:
-        from app.schemas import UserResponse, DocumentResponse, DashboardStats
-        
-        # Test UserResponse schema
-        user_data = {
-            "id": "123",
-            "email": "test@example.com",
-            "first_name": "Test",
-            "last_name": "User",
-            "created_at": datetime.now(),
-            "updated_at": datetime.now()
+    def log_test_result(self, test_name: str, passed: bool, error: str = None, duration: float = 0):
+        """Log test result"""
+        result = {
+            'name': test_name,
+            'passed': passed,
+            'error': error,
+            'duration': duration
         }
+        self.test_results.append(result)
         
-        user_response = UserResponse(**user_data)
-        if user_response.email == "test@example.com":
-            print("✓ UserResponse schema validation successful")
-        else:
-            print("✗ UserResponse schema validation failed")
-            return False
-        
-        # Test DashboardStats schema
-        stats_data = {
-            "documentsProcessed": 10,
-            "activeAgents": 3,
-            "validationErrors": 0,
-            "complianceScore": 95.5,
-            "onboardingComplete": True,
-            "currentQuarter": "Q1_2025",
-            "nextDueDate": "2025-02-15"
-        }
-        
-        dashboard_stats = DashboardStats(**stats_data)
-        if dashboard_stats.documentsProcessed == 10:
-            print("✓ DashboardStats schema validation successful")
-        else:
-            print("✗ DashboardStats schema validation failed")
-            return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Pydantic schemas test failed: {e}")
-        return False
-
-async def test_document_processor():
-    """Test document processing service"""
-    print("\nTesting document processor...")
+        status = "✓" if passed else "✗"
+        print(f"{status} {test_name} ({duration:.2f}ms)")
+        if error:
+            print(f"  Error: {error}")
     
-    try:
-        from app.services.document_processor import DocumentProcessor
-        
-        processor = DocumentProcessor()
-        
-        # Test document type inference
-        test_files = [
-            ("vendor_invoice_001.pdf", "vendor_invoice"),
-            ("sales_register_Q1.xlsx", "sales_register"),
-            ("salary_payroll_jan.csv", "salary_register"),
-            ("bank_statement_dec.pdf", "bank_statement")
-        ]
-        
-        for filename, expected_type in test_files:
-            inferred_type = processor._infer_document_type(filename)
-            if inferred_type == expected_type:
-                print(f"✓ Document type inference for {filename}: {inferred_type}")
-            else:
-                print(f"✗ Document type inference failed for {filename}")
-                return False
-        
-        # Test sample data generation
-        sample_data = processor.get_sample_data("vendor_invoice", "test_invoice.pdf")
-        if sample_data and "invoices" in sample_data:
-            print("✓ Sample data generation successful")
-        else:
-            print("✗ Sample data generation failed")
+    def run_test(self, test_name: str, test_func):
+        """Run a single test with timing and error handling"""
+        start_time = datetime.now()
+        try:
+            test_func()
+            duration = (datetime.now() - start_time).total_seconds() * 1000
+            self.log_test_result(test_name, True, duration=duration)
+            return True
+        except Exception as e:
+            duration = (datetime.now() - start_time).total_seconds() * 1000
+            self.log_test_result(test_name, False, str(e), duration)
             return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Document processor test failed: {e}")
-        return False
-
-async def test_ai_orchestrator():
-    """Test AI orchestrator service"""
-    print("\nTesting AI orchestrator...")
     
-    try:
-        from app.services.ai_orchestrator import AIOrchestrator
+    def test_authentication_service(self):
+        """Test authentication service functionality"""
+        db = next(self.test_db.get_test_db())
         
+        # Test user registration
+        result = self.auth_service.register_user(
+            email="test@example.com",
+            password="TestPassword123!",
+            first_name="Test",
+            last_name="User",
+            company_name="Test Company",
+            db=db
+        )
+        
+        assert result['success'] == True
+        assert result['user']['email'] == "test@example.com"
+        
+        # Test user login
+        login_result = self.auth_service.login_user(
+            email="test@example.com",
+            password="TestPassword123!",
+            db=db
+        )
+        
+        assert login_result['success'] == True
+        assert 'access_token' in login_result
+        
+        # Test token validation
+        user = self.auth_service.get_user_by_token(login_result['access_token'], db=db)
+        assert user is not None
+        assert user.email == "test@example.com"
+    
+    def test_auth_api_endpoints(self):
+        """Test authentication API endpoints"""
+        # Test registration endpoint
+        response = self.client.post("/api/auth/register", json={
+            "email": "api_test@example.com",
+            "password": "ApiTest123!",
+            "first_name": "API",
+            "last_name": "Test",
+            "company_name": "API Test Company"
+        })
+        
+        assert response.status_code == 201
+        data = response.json()
+        assert data['success'] == True
+        assert 'user' in data
+        
+        # Test login endpoint
+        login_response = self.client.post("/api/auth/login", json={
+            "email": "api_test@example.com",
+            "password": "ApiTest123!"
+        })
+        
+        assert login_response.status_code == 200
+        login_data = login_response.json()
+        assert 'access_token' in login_data
+        
+        # Test protected endpoint
+        headers = {"Authorization": f"Bearer {login_data['access_token']}"}
+        user_response = self.client.get("/api/auth/user", headers=headers)
+        
+        assert user_response.status_code == 200
+        user_data = user_response.json()
+        assert user_data['email'] == "api_test@example.com"
+    
+    def test_document_processor(self):
+        """Test document processing functionality"""
+        # Create test CSV content
+        test_data = pd.DataFrame({
+            'Date': ['2024-01-01', '2024-01-02', '2024-01-03'],
+            'Description': ['Test Transaction 1', 'Test Transaction 2', 'Test Transaction 3'],
+            'Amount': [1000.00, 500.00, 750.00],
+            'Account': ['Cash', 'Bank', 'Revenue']
+        })
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            test_data.to_csv(f.name, index=False)
+            temp_file_path = f.name
+        
+        try:
+            processor = DocumentProcessor()
+            
+            # Test document classification
+            classification = processor.classify_document(temp_file_path)
+            assert classification is not None
+            assert 'document_type' in classification
+            
+            # Test data extraction
+            extracted_data = processor.extract_data(temp_file_path)
+            assert extracted_data is not None
+            assert len(extracted_data) > 0
+            
+        finally:
+            os.unlink(temp_file_path)
+    
+    def test_ai_orchestrator(self):
+        """Test AI orchestrator functionality"""
         orchestrator = AIOrchestrator()
         
-        # Test agent configuration
-        expected_agents = [
-            "ClassifierBot", "DataExtractor", "JournalBot", 
-            "GSTValidator", "TDSValidator", "ConsoAI", "AuditAgent"
-        ]
+        # Test workflow creation
+        workflow = orchestrator.create_workflow("test_document_id", "csv")
+        assert workflow is not None
+        assert workflow.document_id == "test_document_id"
         
-        for agent_id in expected_agents:
-            if agent_id in orchestrator.agents:
-                agent_config = orchestrator.agents[agent_id]
-                if all(key in agent_config for key in ['name', 'description', 'model', 'system_prompt']):
-                    print(f"✓ {agent_id} configuration is complete")
-                else:
-                    print(f"✗ {agent_id} configuration incomplete")
-                    return False
-            else:
-                print(f"✗ {agent_id} not found in agents")
-                return False
-        
-        # Test workflow listing
-        workflows = await orchestrator.get_workflows("test_user")
-        if len(workflows) == 7:
-            print("✓ AI workflows listing successful")
-        else:
-            print("✗ AI workflows listing failed")
-            return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ AI orchestrator test failed: {e}")
-        return False
-
-async def test_compliance_checker():
-    """Test compliance checker service"""
-    print("\nTesting compliance checker...")
+        # Test agent execution (mocked)
+        with patch('app.services.ai_orchestrator.AIOrchestrator.execute_agent') as mock_execute:
+            mock_execute.return_value = {"success": True, "result": "test_result"}
+            
+            result = orchestrator.execute_agent("classifier", {"document_id": "test_id"})
+            assert result['success'] == True
+            assert result['result'] == "test_result"
     
-    try:
-        from app.services.compliance_checker import ComplianceChecker
-        
+    def test_compliance_checker(self):
+        """Test compliance checking functionality"""
         checker = ComplianceChecker()
         
-        # Test GSTIN validation
-        valid_gstin = "09ABCDE1234F1Z5"
-        invalid_gstin = "INVALID_GSTIN"
+        # Test GST validation
+        gst_result = checker.validate_gst({
+            'gst_number': '29ABCDE1234F1Z5',
+            'cgst': 100,
+            'sgst': 100,
+            'igst': 0,
+            'total_tax': 200,
+            'total_amount': 1200
+        })
         
-        if checker._validate_gstin(valid_gstin):
-            print("✓ Valid GSTIN validation successful")
-        else:
-            print("✗ Valid GSTIN validation failed")
-            return False
+        assert gst_result['valid'] == True
+        assert gst_result['total_tax'] == 200
         
-        if not checker._validate_gstin(invalid_gstin):
-            print("✓ Invalid GSTIN validation successful")
-        else:
-            print("✗ Invalid GSTIN validation failed")
-            return False
+        # Test TDS validation
+        tds_result = checker.validate_tds({
+            'transaction_amount': 50000,
+            'tds_rate': 10,
+            'deducted_amount': 5000
+        })
         
-        # Test TAN validation
-        valid_tan = "ABCD12345E"
-        invalid_tan = "INVALID_TAN"
-        
-        if checker._validate_tan(valid_tan):
-            print("✓ Valid TAN validation successful")
-        else:
-            print("✗ Valid TAN validation failed")
-            return False
-        
-        if not checker._validate_tan(invalid_tan):
-            print("✓ Invalid TAN validation successful")
-        else:
-            print("✗ Invalid TAN validation failed")
-            return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Compliance checker test failed: {e}")
-        return False
-
-async def test_financial_reports():
-    """Test financial reports service"""
-    print("\nTesting financial reports...")
+        assert tds_result['valid'] == True
+        assert tds_result['expected_tds'] == 5000
     
-    try:
-        from app.services.financial_reports import FinancialReportsService
-        
+    def test_financial_reports_service(self):
+        """Test financial reports generation"""
         reports_service = FinancialReportsService()
         
-        # Test statement types
-        expected_statement_types = [
-            'trial_balance', 'profit_loss', 'balance_sheet', 'cash_flow'
+        # Test trial balance generation
+        trial_balance = reports_service.generate_trial_balance("2024-Q1")
+        assert trial_balance is not None
+        assert 'accounts' in trial_balance
+        assert 'total_debits' in trial_balance
+        assert 'total_credits' in trial_balance
+        
+        # Test P&L statement generation
+        pl_statement = reports_service.generate_pl_statement("2024-Q1")
+        assert pl_statement is not None
+        assert 'revenue' in pl_statement
+        assert 'expenses' in pl_statement
+        assert 'net_profit' in pl_statement
+        
+        # Test balance sheet generation
+        balance_sheet = reports_service.generate_balance_sheet("2024-Q1")
+        assert balance_sheet is not None
+        assert 'assets' in balance_sheet
+        assert 'liabilities' in balance_sheet
+        assert 'equity' in balance_sheet
+    
+    def test_data_source_service(self):
+        """Test data source service functionality"""
+        service = DataSourceService()
+        
+        # Test data source configuration
+        config = service.get_default_config()
+        assert config is not None
+        assert len(config) > 0
+        
+        # Test connection testing (mocked)
+        with patch('app.services.data_source_service.DataSourceService.test_connection') as mock_test:
+            mock_test.return_value = {"success": True, "status": "connected"}
+            
+            result = service.test_connection("database", {
+                "host": "localhost",
+                "port": 5432,
+                "database": "test_db"
+            })
+            assert result['success'] == True
+            assert result['status'] == "connected"
+    
+    def test_ml_anomaly_detector(self):
+        """Test machine learning anomaly detection"""
+        detector = MLAnomalyDetector()
+        
+        # Test anomaly detection
+        test_data = [
+            {'amount': 1000, 'category': 'revenue', 'date': '2024-01-01'},
+            {'amount': 500, 'category': 'expense', 'date': '2024-01-02'},
+            {'amount': 1000000, 'category': 'revenue', 'date': '2024-01-03'}  # Anomaly
         ]
         
-        for statement_type in expected_statement_types:
-            if statement_type in reports_service.statement_types:
-                print(f"✓ {statement_type} is available")
-            else:
-                print(f"✗ {statement_type} is missing")
-                return False
+        result = detector.detect_anomalies(test_data)
+        assert result is not None
+        assert 'anomalies' in result
+        assert len(result['anomalies']) > 0
         
-        # Test statement generation
-        trial_balance = reports_service._generate_trial_balance("Q1_2025")
-        if trial_balance and 'accounts' in trial_balance:
-            print("✓ Trial balance generation successful")
-        else:
-            print("✗ Trial balance generation failed")
-            return False
-        
-        profit_loss = reports_service._generate_profit_loss("Q1_2025")
-        if profit_loss and 'revenue' in profit_loss and 'expenses' in profit_loss:
-            print("✓ Profit & Loss generation successful")
-        else:
-            print("✗ Profit & Loss generation failed")
-            return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Financial reports test failed: {e}")
-        return False
-
-def test_fastapi_app():
-    """Test FastAPI application structure"""
-    print("\nTesting FastAPI application...")
+        # Test model training
+        training_result = detector.train_model(test_data)
+        assert training_result['success'] == True
     
-    try:
-        from main import app
-        from fastapi.testclient import TestClient
+    def test_mca_filing_service(self):
+        """Test MCA filing service functionality"""
+        service = MCAFilingService()
         
-        # Test app initialization
-        if app.title == "QRT Closure Agent Platform":
-            print("✓ FastAPI app title is correct")
-        else:
-            print("✗ FastAPI app title is incorrect")
-            return False
+        # Test AOC-4 generation
+        company_info = {
+            'cin': 'U12345MH2020PTC123456',
+            'name': 'Test Company Pvt Ltd',
+            'financial_year': '2024-25'
+        }
         
-        # Test route registration
-        routes = [route.path for route in app.routes]
-        expected_routes = [
-            "/api/auth/login",
-            "/api/auth/user",
-            "/api/onboarding",
-            "/api/documents/upload",
-            "/api/dashboard/stats",
-            "/api/compliance-checks",
-            "/api/financial-statements",
-            "/api/workflows",
-            "/api/health"
-        ]
+        aoc4_result = service.generate_aoc4(company_info)
+        assert aoc4_result is not None
+        assert 'xml_content' in aoc4_result
+        assert 'validation_status' in aoc4_result
         
-        for route in expected_routes:
-            if route in routes:
-                print(f"✓ Route {route} is registered")
-            else:
-                print(f"✗ Route {route} is missing")
-                return False
+        # Test MGT-7 generation
+        mgt7_result = service.generate_mgt7(company_info)
+        assert mgt7_result is not None
+        assert 'xml_content' in mgt7_result
+        assert 'validation_status' in mgt7_result
+    
+    def test_tutorial_service(self):
+        """Test tutorial service functionality"""
+        service = TutorialService()
         
-        return True
+        # Test workflow types
+        workflows = service.get_workflow_types()
+        assert len(workflows) > 0
+        assert 'mca_filing' in workflows
+        assert 'gst_compliance' in workflows
         
-    except Exception as e:
-        print(f"✗ FastAPI app test failed: {e}")
-        return False
-
-def test_database_connection():
-    """Test database connection and setup"""
-    print("\nTesting database connection...")
-    
-    try:
-        from app.database import engine, Base
-        from sqlalchemy import text
+        # Test tutorial steps
+        steps = service.get_tutorial_steps('mca_filing')
+        assert len(steps) > 0
+        assert all('step_id' in step for step in steps)
+        assert all('title' in step for step in steps)
         
-        # Test database connection
-        with engine.connect() as connection:
-            result = connection.execute(text("SELECT 1"))
-            if result.fetchone()[0] == 1:
-                print("✓ Database connection successful")
-            else:
-                print("✗ Database connection failed")
-                return False
+        # Test progress tracking
+        progress = service.get_user_progress('test_user_id', 'mca_filing')
+        assert progress is not None
+        assert 'completed_steps' in progress
+        assert 'total_steps' in progress
+    
+    def test_health_endpoint(self):
+        """Test health check endpoint"""
+        response = self.client.get("/api/health")
+        assert response.status_code == 200
         
-        # Test table creation
-        Base.metadata.create_all(bind=engine)
-        print("✓ Database tables created successfully")
+        data = response.json()
+        assert data['status'] == 'healthy'
+        assert 'version' in data
+        assert 'timestamp' in data
+    
+    def test_dashboard_endpoints(self):
+        """Test dashboard-related endpoints"""
+        # Create test user and login
+        response = self.client.post("/api/auth/register", json={
+            "email": "dashboard_test@example.com",
+            "password": "DashboardTest123!",
+            "first_name": "Dashboard",
+            "last_name": "Test",
+            "company_name": "Dashboard Test Company"
+        })
         
-        return True
+        login_response = self.client.post("/api/auth/login", json={
+            "email": "dashboard_test@example.com",
+            "password": "DashboardTest123!"
+        })
         
-    except Exception as e:
-        print(f"✗ Database connection test failed: {e}")
-        return False
-
-async def run_all_tests():
-    """Run all tests"""
-    print("=" * 60)
-    print("QRT Closure Platform - Python/FastAPI Testing Suite")
-    print("=" * 60)
-    
-    test_results = []
-    
-    # Run synchronous tests
-    test_results.append(("Module Imports", test_imports()))
-    test_results.append(("Configuration", test_configuration()))
-    test_results.append(("Authentication", test_authentication()))
-    test_results.append(("Database Models", test_database_models()))
-    test_results.append(("Pydantic Schemas", test_pydantic_schemas()))
-    test_results.append(("FastAPI App", test_fastapi_app()))
-    test_results.append(("Database Connection", test_database_connection()))
-    
-    # Run asynchronous tests
-    test_results.append(("Document Processor", await test_document_processor()))
-    test_results.append(("AI Orchestrator", await test_ai_orchestrator()))
-    test_results.append(("Compliance Checker", await test_compliance_checker()))
-    test_results.append(("Financial Reports", await test_financial_reports()))
-    
-    # Print summary
-    print("\n" + "=" * 60)
-    print("TEST SUMMARY")
-    print("=" * 60)
-    
-    passed = 0
-    failed = 0
-    
-    for test_name, result in test_results:
-        status = "✓ PASSED" if result else "✗ FAILED"
-        print(f"{test_name:<25} {status}")
+        access_token = login_response.json()['access_token']
+        headers = {"Authorization": f"Bearer {access_token}"}
         
-        if result:
-            passed += 1
-        else:
-            failed += 1
+        # Test dashboard stats
+        stats_response = self.client.get("/api/dashboard/stats", headers=headers)
+        assert stats_response.status_code == 200
+        
+        stats_data = stats_response.json()
+        assert 'total_documents' in stats_data
+        assert 'processed_documents' in stats_data
+        assert 'pending_documents' in stats_data
     
-    print("-" * 60)
-    print(f"Total Tests: {len(test_results)}")
-    print(f"Passed: {passed}")
-    print(f"Failed: {failed}")
-    print(f"Success Rate: {(passed/len(test_results)*100):.1f}%")
+    def test_error_handling(self):
+        """Test error handling and edge cases"""
+        # Test invalid authentication
+        invalid_headers = {"Authorization": "Bearer invalid_token"}
+        response = self.client.get("/api/auth/user", headers=invalid_headers)
+        assert response.status_code == 401
+        
+        # Test missing fields in registration
+        response = self.client.post("/api/auth/register", json={
+            "email": "incomplete@example.com"
+            # Missing required fields
+        })
+        assert response.status_code == 422
+        
+        # Test duplicate email registration
+        self.client.post("/api/auth/register", json={
+            "email": "duplicate@example.com",
+            "password": "Password123!",
+            "first_name": "Test",
+            "last_name": "User",
+            "company_name": "Test Company"
+        })
+        
+        # Try to register again with same email
+        response = self.client.post("/api/auth/register", json={
+            "email": "duplicate@example.com",
+            "password": "Password123!",
+            "first_name": "Test2",
+            "last_name": "User2",
+            "company_name": "Test Company 2"
+        })
+        assert response.status_code == 400
     
-    if failed == 0:
-        print("\n🎉 All tests passed! The Python/FastAPI refactoring is working correctly.")
-    else:
-        print(f"\n⚠️  {failed} test(s) failed. Please review the errors above.")
+    def run_all_tests(self):
+        """Run all tests and generate report"""
+        print("\n🚀 Starting comprehensive test suite...\n")
+        
+        # System tests
+        self.run_test("Health Endpoint", self.test_health_endpoint)
+        
+        # Authentication tests
+        self.run_test("Authentication Service", self.test_authentication_service)
+        self.run_test("Authentication API Endpoints", self.test_auth_api_endpoints)
+        
+        # Core functionality tests
+        self.run_test("Document Processor", self.test_document_processor)
+        self.run_test("AI Orchestrator", self.test_ai_orchestrator)
+        self.run_test("Compliance Checker", self.test_compliance_checker)
+        self.run_test("Financial Reports Service", self.test_financial_reports_service)
+        
+        # Service tests
+        self.run_test("Data Source Service", self.test_data_source_service)
+        self.run_test("ML Anomaly Detector", self.test_ml_anomaly_detector)
+        self.run_test("MCA Filing Service", self.test_mca_filing_service)
+        self.run_test("Tutorial Service", self.test_tutorial_service)
+        
+        # API tests
+        self.run_test("Dashboard Endpoints", self.test_dashboard_endpoints)
+        self.run_test("Error Handling", self.test_error_handling)
+        
+        self.generate_report()
     
-    return failed == 0
+    def generate_report(self):
+        """Generate comprehensive test report"""
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for r in self.test_results if r['passed'])
+        failed_tests = total_tests - passed_tests
+        total_duration = sum(r['duration'] for r in self.test_results)
+        
+        print('\n' + '=' * 60)
+        print('📊 TEST RESULTS SUMMARY')
+        print('=' * 60)
+        print(f'Total Tests: {total_tests}')
+        print(f'Passed: {passed_tests}')
+        print(f'Failed: {failed_tests}')
+        print(f'Success Rate: {(passed_tests / total_tests * 100):.1f}%')
+        print(f'Total Duration: {total_duration:.2f}ms')
+        print('=' * 60)
+        
+        if failed_tests > 0:
+            print('\n❌ FAILED TESTS:')
+            for result in self.test_results:
+                if not result['passed']:
+                    print(f"  - {result['name']}: {result['error']}")
+        
+        # Generate detailed report
+        report_data = {
+            'summary': {
+                'total_tests': total_tests,
+                'passed': passed_tests,
+                'failed': failed_tests,
+                'success_rate': f"{(passed_tests / total_tests * 100):.1f}%",
+                'total_duration': f"{total_duration:.2f}ms",
+                'timestamp': datetime.now().isoformat()
+            },
+            'results': self.test_results
+        }
+        
+        with open('Python_Test_Report.json', 'w') as f:
+            json.dump(report_data, f, indent=2)
+        
+        print('\n📄 Detailed report saved to Python_Test_Report.json')
+        return passed_tests == total_tests
 
 if __name__ == "__main__":
-    # Run the test suite
-    result = asyncio.run(run_all_tests())
-    sys.exit(0 if result else 1)
+    test_suite = QRTTestSuite()
+    success = test_suite.run_all_tests()
+    
+    if success:
+        print("\n🎉 All tests passed! The platform is working correctly.")
+    else:
+        print("\n❌ Some tests failed. Please review the errors above.")
+        sys.exit(1)

@@ -3,7 +3,7 @@ Document processing service for file upload and validation
 """
 import os
 import pandas as pd
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from fastapi import UploadFile, HTTPException
 import magic
 from io import BytesIO
@@ -203,3 +203,7 @@ class DocumentProcessor:
         }
         
         return sample_data.get(document_type, {'message': 'Document processed successfully'})
+    
+    def get_supported_formats(self) -> List[str]:
+        """Get supported file formats"""
+        return list(self.ALLOWED_EXTENSIONS)

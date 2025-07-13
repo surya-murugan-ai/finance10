@@ -136,7 +136,7 @@ class AIOrchestrator:
             }
         }
     
-    async def get_workflows(self, user_id: str) -> List[Dict[str, Any]]:
+    async def get_workflows(self, user_id: str = None) -> List[Dict[str, Any]]:
         """Get available AI workflows"""
         workflows = []
         
@@ -300,3 +300,7 @@ class AIOrchestrator:
             "result": result,
             "timestamp": datetime.utcnow().isoformat()
         }
+    
+    def get_available_workflows(self) -> List[Dict[str, Any]]:
+        """Get available workflows - alias for compatibility"""
+        return self.get_workflows()

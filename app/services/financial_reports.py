@@ -274,3 +274,7 @@ class FinancialReportsService:
             'export_url': f"/api/exports/{statement_id}.{format}",
             'generated_at': datetime.utcnow().isoformat()
         }
+    
+    def generate_trial_balance(self, period: str) -> Dict[str, Any]:
+        """Generate trial balance for a specific period"""
+        return self._generate_trial_balance(period)

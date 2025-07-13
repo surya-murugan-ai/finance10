@@ -41,7 +41,7 @@ class ModelMetrics:
     training_samples: int
     last_updated: datetime
 
-class FinancialAnomalyDetector:
+class MLAnomalyDetector:
     """
     Advanced ML-based anomaly detection system for financial data
     Supports multiple algorithms and ensemble methods
@@ -79,6 +79,87 @@ class FinancialAnomalyDetector:
         
         # Initialize models
         self._initialize_models()
+    
+    def _initialize_models(self):
+        """Initialize all ML models"""
+        self.models['isolation_forest'] = IsolationForest(**self.model_configs['isolation_forest'])
+        self.models['one_class_svm'] = OneClassSVM(**self.model_configs['one_class_svm'])
+        self.models['elliptic_envelope'] = EllipticEnvelope(**self.model_configs['elliptic_envelope'])
+        self.scalers['default'] = StandardScaler()
+    
+    def detect_anomalies(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect anomalies in financial transaction data"""
+        if not data:
+            return {'anomalies': [], 'total_transactions': 0}
+        
+        try:
+            # Convert to DataFrame
+            df = pd.DataFrame(data)
+            
+            # Extract features
+            features = self._extract_features(df)
+            
+            # Scale features
+            scaled_features = self.scalers['default'].fit_transform(features)
+            
+            # Detect anomalies using isolation forest
+            anomaly_predictions = self.models['isolation_forest'].fit_predict(scaled_features)
+            
+            # Get anomaly scores
+            anomaly_scores = self.models['isolation_forest'].decision_function(scaled_features)
+            
+            # Process results
+            anomalies = []
+            for i, (prediction, score) in enumerate(zip(anomaly_predictions, anomaly_scores)):
+                if prediction == -1:  # Anomaly detected
+                    anomalies.append({
+                        'transaction_index': i,
+                        'anomaly_score': float(score),
+                        'original_data': data[i],
+                        'confidence': abs(float(score))
+                    })
+            
+            return {
+                'anomalies': anomalies,
+                'total_transactions': len(data),
+                'anomaly_count': len(anomalies),
+                'anomaly_rate': len(anomalies) / len(data) * 100 if data else 0
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in anomaly detection: {str(e)}")
+            return {
+                'anomalies': [],
+                'total_transactions': len(data),
+                'error': str(e)
+            }
+    
+    def _extract_features(self, df: pd.DataFrame) -> np.ndarray:
+        """Extract numerical features from transaction data"""
+        features = []
+        
+        # Amount feature
+        if 'amount' in df.columns:
+            features.append(df['amount'].astype(float))
+        
+        # Add more features as needed
+        if 'category' in df.columns:
+            # Simple category encoding - convert to numeric
+            category_mapping = {cat: i for i, cat in enumerate(df['category'].unique())}
+            category_numeric = df['category'].map(category_mapping)
+            features.append(category_numeric)
+        
+        if len(features) == 0:
+            # Fallback: use all numeric columns
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            if len(numeric_cols) > 0:
+                for col in numeric_cols:
+                    features.append(df[col].astype(float))
+            else:
+                # Ultimate fallback: create a dummy feature
+                features.append(np.ones(len(df)))
+        
+        return np.column_stack(features)
     
     def _initialize_models(self):
         """Initialize all ML models for anomaly detection"""
