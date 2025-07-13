@@ -179,3 +179,116 @@ class IntercompanyTransaction(Base):
     reconciliation_id = Column(String, ForeignKey("reconciliation_matches.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# ML Anomaly Detection Models
+class AnomalyDetectionModel(Base):
+    __tablename__ = "anomaly_detection_models"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    model_name = Column(String, nullable=False)
+    model_type = Column(String)  # isolation_forest, one_class_svm, etc.
+    version = Column(String)
+    parameters = Column(JSON)
+    training_data_size = Column(Integer)
+    training_date = Column(DateTime)
+    performance_metrics = Column(JSON)
+    model_file_path = Column(String)
+    is_active = Column(Boolean, default=True)
+    created_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = relationship("User")
+    anomaly_results = relationship("AnomalyDetectionResult", back_populates="model")
+
+class AnomalyDetectionResult(Base):
+    __tablename__ = "anomaly_detection_results"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    model_id = Column(String, ForeignKey("anomaly_detection_models.id"))
+    transaction_id = Column(String)
+    document_id = Column(String, ForeignKey("documents.id"))
+    anomaly_score = Column(DECIMAL(precision=10, scale=6))
+    is_anomaly = Column(Boolean)
+    confidence_level = Column(DECIMAL(precision=5, scale=4))
+    anomaly_reasons = Column(JSON)
+    detection_method = Column(String)
+    features_used = Column(JSON)
+    model_version = Column(String)
+    detected_at = Column(DateTime, default=datetime.utcnow)
+    reviewed_by = Column(String, ForeignKey("users.id"))
+    review_status = Column(String, default="pending")  # pending, confirmed, false_positive
+    review_notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    model = relationship("AnomalyDetectionModel", back_populates="anomaly_results")
+    document = relationship("Document")
+    reviewer = relationship("User")
+
+class ModelPerformanceMetric(Base):
+    __tablename__ = "model_performance_metrics"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    model_id = Column(String, ForeignKey("anomaly_detection_models.id"))
+    metric_name = Column(String)
+    metric_value = Column(DECIMAL(precision=10, scale=6))
+    metric_type = Column(String)  # accuracy, precision, recall, f1_score, etc.
+    measurement_date = Column(DateTime)
+    samples_processed = Column(Integer)
+    anomalies_detected = Column(Integer)
+    processing_time_ms = Column(DECIMAL(precision=10, scale=2))
+    data_window = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    model = relationship("AnomalyDetectionModel")
+
+class DataDriftMetric(Base):
+    __tablename__ = "data_drift_metrics"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    feature_name = Column(String)
+    drift_score = Column(DECIMAL(precision=10, scale=6))
+    drift_threshold = Column(DECIMAL(precision=10, scale=6))
+    is_drift_detected = Column(Boolean)
+    drift_type = Column(String)  # mean, variance, distribution
+    statistical_test = Column(String)
+    p_value = Column(DECIMAL(precision=10, scale=6))
+    reference_period = Column(String)
+    current_period = Column(String)
+    detection_date = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class ModelAlert(Base):
+    __tablename__ = "model_alerts"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    alert_type = Column(String)  # performance, drift, error, anomaly_rate
+    severity = Column(String)    # low, medium, high, critical
+    model_id = Column(String, ForeignKey("anomaly_detection_models.id"))
+    metric_name = Column(String)
+    current_value = Column(DECIMAL(precision=10, scale=6))
+    threshold_value = Column(DECIMAL(precision=10, scale=6))
+    description = Column(Text)
+    recommendation = Column(Text)
+    is_resolved = Column(Boolean, default=False)
+    resolved_by = Column(String, ForeignKey("users.id"))
+    resolved_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    model = relationship("AnomalyDetectionModel")
+    resolver = relationship("User")
+
+class FeatureImportance(Base):
+    __tablename__ = "feature_importance"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    model_id = Column(String, ForeignKey("anomaly_detection_models.id"))
+    feature_name = Column(String)
+    importance_score = Column(DECIMAL(precision=10, scale=6))
+    rank = Column(Integer)
+    category = Column(String)
+    description = Column(Text)
+    calculation_method = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    model = relationship("AnomalyDetectionModel")

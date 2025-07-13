@@ -11,7 +11,8 @@ import {
   GitMerge,
   Table,
   MessageCircle,
-  Settings
+  Settings,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
   { name: "Data Tables", href: "/data-tables", icon: Table },
   { name: "Agent Chat", href: "/agent-chat", icon: MessageCircle },
+  { name: "ML Anomaly Detection", href: "/ml-anomaly-detection", icon: Brain },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
