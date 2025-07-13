@@ -18,7 +18,7 @@ from app.models import (
     User, Document, JournalEntry, AnomalyDetectionModel, AnomalyDetectionResult,
     ModelPerformanceMetric, DataDriftMetric, ModelAlert, FeatureImportance
 )
-from app.services.ml_anomaly_detector import FinancialAnomalyDetector, AnomalyResult
+from app.services.ml_anomaly_detector import MLAnomalyDetector, AnomalyResult
 from app.services.ml_feature_engineering import FinancialFeatureEngineer
 from app.services.ml_model_monitor import MLModelMonitor
 
@@ -26,7 +26,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Initialize ML services
-anomaly_detector = FinancialAnomalyDetector()
+anomaly_detector = MLAnomalyDetector()
 feature_engineer = FinancialFeatureEngineer()
 model_monitor = MLModelMonitor()
 

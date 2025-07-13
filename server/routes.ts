@@ -58,8 +58,8 @@ function getNextDueDate(): string {
 }
 
 // Helper function for basic anomaly detection (fallback)
-async function performBasicAnomalyDetection(transactions: any[], document: any) {
-  const anomalies = [];
+async function performBasicAnomalyDetection(transactions: any[], document: any): Promise<any[]> {
+  const anomalies: any[] = [];
   
   if (transactions.length === 0) return anomalies;
   
@@ -1016,7 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get documents and their journal entries
       const docResults = await Promise.all(
-        document_ids.map(id => storage.getDocument(id))
+        document_ids.map((id: string) => storage.getDocument(id))
       );
       
       const validDocuments = docResults.filter(doc => doc !== null);
@@ -1157,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get documents and related transactions
       const documentResults = await Promise.all(
-        documentIds.map(id => storage.getDocument(id))
+        documentIds.map((id: string) => storage.getDocument(id))
       );
       
       const validDocuments = documentResults.filter(doc => doc !== null);
@@ -1262,8 +1262,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           anomalyScore: 85.2,
           confidence: 0.89,
           anomalyType: 'amount_anomaly',
-          severity: 'HIGH',
+          severity: 'HIGH' as const,
           reasoning: 'Transaction amount significantly exceeds normal range',
+          evidence: ['Amount exceeds 2 standard deviations', 'No historical precedent'],
+          recommendations: ['Review transaction', 'Verify documentation'],
+          businessContext: 'Statistical outlier detection',
+          riskFactors: ['Unusual amount'],
+          suggestedActions: [],
+          followUpQuestions: ['Is this amount correct?'],
+          relatedTransactions: [],
           detectedAt: new Date().toISOString(),
           status: 'pending_review'
         }
@@ -1309,8 +1316,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           anomalyScore: 85.2,
           confidence: 0.89,
           anomalyType: 'amount_anomaly',
-          severity: 'HIGH',
-          reasoning: 'Transaction amount significantly exceeds normal range'
+          severity: 'HIGH' as const,
+          reasoning: 'Transaction amount significantly exceeds normal range',
+          evidence: ['Amount exceeds 2 standard deviations', 'No historical precedent'],
+          recommendations: ['Review transaction', 'Verify documentation'],
+          businessContext: 'Statistical outlier detection',
+          riskFactors: ['Unusual amount'],
+          suggestedActions: [],
+          followUpQuestions: ['Is this amount correct?'],
+          relatedTransactions: []
         }
       ];
       
@@ -1369,8 +1383,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           anomalyScore: 85.2,
           confidence: 0.89,
           anomalyType: 'amount_anomaly',
-          severity: 'HIGH',
+          severity: 'HIGH' as const,
           reasoning: 'Transaction amount significantly exceeds normal range',
+          evidence: ['Amount exceeds 2 standard deviations', 'No historical precedent'],
+          recommendations: ['Review transaction', 'Verify documentation'],
+          businessContext: 'Statistical outlier detection',
+          riskFactors: ['Unusual amount'],
+          suggestedActions: [],
+          followUpQuestions: ['Is this amount correct?'],
+          relatedTransactions: [],
           detectedAt: new Date().toISOString(),
           status: 'pending_review'
         }
