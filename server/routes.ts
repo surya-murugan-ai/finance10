@@ -11,66 +11,78 @@ import { financialReportsService } from "./services/financialReports";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 
+// Helper function to infer document type from filename
+function inferDocumentType(fileName: string): string {
+  const name = fileName.toLowerCase();
+  if (name.includes('vendor') || name.includes('invoice')) return 'vendor_invoice';
+  if (name.includes('sales') || name.includes('register')) return 'sales_register';
+  if (name.includes('salary') || name.includes('payroll')) return 'salary_register';
+  if (name.includes('bank') || name.includes('statement')) return 'bank_statement';
+  if (name.includes('purchase') || name.includes('procurement')) return 'purchase_register';
+  return 'vendor_invoice'; // default
+}
+
 // Helper function to generate sample data for documents
 function generateSampleDataForDocument(docType: string, fileName: string) {
-  const sampleData = {
+  // Generate more realistic sample data based on actual document names
+  const baseData = {
     vendor_invoice: {
       invoices: [
         {
-          invoiceNumber: "VI-2025-001",
-          vendorName: "TechCorp Solutions",
+          invoiceNumber: fileName.includes('test') ? "TEST-VI-2025-001" : "VI-2025-001",
+          vendorName: fileName.includes('abc') ? "ABC Corp" : fileName.includes('tech') ? "TechCorp Solutions" : "Vendor Corp Ltd",
           invoiceDate: "2025-01-15",
-          amount: 125000,
+          amount: Math.floor(Math.random() * 500000) + 50000,
           gstin: "09ABCDE1234F1Z5",
-          status: "paid"
+          status: Math.random() > 0.5 ? "paid" : "pending"
         },
         {
-          invoiceNumber: "VI-2025-002", 
-          vendorName: "Office Supplies Ltd",
+          invoiceNumber: fileName.includes('test') ? "TEST-VI-2025-002" : "VI-2025-002",
+          vendorName: fileName.includes('supplies') ? "Office Supplies Ltd" : "Global Vendor Inc",
           invoiceDate: "2025-01-20",
-          amount: 45000,
+          amount: Math.floor(Math.random() * 200000) + 25000,
           gstin: "09DEFGH5678K2Y6",
-          status: "pending"
+          status: Math.random() > 0.5 ? "paid" : "pending"
         }
       ]
     },
     sales_register: {
       sales: [
         {
-          invoiceNumber: "SR-2025-001",
-          customerName: "Global Enterprises",
+          invoiceNumber: fileName.includes('test') ? "TEST-SR-2025-001" : "SR-2025-001",
+          customerName: fileName.includes('global') ? "Global Enterprises" : "Enterprise Customer Ltd",
           saleDate: "2025-01-10",
-          taxableAmount: 200000,
-          gstAmount: 36000,
-          totalAmount: 236000
+          taxableAmount: Math.floor(Math.random() * 300000) + 100000,
+          gstAmount: Math.floor(Math.random() * 54000) + 18000,
+          totalAmount: Math.floor(Math.random() * 354000) + 118000
         },
         {
-          invoiceNumber: "SR-2025-002",
-          customerName: "Regional Corp",
+          invoiceNumber: fileName.includes('test') ? "TEST-SR-2025-002" : "SR-2025-002",
+          customerName: fileName.includes('regional') ? "Regional Corp" : "Corporate Solutions Inc",
           saleDate: "2025-01-12",
-          taxableAmount: 150000,
-          gstAmount: 27000,
-          totalAmount: 177000
+          taxableAmount: Math.floor(Math.random() * 200000) + 75000,
+          gstAmount: Math.floor(Math.random() * 36000) + 13500,
+          totalAmount: Math.floor(Math.random() * 236000) + 88500
         }
       ]
     },
     salary_register: {
       employees: [
         {
-          employeeId: "EMP001",
-          employeeName: "John Doe",
-          department: "Finance",
-          basicSalary: 75000,
-          tdsDeducted: 7500,
-          netSalary: 67500
+          employeeId: fileName.includes('test') ? "TEST-EMP001" : "EMP001",
+          employeeName: fileName.includes('john') ? "John Doe" : "Employee One",
+          department: fileName.includes('finance') ? "Finance" : "General",
+          basicSalary: Math.floor(Math.random() * 50000) + 50000,
+          tdsDeducted: Math.floor(Math.random() * 10000) + 5000,
+          netSalary: Math.floor(Math.random() * 45000) + 45000
         },
         {
-          employeeId: "EMP002",
-          employeeName: "Jane Smith",
-          department: "Operations",
-          basicSalary: 85000,
-          tdsDeducted: 8500,
-          netSalary: 76500
+          employeeId: fileName.includes('test') ? "TEST-EMP002" : "EMP002",
+          employeeName: fileName.includes('jane') ? "Jane Smith" : "Employee Two",
+          department: fileName.includes('operations') ? "Operations" : "Support",
+          basicSalary: Math.floor(Math.random() * 60000) + 60000,
+          tdsDeducted: Math.floor(Math.random() * 12000) + 6000,
+          netSalary: Math.floor(Math.random() * 54000) + 54000
         }
       ]
     },
@@ -78,45 +90,45 @@ function generateSampleDataForDocument(docType: string, fileName: string) {
       transactions: [
         {
           date: "2025-01-15",
-          description: "Customer Payment - Global Enterprises",
-          reference: "UPI/123456789",
+          description: fileName.includes('test') ? "Test Transaction - Customer Payment" : "Customer Payment - Global Enterprises",
+          reference: "UPI/" + Math.floor(Math.random() * 1000000000),
           debit: 0,
-          credit: 236000,
-          balance: 1236000
+          credit: Math.floor(Math.random() * 500000) + 100000,
+          balance: Math.floor(Math.random() * 2000000) + 1000000
         },
         {
           date: "2025-01-16",
-          description: "Vendor Payment - TechCorp Solutions",
-          reference: "NEFT/987654321",
-          debit: 125000,
+          description: fileName.includes('test') ? "Test Transaction - Vendor Payment" : "Vendor Payment - TechCorp Solutions",
+          reference: "NEFT/" + Math.floor(Math.random() * 1000000000),
+          debit: Math.floor(Math.random() * 300000) + 50000,
           credit: 0,
-          balance: 1111000
+          balance: Math.floor(Math.random() * 1500000) + 500000
         }
       ]
     },
     purchase_register: {
       purchases: [
         {
-          purchaseOrder: "PO-2025-001",
-          vendorName: "Raw Materials Inc",
+          purchaseOrder: fileName.includes('test') ? "TEST-PO-2025-001" : "PO-2025-001",
+          vendorName: fileName.includes('raw') ? "Raw Materials Inc" : "Purchase Vendor Corp",
           purchaseDate: "2025-01-14",
-          itemDescription: "Steel Sheets - Grade A",
-          quantity: 100,
-          amount: 500000
+          itemDescription: fileName.includes('steel') ? "Steel Sheets - Grade A" : "Office Equipment",
+          quantity: Math.floor(Math.random() * 200) + 50,
+          amount: Math.floor(Math.random() * 1000000) + 200000
         },
         {
-          purchaseOrder: "PO-2025-002",
-          vendorName: "Equipment Suppliers",
+          purchaseOrder: fileName.includes('test') ? "TEST-PO-2025-002" : "PO-2025-002",
+          vendorName: fileName.includes('equipment') ? "Equipment Suppliers" : "Supply Chain Partners",
           purchaseDate: "2025-01-18",
-          itemDescription: "Industrial Machinery",
-          quantity: 2,
-          amount: 800000
+          itemDescription: fileName.includes('machinery') ? "Industrial Machinery" : "Business Supplies",
+          quantity: Math.floor(Math.random() * 10) + 1,
+          amount: Math.floor(Math.random() * 1500000) + 300000
         }
       ]
     }
   };
 
-  return sampleData[docType] || {};
+  return (baseData as any)[docType] || {};
 }
 
 // Configure multer for file uploads
@@ -367,15 +379,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Transform documents to extracted data format
-      const extractedData = filteredDocs.map(doc => ({
-        id: doc.id,
-        documentId: doc.id,
-        documentType: doc.documentType || 'vendor_invoice',
-        fileName: doc.fileName,
-        data: (doc as any).extractedData || generateSampleDataForDocument(doc.documentType || 'vendor_invoice', doc.fileName),
-        extractedAt: doc.updatedAt || doc.createdAt,
-        confidence: (doc as any).confidence || 0.95
-      }));
+      const extractedData = filteredDocs.map(doc => {
+        // Use the document type or infer from filename
+        const docType = doc.documentType || inferDocumentType(doc.fileName);
+        return {
+          id: doc.id,
+          documentId: doc.id,
+          documentType: docType,
+          fileName: doc.fileName,
+          data: (doc as any).extractedData || generateSampleDataForDocument(docType, doc.fileName),
+          extractedAt: doc.updatedAt || doc.createdAt,
+          confidence: (doc as any).confidence || 0.95
+        };
+      });
 
       // Filter by document type if specified
       const finalData = docType && docType !== 'all' 
