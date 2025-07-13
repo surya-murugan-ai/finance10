@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Python/FastAPI Refactoring (July 13, 2025)**: Complete architectural refactoring from Node.js/TypeScript to Python/FastAPI:
+  - Migrated entire backend from Express.js to FastAPI with Python 3.11
+  - Converted Drizzle ORM to SQLAlchemy with comprehensive model definitions
+  - Implemented JWT-based authentication replacing Replit Auth
+  - Created 7 specialized AI agents with Anthropic + OpenAI SDK integration
+  - Built document processing pipeline with pandas, openpyxl, and PyPDF2
+  - Developed compliance engine with GST/TDS validation
+  - Created financial reporting system with trial balance, P&L, balance sheet, and cash flow
+  - Added Alembic database migration system
+  - Maintained all original functionality while improving performance and AI integration
+
 - **Individual Agent Configuration (July 13, 2025)**: Enhanced settings with separate AI configuration for each agent:
   - Added Agent Configs tab with 7 specialized agents (ClassifierBot, JournalBot, GST Validator, TDS Validator, Data Extractor, ConsoAI, Audit Agent)
   - Implemented individual temperature controls (0.1-2.0) for each agent
@@ -46,7 +57,7 @@ Preferred communication style: Simple, everyday language.
 
 The application follows a modern full-stack architecture with clear separation between frontend, backend, and shared components:
 
-### Frontend Architecture
+### Frontend Architecture (Maintained)
 - **Framework**: React 18 with TypeScript
 - **Routing**: Wouter (lightweight React router)
 - **UI Components**: Radix UI with shadcn/ui design system
@@ -54,13 +65,14 @@ The application follows a modern full-stack architecture with clear separation b
 - **State Management**: TanStack Query for server state management
 - **Build Tool**: Vite for development and production builds
 
-### Backend Architecture
-- **Runtime**: Node.js with Express server
-- **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL via Neon serverless with Drizzle ORM
-- **Authentication**: Replit Auth with OpenID Connect
-- **File Processing**: Multer for file uploads with in-memory storage
-- **AI Integration**: Anthropic Claude API for document processing
+### Backend Architecture (Refactored to Python)
+- **Runtime**: Python 3.11 with FastAPI framework
+- **Language**: Python with async/await support
+- **Database**: PostgreSQL via Neon serverless with SQLAlchemy ORM
+- **Authentication**: JWT-based authentication with HTTPBearer
+- **File Processing**: Python multipart with pandas, openpyxl, PyPDF2
+- **AI Integration**: Anthropic Claude API + OpenAI API for document processing
+- **Migration**: Alembic for database schema management
 
 ### Key Design Decisions
 
