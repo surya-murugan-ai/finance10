@@ -26,9 +26,13 @@ export default function DataTables() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocType, setSelectedDocType] = useState("all");
 
-  const { data: extractedData, isLoading } = useQuery<ExtractedData[]>({
-    queryKey: ["/api/extracted-data", selectedPeriod, selectedDocType],
+  const { data: extractedData, isLoading, error } = useQuery<ExtractedData[]>({
+    queryKey: [`/api/extracted-data?period=${selectedPeriod}&docType=${selectedDocType}`],
   });
+
+  console.log('Data Tables Query:', { extractedData, isLoading, error });
+  console.log('Extracted data length:', extractedData?.length || 0);
+  console.log('Selected period:', selectedPeriod, 'Selected doc type:', selectedDocType);
 
   const filteredData = extractedData?.filter(item => {
     const matchesSearch = searchTerm === "" || 

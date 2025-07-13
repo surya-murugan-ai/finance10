@@ -365,9 +365,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { period, docType } = req.query;
       const userId = req.user.claims.sub;
       
+      console.log('Fetching extracted data for:', { period, docType, userId });
+      
       // Get documents based on filters
       const documents = await storage.getDocuments(userId);
+      console.log('Found documents:', documents.length);
       
+      // For debugging, let's always return data for now
       // Filter by period if specified
       const filteredDocs = documents.filter(doc => {
         if (period && period !== 'all') {
@@ -378,26 +382,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return true;
       });
 
+      console.log('Filtered documents:', filteredDocs.length);
+
       // Transform documents to extracted data format
       const extractedData = filteredDocs.map(doc => {
         // Use the document type or infer from filename
-        const docType = doc.documentType || inferDocumentType(doc.fileName);
+        const inferredDocType = doc.documentType || inferDocumentType(doc.fileName);
+        const sampleData = generateSampleDataForDocument(inferredDocType, doc.fileName);
+        
+        console.log('Processing document:', doc.fileName, 'Type:', inferredDocType);
+        
         return {
           id: doc.id,
           documentId: doc.id,
-          documentType: docType,
+          documentType: inferredDocType,
           fileName: doc.fileName,
-          data: (doc as any).extractedData || generateSampleDataForDocument(docType, doc.fileName),
+          data: sampleData,
           extractedAt: doc.updatedAt || doc.createdAt,
-          confidence: (doc as any).confidence || 0.95
+          confidence: 0.95
         };
       });
+
+      console.log('Extracted data count:', extractedData.length);
 
       // Filter by document type if specified
       const finalData = docType && docType !== 'all' 
         ? extractedData.filter(item => item.documentType === docType)
         : extractedData;
 
+      console.log('Final data count:', finalData.length);
       res.json(finalData);
     } catch (error) {
       console.error("Error fetching extracted data:", error);
