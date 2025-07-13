@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, RefreshCw, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import { FileText, Download, RefreshCw, TrendingUp, Calendar, BarChart3, Trash2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { FinancialStatement } from "@shared/schema";
 
 export default function FinancialReports() {
@@ -75,6 +76,39 @@ export default function FinancialReports() {
       toast({
         title: "Generation Failed",
         description: error.message || "Failed to generate report",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteReportMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/financial-statements/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Report Deleted",
+        description: "Financial report deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial-statements"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Deletion Failed",
+        description: error.message || "Failed to delete report",
         variant: "destructive",
       });
     },
@@ -191,8 +225,9 @@ export default function FinancialReports() {
           </div>
 
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="reports-management">Reports Management</TabsTrigger>
               <TabsTrigger value="journal-entries">Journal Entries</TabsTrigger>
               <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
               <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>
@@ -306,6 +341,100 @@ export default function FinancialReports() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="reports-management" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Generated Reports</CardTitle>
+                    <Badge variant="outline">
+                      {statements ? statements.length : 0} reports
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {statementsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : statements && statements.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Period</TableHead>
+                            <TableHead>Generated At</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {statements.map((statement) => (
+                            <TableRow key={statement.id}>
+                              <TableCell className="font-medium">
+                                {getStatementTitle(statement.statementType)}
+                              </TableCell>
+                              <TableCell>{statement.period}</TableCell>
+                              <TableCell>{new Date(statement.generatedAt).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant={statement.isValid ? "default" : "destructive"}>
+                                  {statement.isValid ? "Valid" : "Invalid"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      toast({
+                                        title: "Report View",
+                                        description: `Opening ${getStatementTitle(statement.statementType)} report`,
+                                      });
+                                    }}
+                                  >
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    View
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => deleteReportMutation.mutate(statement.id)}
+                                    disabled={deleteReportMutation.isPending}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg font-medium">No financial reports found</p>
+                      <p className="text-sm text-muted-foreground">
+                        Generate reports from the Overview tab to get started
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {deleteReportMutation.isPending && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Deleting report... Please wait.
+                  </AlertDescription>
+                </Alert>
+              )}
             </TabsContent>
 
             <TabsContent value="journal-entries" className="space-y-6">

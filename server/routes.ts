@@ -659,6 +659,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete financial statement
+  app.delete('/api/financial-statements/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      await storage.deleteFinancialStatement(id);
+      
+      // Log audit trail
+      await storage.createAuditTrail({
+        action: 'financial_statement_deleted',
+        entityType: 'financial_statement',
+        entityId: id,
+        userId,
+        details: { deleted: true },
+      });
+
+      res.json({ message: "Financial statement deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting financial statement:", error);
+      res.status(500).json({ message: "Failed to delete financial statement" });
+    }
+  });
+
   // Get extracted data for data tables
   app.get('/api/extracted-data', isAuthenticated, async (req: any, res) => {
     try {

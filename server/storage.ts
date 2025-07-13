@@ -63,6 +63,7 @@ export interface IStorage {
   createFinancialStatement(statement: InsertFinancialStatement): Promise<FinancialStatement>;
   getFinancialStatement(type: string, period: string): Promise<FinancialStatement | undefined>;
   getFinancialStatements(period?: string): Promise<FinancialStatement[]>;
+  deleteFinancialStatement(id: string): Promise<void>;
 
   // Compliance check operations
   createComplianceCheck(check: InsertComplianceCheck): Promise<ComplianceCheck>;
@@ -269,6 +270,10 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(financialStatements)
       .orderBy(desc(financialStatements.generatedAt));
+  }
+
+  async deleteFinancialStatement(id: string): Promise<void> {
+    await db.delete(financialStatements).where(eq(financialStatements.id, id));
   }
 
   // Compliance check operations
