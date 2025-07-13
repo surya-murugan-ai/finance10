@@ -14,12 +14,14 @@ import {
   Settings,
   Brain,
   BookOpen,
-  Database
+  Database,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Company Onboarding", href: "/onboarding", icon: Building2 },
   { name: "Document Upload", href: "/documents", icon: Upload },
   { name: "Document Management", href: "/document-management", icon: FolderOpen },
   { name: "Agent Workflows", href: "/workflows", icon: Bot },
