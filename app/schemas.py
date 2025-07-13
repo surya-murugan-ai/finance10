@@ -18,8 +18,8 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -39,8 +39,8 @@ class DocumentResponse(DocumentBase):
     status: str
     extracted_data: Optional[Dict[str, Any]] = None
     uploaded_by: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
