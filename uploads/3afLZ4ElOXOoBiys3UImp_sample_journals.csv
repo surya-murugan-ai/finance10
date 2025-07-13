@@ -1,0 +1,7 @@
+Date,Entity,Journal ID,Account,Type,Amount,Description
+2025-03-31,Entity A,J001,Sales,Credit,500000,Sales to client X
+2025-03-31,Entity A,J001,Bank,Debit,500000,Receipt from client X
+2025-03-31,Entity A,J002,Salary Expense,Debit,200000,March salaries
+2025-03-31,Entity A,J002,Bank,Credit,200000,Salary payout
+2025-03-31,Entity B,J003,Interco Receivable,Debit,150000,Transfer to Entity A
+2025-03-31,Entity A,J004,Interco Payable,Credit,150000,Transfer from Entity B

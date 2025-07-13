@@ -48,6 +48,8 @@ export const documentTypeEnum = pgEnum("document_type", [
   "fixed_asset_register",
   "purchase_register",
   "sales_register",
+  "salary_register",
+  "vendor_invoice",
   "bank_statement",
   "other"
 ]);

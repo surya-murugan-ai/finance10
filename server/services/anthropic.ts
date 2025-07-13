@@ -45,15 +45,24 @@ export class AnthropicService {
     Content Preview: ${content.substring(0, 2000)}
     
     Classify this document as one of:
+    - vendor_invoice (Vendor invoices, supplier bills, purchase invoices - PDF documents)
+    - sales_register (Sales register, sales reports, revenue records - Excel documents)
+    - salary_register (Salary register, payroll records, staff payments - Excel/CSV documents)
+    - bank_statement (Bank statements, bank records, transaction history - PDF/Excel documents)
+    - purchase_register (Purchase register, procurement records, purchase reports - Excel documents)
     - journal (General journal entries)
     - gst (GST returns, invoices, GSTR forms)
     - tds (TDS certificates, Form 26Q, challan)
     - trial_balance (Trial balance statements)
     - fixed_asset_register (Fixed asset registers)
-    - purchase_register (Purchase registers)
-    - sales_register (Sales registers)
-    - bank_statement (Bank statements)
     - other (Other financial documents)
+    
+    Priority classification patterns:
+    - If filename contains "vendor", "supplier", "bill", "invoice" → vendor_invoice
+    - If filename contains "sales", "revenue", "income" → sales_register
+    - If filename contains "salary", "payroll", "staff", "wages" → salary_register
+    - If filename contains "bank", "statement", "transaction" → bank_statement
+    - If filename contains "purchase", "procurement", "buying" → purchase_register
     
     Consider:
     - File name patterns
