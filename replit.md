@@ -10,6 +10,21 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Dashboard Mock Data Fix (July 14, 2025)**: **RESOLVED** - Fixed critical issue where dashboard showed random/mock financial data instead of real data:
+  - **Root Cause**: System was auto-generating sample journal entries even when no real documents were uploaded
+  - **Mock Data Removal**: Cleared 6 mock journal entries and 124 mock financial statements from database
+  - **Trial Balance Fix**: Modified trial balance generation to return empty results when no real journal entries exist
+  - **Real Data Only**: Dashboard now shows "Rs 0" for all financial reports when no documents are uploaded
+  - **Data Integrity**: System now only displays authentic data from actual uploaded documents
+  - **User Experience**: Dashboard accurately reflects actual document processing status instead of misleading sample data
+
+- **Signout Button Addition (July 14, 2025)**: **COMPLETED** - Added proper signout functionality to navigation:
+  - **Sidebar Integration**: Added red-colored signout button at bottom of CollapsibleSidebar
+  - **User Information**: Shows current user email when sidebar is expanded
+  - **Logout Functionality**: Properly clears authentication tokens and redirects to home page
+  - **Responsive Design**: Includes tooltip support for collapsed sidebar state
+  - **Consistent Styling**: Matches existing navigation design patterns
+
 - **Deployment Authentication Fix (July 14, 2025)**: **RESOLVED** - Fixed missing authentication endpoints in production deployment:
   - **Registration Endpoint Added**: Implemented `/api/auth/register` endpoint for user signup functionality
   - **CORS Configuration**: Added proper CORS headers for cross-origin requests in production environment

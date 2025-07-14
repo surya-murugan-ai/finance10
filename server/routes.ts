@@ -1009,31 +1009,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let journalEntries = await storage.getJournalEntriesByPeriod(period);
       
-      // If no journal entries exist, create them from uploaded documents
+      // Don't auto-generate mock data - only show real data from uploaded documents
       if (journalEntries.length === 0) {
-        const documents = await storage.getDocuments(userId);
+        // Return empty trial balance if no real journal entries exist
+        const emptyTrialBalance = {
+          entries: [],
+          totalDebits: 0,
+          totalCredits: 0,
+          isBalanced: true,
+          totalDebitsText: "Rs 0",
+          totalCreditsText: "Rs 0"
+        };
         
-        for (const doc of documents) {
-          const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
-          
-          for (const entry of defaultEntries) {
-            await storage.createJournalEntry({
-              journalId: entry.journalId,
-              date: entry.date,
-              accountCode: entry.accountCode,
-              accountName: entry.accountName,
-              debitAmount: entry.debitAmount,
-              creditAmount: entry.creditAmount,
-              narration: entry.narration,
-              entity: entry.entity,
-              documentId: doc.id,
-              createdBy: userId,
-            });
-          }
-        }
-        
-        // Fetch the newly created entries
-        journalEntries = await storage.getJournalEntriesByPeriod(period);
+        res.json(emptyTrialBalance);
+        return;
       }
       
       const trialBalance = await financialReportsService.generateTrialBalance(journalEntries);
