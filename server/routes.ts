@@ -736,8 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'trial_balance',
             period: period || 'Q3_2025',
             data: trialBalance,
-            generatedAt: new Date(),
-            status: 'updated'
+            generatedAt: new Date()
           });
           
           // Generate profit & loss
@@ -746,8 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'profit_loss',
             period: period || 'Q3_2025',
             data: profitLoss,
-            generatedAt: new Date(),
-            status: 'updated'
+            generatedAt: new Date()
           });
           
           // Generate balance sheet
@@ -756,8 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'balance_sheet',
             period: period || 'Q3_2025',
             data: balanceSheet,
-            generatedAt: new Date(),
-            status: 'updated'
+            generatedAt: new Date()
           });
           
           statements = [trialBalanceStatement, profitLossStatement, balanceSheetStatement];
