@@ -5,6 +5,7 @@ import { Download, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
+import TrialBalanceCard from "./trial-balance-card";
 
 interface FinancialReport {
   id: string;
@@ -170,7 +171,8 @@ export default function FinancialReportsSection() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      {reportsToShow.map((report) => {
+      <TrialBalanceCard />
+      {reportsToShow.filter(report => report.statementType !== 'trial_balance').map((report) => {
         const reportData = getReportData(report);
         
         // Debug for trial balance specifically
@@ -194,37 +196,7 @@ export default function FinancialReportsSection() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {report.statementType === 'trial_balance' && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Total Debits</span>
-                      <span className="text-sm font-semibold">
-                        {(() => {
-                          if (trialBalance && trialBalance.totalDebits) {
-                            return `₹${trialBalance.totalDebits.toLocaleString()}`;
-                          }
-                          return '₹0';
-                        })()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Total Credits</span>
-                      <span className="text-sm font-semibold">
-                        {(() => {
-                          if (trialBalance && trialBalance.totalCredits) {
-                            return `₹${trialBalance.totalCredits.toLocaleString()}`;
-                          }
-                          return '₹0';
-                        })()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-sm font-medium text-foreground">Balance</span>
-                      <span className="text-sm font-semibold text-secondary">₹0</span>
-                    </div>
-                  </>
-                )}
-                
+
                 {report.statementType === 'profit_loss' && (
                   <>
                     <div className="flex justify-between">
