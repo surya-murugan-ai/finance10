@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import TrialBalanceCard from "./trial-balance-card";
+import SimpleTrialBalance from "./simple-trial-balance";
 
 interface FinancialReport {
   id: string;
@@ -171,7 +172,7 @@ export default function FinancialReportsSection() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <TrialBalanceCard />
+      <SimpleTrialBalance />
       {reportsToShow.filter(report => report.statementType !== 'trial_balance').map((report) => {
         const reportData = getReportData(report);
         
