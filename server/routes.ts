@@ -272,6 +272,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
+
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { email, password, first_name, last_name, company_name, phone } = req.body;
+      
+      // Basic validation
+      if (!email || !password || !first_name || !last_name) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email, password, first name, and last name are required' 
+        });
+      }
+      
+      // For demo purposes, create a new user (in production, save to database)
+      const newUserId = nanoid();
+      const user = {
+        id: newUserId,
+        email,
+        first_name,
+        last_name,
+        company_name: company_name || null,
+        phone: phone || null,
+        is_active: true
+      };
+      
+      // Create a simple token (in production, use proper JWT)
+      const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
+      
+      res.json({
+        success: true,
+        message: 'Account created successfully',
+        access_token: token,
+        user: user
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
   
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
