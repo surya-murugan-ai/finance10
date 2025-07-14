@@ -19,9 +19,11 @@ import {
   FileSpreadsheet,
   Building,
   UserCheck,
-  Bot
+  Bot,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   name: string;
@@ -52,9 +54,15 @@ const navItems: NavItem[] = [
 export default function CollapsibleSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [location] = useLocation();
+  const { logout, user } = useAuth();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+    window.location.href = '/';
   };
 
   return (
@@ -114,6 +122,39 @@ export default function CollapsibleSidebar() {
           })}
         </div>
       </nav>
+
+      {/* User Info and Sign Out */}
+      <div className="border-t border-gray-200 dark:border-gray-800 p-2">
+        {/* User Info */}
+        {user && !isCollapsed && (
+          <div className="px-3 py-2 mb-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400">Signed in as</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              {user.email}
+            </div>
+          </div>
+        )}
+        
+        {/* Sign Out Button */}
+        <button
+          onClick={handleSignOut}
+          className={cn(
+            "flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
+            "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+          )}
+        >
+          <LogOut className={cn("h-5 w-5", isCollapsed ? "mx-auto" : "mr-3")} />
+          {!isCollapsed && <span>Sign Out</span>}
+          
+          {/* Tooltip for collapsed state */}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+              Sign Out
+              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+            </div>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
