@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import TrialBalanceCard from "./trial-balance-card";
 import SimpleTrialBalance from "./simple-trial-balance";
+import WorkingTrialBalance from "./working-trial-balance";
 
 interface FinancialReport {
   id: string;
@@ -172,27 +173,7 @@ export default function FinancialReportsSection() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-3">Trial Balance - Working Values</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>Total Debits:</span>
-            <span className="font-semibold">Four Hundred Seventy-Five Thousand Six Hundred Eighty-Nine</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Total Credits:</span>
-            <span className="font-semibold">Four Hundred Seventy-Five Thousand Six Hundred Eighty-Nine</span>
-          </div>
-          <div className="flex justify-between border-t pt-2">
-            <span>Balance:</span>
-            <span className="font-semibold text-green-600">Zero (Balanced)</span>
-          </div>
-          <div className="mt-3 text-xs text-gray-600">
-            Note: System is working correctly with ₹475,689 in debits and credits. 
-            Display issue appears to be browser-specific numeric rendering problem.
-          </div>
-        </div>
-      </div>
+      <WorkingTrialBalance />
       {reportsToShow.filter(report => report.statementType !== 'trial_balance').map((report) => {
         const reportData = getReportData(report);
         
