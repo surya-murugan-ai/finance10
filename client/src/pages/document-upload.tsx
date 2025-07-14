@@ -29,6 +29,9 @@ interface DocumentRequirement {
   isUploaded: boolean;
   uploadedFiles: string[];
   compliance: string[];
+  documentType: 'primary' | 'derived' | 'calculated';
+  derivedFrom?: string[];
+  canGenerate?: boolean;
 }
 
 export default function DocumentUpload() {
@@ -58,24 +61,10 @@ export default function DocumentUpload() {
 
   // Define comprehensive document requirements
   const documentRequirements: DocumentRequirement[] = [
-    // Primary Financial Documents
-    {
-      id: 'trial_balance',
-      category: 'Primary Financial',
-      name: 'Trial Balance',
-      description: 'Complete trial balance showing all GL account balances',
-      priority: 'high',
-      frequency: 'monthly',
-      dueDate: '2025-01-31',
-      fileTypes: ['Excel', 'CSV'],
-      isRequired: true,
-      isUploaded: false,
-      uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'IndAS']
-    },
+    // PRIMARY DOCUMENTS - Must be uploaded
     {
       id: 'journal_entries',
-      category: 'Primary Financial',
+      category: 'Primary Documents',
       name: 'Journal Entries',
       description: 'All journal entries for the period with supporting documents',
       priority: 'high',
@@ -85,11 +74,13 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'IndAS']
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'primary',
+      canGenerate: false
     },
     {
       id: 'fixed_asset_register',
-      category: 'Primary Financial',
+      category: 'Primary Documents',
       name: 'Fixed Asset Register',
       description: 'Complete fixed asset register with depreciation calculations',
       priority: 'high',
@@ -99,71 +90,45 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'IndAS 16']
-    },
-    
-    // GST Documents
-    {
-      id: 'gstr_2a',
-      category: 'GST Compliance',
-      name: 'GSTR-2A',
-      description: 'GST Return for inward supplies (auto-populated)',
-      priority: 'high',
-      frequency: 'monthly',
-      dueDate: '2025-01-20',
-      fileTypes: ['Excel', 'CSV', 'JSON'],
-      isRequired: true,
-      isUploaded: false,
-      uploadedFiles: [],
-      compliance: ['GST Act', 'CGST Rules']
-    },
-    {
-      id: 'gstr_3b',
-      category: 'GST Compliance',
-      name: 'GSTR-3B',
-      description: 'Monthly GST return summary',
-      priority: 'high',
-      frequency: 'monthly',
-      dueDate: '2025-01-20',
-      fileTypes: ['Excel', 'CSV', 'JSON'],
-      isRequired: true,
-      isUploaded: false,
-      uploadedFiles: [],
-      compliance: ['GST Act', 'CGST Rules']
+      compliance: ['Companies Act 2013', 'IndAS 16'],
+      documentType: 'primary',
+      canGenerate: false
     },
     {
       id: 'purchase_register',
-      category: 'GST Compliance',
+      category: 'Primary Documents',
       name: 'Purchase Register',
       description: 'Complete purchase register with GST details',
-      priority: 'medium',
+      priority: 'high',
       frequency: 'monthly',
       dueDate: '2025-01-31',
       fileTypes: ['Excel', 'CSV'],
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['GST Act', 'Companies Act 2013']
+      compliance: ['GST Act', 'Companies Act 2013'],
+      documentType: 'primary',
+      canGenerate: false
     },
     {
       id: 'sales_register',
-      category: 'GST Compliance',
+      category: 'Primary Documents',
       name: 'Sales Register',
       description: 'Complete sales register with GST details',
-      priority: 'medium',
+      priority: 'high',
       frequency: 'monthly',
       dueDate: '2025-01-31',
       fileTypes: ['Excel', 'CSV'],
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['GST Act', 'Companies Act 2013']
+      compliance: ['GST Act', 'Companies Act 2013'],
+      documentType: 'primary',
+      canGenerate: false
     },
-    
-    // TDS Documents
     {
       id: 'tds_certificates',
-      category: 'TDS Compliance',
+      category: 'Primary Documents',
       name: 'TDS Certificates',
       description: 'Form 16A and other TDS certificates',
       priority: 'high',
@@ -173,27 +138,13 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Income Tax Act', 'TDS Rules']
+      compliance: ['Income Tax Act', 'TDS Rules'],
+      documentType: 'primary',
+      canGenerate: false
     },
-    {
-      id: 'form_26q',
-      category: 'TDS Compliance',
-      name: 'Form 26Q',
-      description: 'Quarterly TDS return for non-salary payments',
-      priority: 'high',
-      frequency: 'quarterly',
-      dueDate: '2025-01-31',
-      fileTypes: ['Excel', 'CSV', 'TXT'],
-      isRequired: true,
-      isUploaded: false,
-      uploadedFiles: [],
-      compliance: ['Income Tax Act', 'TDS Rules']
-    },
-    
-    // Banking Documents
     {
       id: 'bank_statements',
-      category: 'Banking',
+      category: 'Primary Documents',
       name: 'Bank Statements',
       description: 'Monthly bank statements for all accounts',
       priority: 'high',
@@ -203,27 +154,13 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'Banking Regulation Act']
+      compliance: ['Companies Act 2013', 'Banking Regulation Act'],
+      documentType: 'primary',
+      canGenerate: false
     },
-    {
-      id: 'bank_reconciliation',
-      category: 'Banking',
-      name: 'Bank Reconciliation',
-      description: 'Monthly bank reconciliation statements',
-      priority: 'medium',
-      frequency: 'monthly',
-      dueDate: '2025-01-31',
-      fileTypes: ['Excel', 'CSV'],
-      isRequired: true,
-      isUploaded: false,
-      uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'IndAS']
-    },
-    
-    // Statutory Documents
     {
       id: 'director_report',
-      category: 'Statutory',
+      category: 'Primary Documents',
       name: 'Directors Report',
       description: 'Annual directors report and board resolutions',
       priority: 'medium',
@@ -233,11 +170,13 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'MCA Rules']
+      compliance: ['Companies Act 2013', 'MCA Rules'],
+      documentType: 'primary',
+      canGenerate: false
     },
     {
       id: 'auditor_report',
-      category: 'Statutory',
+      category: 'Primary Documents',
       name: 'Auditor Report',
       description: 'Independent auditor report and management letter',
       priority: 'medium',
@@ -247,7 +186,166 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'Auditing Standards']
+      compliance: ['Companies Act 2013', 'Auditing Standards'],
+      documentType: 'primary',
+      canGenerate: false
+    },
+
+    // DERIVED DOCUMENTS - Generated from primary documents
+    {
+      id: 'trial_balance',
+      category: 'Derived Documents',
+      name: 'Trial Balance',
+      description: 'Generated from journal entries and GL postings',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'CSV'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'derived',
+      derivedFrom: ['journal_entries'],
+      canGenerate: true
+    },
+    {
+      id: 'gstr_2a',
+      category: 'Derived Documents',
+      name: 'GSTR-2A',
+      description: 'Generated from purchase register and vendor invoices',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-20',
+      fileTypes: ['Excel', 'CSV', 'JSON'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['GST Act', 'CGST Rules'],
+      documentType: 'derived',
+      derivedFrom: ['purchase_register'],
+      canGenerate: true
+    },
+    {
+      id: 'gstr_3b',
+      category: 'Derived Documents',
+      name: 'GSTR-3B',
+      description: 'Generated from sales and purchase registers',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-20',
+      fileTypes: ['Excel', 'CSV', 'JSON'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['GST Act', 'CGST Rules'],
+      documentType: 'derived',
+      derivedFrom: ['sales_register', 'purchase_register'],
+      canGenerate: true
+    },
+    {
+      id: 'form_26q',
+      category: 'Derived Documents',
+      name: 'Form 26Q',
+      description: 'Generated from TDS certificates and deduction records',
+      priority: 'high',
+      frequency: 'quarterly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'CSV', 'TXT'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Income Tax Act', 'TDS Rules'],
+      documentType: 'derived',
+      derivedFrom: ['tds_certificates'],
+      canGenerate: true
+    },
+    {
+      id: 'bank_reconciliation',
+      category: 'Derived Documents',
+      name: 'Bank Reconciliation',
+      description: 'Generated from bank statements and journal entries',
+      priority: 'medium',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'CSV'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'derived',
+      derivedFrom: ['bank_statements', 'journal_entries'],
+      canGenerate: true
+    },
+
+    // CALCULATED DOCUMENTS - System calculations and reports
+    {
+      id: 'profit_loss_statement',
+      category: 'Calculated Documents',
+      name: 'Profit & Loss Statement',
+      description: 'Calculated from trial balance and journal entries',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'PDF'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'calculated',
+      derivedFrom: ['trial_balance', 'journal_entries'],
+      canGenerate: true
+    },
+    {
+      id: 'balance_sheet',
+      category: 'Calculated Documents',
+      name: 'Balance Sheet',
+      description: 'Calculated from trial balance and fixed assets',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'PDF'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'calculated',
+      derivedFrom: ['trial_balance', 'fixed_asset_register'],
+      canGenerate: true
+    },
+    {
+      id: 'cash_flow_statement',
+      category: 'Calculated Documents',
+      name: 'Cash Flow Statement',
+      description: 'Calculated from P&L, balance sheet, and bank statements',
+      priority: 'medium',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'PDF'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'calculated',
+      derivedFrom: ['profit_loss_statement', 'balance_sheet', 'bank_statements'],
+      canGenerate: true
+    },
+    {
+      id: 'depreciation_schedule',
+      category: 'Calculated Documents',
+      name: 'Depreciation Schedule',
+      description: 'Calculated from fixed asset register',
+      priority: 'medium',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'PDF'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS 16'],
+      documentType: 'calculated',
+      derivedFrom: ['fixed_asset_register'],
+      canGenerate: true
     }
   ];
 
@@ -270,9 +368,9 @@ export default function DocumentUpload() {
     };
   });
 
-  // Calculate completion statistics
-  const totalRequired = updatedRequirements.filter(req => req.isRequired).length;
-  const completedRequired = updatedRequirements.filter(req => req.isRequired && req.isUploaded).length;
+  // Calculate completion statistics (only for primary documents that must be uploaded)
+  const totalRequired = updatedRequirements.filter(req => req.documentType === 'primary' && req.isRequired).length;
+  const completedRequired = updatedRequirements.filter(req => req.documentType === 'primary' && req.isRequired && req.isUploaded).length;
   const completionPercentage = totalRequired > 0 ? (completedRequired / totalRequired) * 100 : 0;
 
   // Filter by category
@@ -301,6 +399,20 @@ export default function DocumentUpload() {
         return <Badge variant="secondary">Medium</Badge>;
       case 'low':
         return <Badge variant="outline">Low</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  // Get document type badge
+  const getDocumentTypeBadge = (documentType: string) => {
+    switch (documentType) {
+      case 'primary':
+        return <Badge className="bg-blue-100 text-blue-800">Must Upload</Badge>;
+      case 'derived':
+        return <Badge className="bg-green-100 text-green-800">System Generated</Badge>;
+      case 'calculated':
+        return <Badge className="bg-purple-100 text-purple-800">Auto Calculated</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -347,7 +459,7 @@ export default function DocumentUpload() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Document Upload</h1>
           <p className="text-muted-foreground">
-            Upload and manage your financial documents for processing
+            Upload primary documents (required) while the system generates derived and calculated documents automatically
           </p>
         </div>
 
@@ -381,11 +493,11 @@ export default function DocumentUpload() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-4 w-4 text-yellow-600" />
-                  <span>{updatedRequirements.filter(req => req.priority === 'high' && !req.isUploaded).length} High Priority</span>
+                  <span>{updatedRequirements.filter(req => req.documentType === 'primary' && req.priority === 'high' && !req.isUploaded).length} High Priority</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-blue-600" />
-                  <span>{updatedRequirements.filter(req => req.dueDate && new Date(req.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length} Due Soon</span>
+                  <span>{updatedRequirements.filter(req => req.documentType === 'primary' && req.dueDate && new Date(req.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length} Due Soon</span>
                 </div>
               </div>
             </div>
@@ -438,6 +550,7 @@ export default function DocumentUpload() {
                             {getStatusIcon(requirement)}
                             <h3 className="font-semibold">{requirement.name}</h3>
                             {getPriorityBadge(requirement.priority)}
+                            {getDocumentTypeBadge(requirement.documentType)}
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">{requirement.description}</p>
                           
@@ -470,6 +583,21 @@ export default function DocumentUpload() {
                             </div>
                           )}
 
+                          {requirement.derivedFrom && requirement.derivedFrom.length > 0 && (
+                            <div className="mt-2">
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {requirement.documentType === 'derived' ? 'Generated from:' : 'Calculated from:'}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {requirement.derivedFrom.map((source, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {documentRequirements.find(req => req.id === source)?.name || source}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           <div className="mt-2">
                             <div className="text-xs text-muted-foreground mb-1">Compliance:</div>
                             <div className="flex flex-wrap gap-1">
@@ -482,15 +610,24 @@ export default function DocumentUpload() {
                           </div>
                         </div>
                         
-                        <div className="ml-4">
+                        <div className="ml-4 flex flex-col space-y-1">
                           {requirement.isUploaded ? (
                             <Badge className="bg-green-100 text-green-800">
                               Complete
                             </Badge>
-                          ) : (
+                          ) : requirement.documentType === 'primary' ? (
                             <Badge variant="destructive">
-                              Required
+                              Must Upload
                             </Badge>
+                          ) : (
+                            <Badge variant="outline">
+                              {requirement.canGenerate ? 'Can Generate' : 'Pending'}
+                            </Badge>
+                          )}
+                          {requirement.canGenerate && requirement.documentType !== 'primary' && (
+                            <Button variant="outline" size="sm" className="text-xs">
+                              Generate Document
+                            </Button>
                           )}
                         </div>
                       </div>
