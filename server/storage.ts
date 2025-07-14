@@ -59,6 +59,7 @@ export interface IStorage {
   getJournalEntries(documentId?: string): Promise<JournalEntry[]>;
   getJournalEntriesByPeriod(period: string): Promise<JournalEntry[]>;
   deleteJournalEntry(id: string): Promise<void>;
+  deleteJournalEntriesByDocument(documentId: string): Promise<void>;
 
   // Financial statement operations
   createFinancialStatement(statement: InsertFinancialStatement): Promise<FinancialStatement>;
@@ -177,14 +178,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDocument(id: string): Promise<void> {
+    console.log(`Deleting document ${id} and all related data...`);
+    
     // First delete all related agent jobs
-    await db.delete(agentJobs).where(eq(agentJobs.documentId, id));
+    const deletedJobs = await db.delete(agentJobs).where(eq(agentJobs.documentId, id));
+    console.log(`Deleted ${deletedJobs.rowCount || 0} agent jobs`);
     
     // Then delete all related journal entries
-    await db.delete(journalEntries).where(eq(journalEntries.documentId, id));
+    const deletedEntries = await db.delete(journalEntries).where(eq(journalEntries.documentId, id));
+    console.log(`Deleted ${deletedEntries.rowCount || 0} journal entries`);
     
     // Finally delete the document
-    await db.delete(documents).where(eq(documents.id, id));
+    const deletedDoc = await db.delete(documents).where(eq(documents.id, id));
+    console.log(`Deleted ${deletedDoc.rowCount || 0} document`);
   }
 
   // Agent job operations
@@ -251,6 +257,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteJournalEntry(id: string): Promise<void> {
     await db.delete(journalEntries).where(eq(journalEntries.id, id));
+  }
+
+  async deleteJournalEntriesByDocument(documentId: string): Promise<void> {
+    await db.delete(journalEntries).where(eq(journalEntries.documentId, documentId));
   }
 
   async hasJournalEntries(documentId: string): Promise<boolean> {
