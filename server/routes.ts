@@ -815,13 +815,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate journal entries from uploaded documents
+  app.post('/api/reports/generate-journal-entries', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const documents = await storage.getDocuments(userId);
+      
+      let totalEntries = 0;
+      
+      for (const doc of documents) {
+        // Generate sample journal entries based on document type
+        const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+        
+        for (const entry of defaultEntries) {
+          await storage.createJournalEntry({
+            journalId: entry.journalId,
+            date: entry.date,
+            accountCode: entry.accountCode,
+            accountName: entry.accountName,
+            debitAmount: entry.debitAmount,
+            creditAmount: entry.creditAmount,
+            narration: entry.narration,
+            entity: entry.entity,
+            documentId: doc.id,
+            createdBy: userId,
+          });
+          totalEntries++;
+        }
+      }
+      
+      res.json({ 
+        message: `Generated ${totalEntries} journal entries from ${documents.length} documents`,
+        totalEntries,
+        documentsProcessed: documents.length
+      });
+    } catch (error) {
+      console.error("Error generating journal entries:", error);
+      res.status(500).json({ message: "Failed to generate journal entries" });
+    }
+  });
+
   // Generate trial balance
   app.post('/api/reports/trial-balance', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { period } = req.body;
       
-      const journalEntries = await storage.getJournalEntriesByPeriod(period);
+      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      
+      // If no journal entries exist, create them from uploaded documents
+      if (journalEntries.length === 0) {
+        const documents = await storage.getDocuments(userId);
+        
+        for (const doc of documents) {
+          const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+          
+          for (const entry of defaultEntries) {
+            await storage.createJournalEntry({
+              journalId: entry.journalId,
+              date: entry.date,
+              accountCode: entry.accountCode,
+              accountName: entry.accountName,
+              debitAmount: entry.debitAmount,
+              creditAmount: entry.creditAmount,
+              narration: entry.narration,
+              entity: entry.entity,
+              documentId: doc.id,
+              createdBy: userId,
+            });
+          }
+        }
+        
+        // Fetch the newly created entries
+        journalEntries = await storage.getJournalEntriesByPeriod(period);
+      }
+      
       const trialBalance = await financialReportsService.generateTrialBalance(journalEntries);
       
       // Save the report
@@ -845,7 +913,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { period } = req.body;
       
-      const journalEntries = await storage.getJournalEntriesByPeriod(period);
+      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      
+      // If no journal entries exist, create them from uploaded documents
+      if (journalEntries.length === 0) {
+        const documents = await storage.getDocuments(userId);
+        
+        for (const doc of documents) {
+          const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+          
+          for (const entry of defaultEntries) {
+            await storage.createJournalEntry({
+              journalId: entry.journalId,
+              date: entry.date,
+              accountCode: entry.accountCode,
+              accountName: entry.accountName,
+              debitAmount: entry.debitAmount,
+              creditAmount: entry.creditAmount,
+              narration: entry.narration,
+              entity: entry.entity,
+              documentId: doc.id,
+              createdBy: userId,
+            });
+          }
+        }
+        
+        // Fetch the newly created entries
+        journalEntries = await storage.getJournalEntriesByPeriod(period);
+      }
+      
       const profitLoss = await financialReportsService.generateProfitLoss(journalEntries);
       
       // Save the report
@@ -869,7 +965,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { period } = req.body;
       
-      const journalEntries = await storage.getJournalEntriesByPeriod(period);
+      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      
+      // If no journal entries exist, create them from uploaded documents
+      if (journalEntries.length === 0) {
+        const documents = await storage.getDocuments(userId);
+        
+        for (const doc of documents) {
+          const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+          
+          for (const entry of defaultEntries) {
+            await storage.createJournalEntry({
+              journalId: entry.journalId,
+              date: entry.date,
+              accountCode: entry.accountCode,
+              accountName: entry.accountName,
+              debitAmount: entry.debitAmount,
+              creditAmount: entry.creditAmount,
+              narration: entry.narration,
+              entity: entry.entity,
+              documentId: doc.id,
+              createdBy: userId,
+            });
+          }
+        }
+        
+        // Fetch the newly created entries
+        journalEntries = await storage.getJournalEntriesByPeriod(period);
+      }
+      
       const balanceSheet = await financialReportsService.generateBalanceSheet(journalEntries);
       
       // Save the report

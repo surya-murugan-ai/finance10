@@ -48,10 +48,16 @@ export default function FinancialReports() {
 
   const generateReportMutation = useMutation({
     mutationFn: async (reportType: string) => {
-      const response = await apiRequest('POST', `/api/reports/${reportType}`, {
-        period: selectedPeriod,
+      const response = await apiRequest(`/api/reports/${reportType}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          period: selectedPeriod,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      return response.json();
+      return response;
     },
     onSuccess: (data, reportType) => {
       toast({
@@ -109,6 +115,44 @@ export default function FinancialReports() {
       toast({
         title: "Deletion Failed",
         description: error.message || "Failed to delete report",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateJournalEntriesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(`/api/reports/generate-journal-entries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Journal Entries Generated",
+        description: `Generated ${data.totalEntries} journal entries from ${data.documentsProcessed} documents`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/journal-entries"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate journal entries",
         variant: "destructive",
       });
     },
@@ -269,6 +313,15 @@ export default function FinancialReports() {
                     <SelectItem value="Q4_2025">Q4 2025</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  onClick={() => generateJournalEntriesMutation.mutate()}
+                  disabled={generateJournalEntriesMutation.isPending}
+                  variant="default"
+                  size="sm"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generate Journal Entries
+                </Button>
                 <Button
                   onClick={() => {
                     queryClient.invalidateQueries({ queryKey: ["/api/financial-statements"] });

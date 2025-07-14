@@ -457,7 +457,7 @@ export class LangGraphOrchestrator {
     node.output = auditFindings;
   }
 
-  private generateDefaultJournalEntries(document: any, extractedData: any): any[] {
+  public generateDefaultJournalEntries(document: any, extractedData: any): any[] {
     const date = new Date();
     const amount = extractedData?.extractedData?.totalAmount || "1000";
     
