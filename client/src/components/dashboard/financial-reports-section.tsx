@@ -47,28 +47,30 @@ export default function FinancialReportsSection() {
     if (report.statementType === 'trial_balance') {
       // Use real trial balance data if available
       if (trialBalance && !trialBalanceLoading) {
+        console.log('Using real trial balance data:', trialBalance);
         return {
-          totalDebits: trialBalance.totalDebits || 0,
-          totalCredits: trialBalance.totalCredits || 0,
+          totalDebits: Number(trialBalance.totalDebits) || 0,
+          totalCredits: Number(trialBalance.totalCredits) || 0,
           balance: '₹0',
         };
       }
+      console.log('Using report data:', report.data);
       return {
-        totalDebits: report.data?.totalDebits || 0,
-        totalCredits: report.data?.totalCredits || 0,
+        totalDebits: Number(report.data?.totalDebits) || 0,
+        totalCredits: Number(report.data?.totalCredits) || 0,
         balance: '₹0',
       };
     } else if (report.statementType === 'profit_loss') {
       return {
-        revenue: report.data?.totalRevenue || 0,
-        expenses: report.data?.totalExpenses || 0,
-        netProfit: report.data?.netProfit || 0,
+        revenue: Number(report.data?.totalRevenue) || 0,
+        expenses: Number(report.data?.totalExpenses) || 0,
+        netProfit: Number(report.data?.netProfit) || 0,
       };
     } else if (report.statementType === 'balance_sheet') {
       return {
-        totalAssets: report.data?.totalAssets || 0,
-        totalLiabilities: report.data?.totalLiabilities || 0,
-        equity: report.data?.totalEquity || 0,
+        totalAssets: Number(report.data?.totalAssets) || 0,
+        totalLiabilities: Number(report.data?.totalLiabilities) || 0,
+        equity: Number(report.data?.totalEquity) || 0,
       };
     }
     return {};
@@ -158,11 +160,11 @@ export default function FinancialReportsSection() {
                   <>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Debits</span>
-                      <span className="text-sm font-semibold">₹{reportData.totalDebits?.toLocaleString()}</span>
+                      <span className="text-sm font-semibold">₹{(reportData.totalDebits || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Credits</span>
-                      <span className="text-sm font-semibold">₹{reportData.totalCredits?.toLocaleString()}</span>
+                      <span className="text-sm font-semibold">₹{(reportData.totalCredits || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
                       <span className="text-sm font-medium text-foreground">Balance</span>
