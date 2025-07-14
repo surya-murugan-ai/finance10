@@ -53,6 +53,8 @@ export default function DocumentManagement() {
         description: "Document deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      // Force a refetch to ensure immediate UI update
+      refetch();
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
