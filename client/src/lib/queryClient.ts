@@ -8,11 +8,10 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const isFormData = data instanceof FormData;
+  options: RequestInit = {}
+): Promise<any> {
+  const isFormData = options.body instanceof FormData;
   
   // Get JWT token from localStorage
   const token = localStorage.getItem('access_token');
@@ -20,8 +19,11 @@ export async function apiRequest(
   // Determine the full URL - use Express backend on same port
   const fullUrl = url.startsWith('http') ? url : url;
   
-  const headers: Record<string, string> = {};
-  if (!isFormData && data) {
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {})
+  };
+  
+  if (!isFormData && options.body && options.method !== 'GET') {
     headers["Content-Type"] = "application/json";
   }
   if (token) {
@@ -29,14 +31,15 @@ export async function apiRequest(
   }
   
   const res = await fetch(fullUrl, {
-    method,
+    method: options.method || 'GET',
     headers,
-    body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+    body: options.body,
     credentials: "include",
+    ...options
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return await res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

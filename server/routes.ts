@@ -938,6 +938,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Data Source Configuration Endpoints
   
+  // Get data source statistics (must be before the :id route)
+  app.get('/api/data-sources/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const stats = await dataSourceService.getDataSourceStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching data source stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
   // Get all data sources
   app.get('/api/data-sources', isAuthenticated, async (req: any, res) => {
     try {
@@ -1002,19 +1013,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get data source statistics
-  app.get('/api/data-sources/stats', isAuthenticated, async (req: any, res) => {
+  // ERP Connector Endpoints
+  
+  // Get ERP statistics (must be before the :id route)
+  app.get('/api/erp-connectors/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const stats = await dataSourceService.getDataSourceStats();
+      const stats = await dataSourceService.getERPStats();
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching data source stats:", error);
-      res.status(500).json({ message: "Failed to fetch stats" });
+      console.error("Error fetching ERP stats:", error);
+      res.status(500).json({ message: "Failed to fetch ERP stats" });
     }
   });
 
-  // ERP Connector Endpoints
-  
   // Get all ERP connectors
   app.get('/api/erp-connectors', isAuthenticated, async (req: any, res) => {
     try {
@@ -1065,17 +1076,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error syncing ERP data:", error);
       res.status(500).json({ message: "Failed to sync ERP data" });
-    }
-  });
-
-  // Get ERP statistics
-  app.get('/api/erp-connectors/stats', isAuthenticated, async (req: any, res) => {
-    try {
-      const stats = await dataSourceService.getERPStats();
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching ERP stats:", error);
-      res.status(500).json({ message: "Failed to fetch ERP stats" });
     }
   });
 

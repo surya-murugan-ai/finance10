@@ -128,9 +128,36 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Check for JWT token in Authorization header
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    
+    try {
+      // Decode the base64 token to get user info
+      const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      const userData = JSON.parse(decoded);
+      
+      if (userData.userId && userData.email) {
+        // Attach user info to request
+        req.user = {
+          claims: {
+            sub: userData.userId,
+            email: userData.email
+          }
+        };
+        return next();
+      }
+    } catch (error) {
+      console.error('JWT token decode error:', error);
+    }
+  }
+
+  // Fallback to session-based authentication
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
