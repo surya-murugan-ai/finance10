@@ -63,10 +63,10 @@ export default function DocumentUpload() {
   const documentRequirements: DocumentRequirement[] = [
     // PRIMARY DOCUMENTS - Must be uploaded
     {
-      id: 'journal_entries',
+      id: 'vendor_invoices',
       category: 'Primary Documents',
-      name: 'Journal Entries',
-      description: 'All journal entries for the period with supporting documents',
+      name: 'Vendor Invoices',
+      description: 'All vendor invoices and purchase documents',
       priority: 'high',
       frequency: 'monthly',
       dueDate: '2025-01-31',
@@ -74,7 +74,7 @@ export default function DocumentUpload() {
       isRequired: true,
       isUploaded: false,
       uploadedFiles: [],
-      compliance: ['Companies Act 2013', 'IndAS'],
+      compliance: ['Companies Act 2013', 'GST Act'],
       documentType: 'primary',
       canGenerate: false
     },
@@ -190,8 +190,41 @@ export default function DocumentUpload() {
       documentType: 'primary',
       canGenerate: false
     },
+    {
+      id: 'salary_register',
+      category: 'Primary Documents',
+      name: 'Salary Register',
+      description: 'Monthly salary register with employee details and deductions',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'CSV'],
+      isRequired: true,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'Labour Laws'],
+      documentType: 'primary',
+      canGenerate: false
+    },
 
     // DERIVED DOCUMENTS - Generated from primary documents
+    {
+      id: 'journal_entries',
+      category: 'Derived Documents',
+      name: 'Journal Entries',
+      description: 'Generated automatically from vendor invoices, sales data, and bank transactions',
+      priority: 'high',
+      frequency: 'monthly',
+      dueDate: '2025-01-31',
+      fileTypes: ['Excel', 'CSV'],
+      isRequired: false,
+      isUploaded: false,
+      uploadedFiles: [],
+      compliance: ['Companies Act 2013', 'IndAS'],
+      documentType: 'derived',
+      derivedFrom: ['vendor_invoices', 'sales_register', 'bank_statements'],
+      canGenerate: true
+    },
     {
       id: 'trial_balance',
       category: 'Derived Documents',
@@ -459,7 +492,7 @@ export default function DocumentUpload() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Document Upload</h1>
           <p className="text-muted-foreground">
-            Upload primary documents (required) while the system generates derived and calculated documents automatically
+            Upload primary source documents - the system will automatically generate journal entries, reports, and compliance documents from your uploads
           </p>
         </div>
 

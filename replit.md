@@ -12,8 +12,8 @@ Preferred communication style: Simple, everyday language.
 
 - **Document Requirements Table Format (July 14, 2025)**: Enhanced document upload page with comprehensive table-based requirement tracking:
   - **Document Classification**: Clear distinction between Primary Documents (must upload), Derived Documents (system generated), and Calculated Documents (auto calculated)
-  - **Primary Documents**: 6 essential documents users must upload (Journal Entries, Fixed Asset Register, Purchase Register, Sales Register, TDS Certificates, Bank Statements, Directors Report, Auditor Report)
-  - **Derived Documents**: 5 documents generated from primary uploads (Trial Balance, GSTR-2A, GSTR-3B, Form 26Q, Bank Reconciliation)
+  - **Primary Documents**: 7 essential documents users must upload (Vendor Invoices, Fixed Asset Register, Purchase Register, Sales Register, TDS Certificates, Bank Statements, Directors Report, Auditor Report, Salary Register)
+  - **Derived Documents**: 6 documents generated from primary uploads (Journal Entries, Trial Balance, GSTR-2A, GSTR-3B, Form 26Q, Bank Reconciliation)
   - **Calculated Documents**: 4 financial reports auto-calculated by system (P&L Statement, Balance Sheet, Cash Flow Statement, Depreciation Schedule)
   - **Table Format**: Comprehensive table with columns for Document Name, Type, Priority, Status, Frequency, Due Date, File Types, Generated From, Compliance, and Actions
   - **Smart Status Indicators**: "Must Upload" for primary documents, "Can Generate" for derived/calculated documents, "Complete" for uploaded items
