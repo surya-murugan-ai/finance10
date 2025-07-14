@@ -8,6 +8,7 @@ import { fileProcessorService } from "./services/fileProcessor";
 import { langGraphOrchestrator } from "./services/langGraph";
 import { complianceCheckerService } from "./services/complianceChecker";
 import { financialReportsService } from "./services/financialReports";
+import { dataSourceService } from "./services/dataSourceService";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 
@@ -932,6 +933,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Data Source Configuration Endpoints
+  
+  // Get all data sources
+  app.get('/api/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const sources = await dataSourceService.getAllDataSources();
+      res.json(sources);
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      res.status(500).json({ message: "Failed to fetch data sources" });
+    }
+  });
+
+  // Get specific data source
+  app.get('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const source = await dataSourceService.getDataSource(id);
+      if (!source) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      res.json(source);
+    } catch (error) {
+      console.error("Error fetching data source:", error);
+      res.status(500).json({ message: "Failed to fetch data source" });
+    }
+  });
+
+  // Create new data source
+  app.post('/api/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const source = await dataSourceService.createDataSource(req.body);
+      res.json(source);
+    } catch (error) {
+      console.error("Error creating data source:", error);
+      res.status(500).json({ message: "Failed to create data source" });
+    }
+  });
+
+  // Update data source
+  app.put('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const source = await dataSourceService.updateDataSource(id, req.body);
+      if (!source) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      res.json(source);
+    } catch (error) {
+      console.error("Error updating data source:", error);
+      res.status(500).json({ message: "Failed to update data source" });
+    }
+  });
+
+  // Test data source connection
+  app.post('/api/data-sources/:id/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const result = await dataSourceService.testConnection(id);
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing data source connection:", error);
+      res.status(500).json({ message: "Failed to test connection" });
+    }
+  });
+
+  // Get data source statistics
+  app.get('/api/data-sources/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const stats = await dataSourceService.getDataSourceStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching data source stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // ERP Connector Endpoints
+  
+  // Get all ERP connectors
+  app.get('/api/erp-connectors', isAuthenticated, async (req: any, res) => {
+    try {
+      const connectors = await dataSourceService.getAllERPConnectors();
+      res.json(connectors);
+    } catch (error) {
+      console.error("Error fetching ERP connectors:", error);
+      res.status(500).json({ message: "Failed to fetch ERP connectors" });
+    }
+  });
+
+  // Get specific ERP connector
+  app.get('/api/erp-connectors/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const connector = await dataSourceService.getERPConnector(id);
+      if (!connector) {
+        return res.status(404).json({ message: "ERP connector not found" });
+      }
+      res.json(connector);
+    } catch (error) {
+      console.error("Error fetching ERP connector:", error);
+      res.status(500).json({ message: "Failed to fetch ERP connector" });
+    }
+  });
+
+  // Update ERP connector
+  app.put('/api/erp-connectors/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const connector = await dataSourceService.updateERPConnector(id, req.body);
+      if (!connector) {
+        return res.status(404).json({ message: "ERP connector not found" });
+      }
+      res.json(connector);
+    } catch (error) {
+      console.error("Error updating ERP connector:", error);
+      res.status(500).json({ message: "Failed to update ERP connector" });
+    }
+  });
+
+  // Sync ERP data
+  app.post('/api/erp-connectors/:id/sync', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const result = await dataSourceService.syncERPData(id);
+      res.json(result);
+    } catch (error) {
+      console.error("Error syncing ERP data:", error);
+      res.status(500).json({ message: "Failed to sync ERP data" });
+    }
+  });
+
+  // Get ERP statistics
+  app.get('/api/erp-connectors/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const stats = await dataSourceService.getERPStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching ERP stats:", error);
+      res.status(500).json({ message: "Failed to fetch ERP stats" });
+    }
+  });
+
+  // Data Format Template Endpoints
+  
+  // Get all data format templates
+  app.get('/api/data-formats', isAuthenticated, async (req: any, res) => {
+    try {
+      const type = req.query.type as string;
+      let formats;
+      
+      if (type) {
+        formats = await dataSourceService.getDataFormatsByType(type as any);
+      } else {
+        formats = await dataSourceService.getAllDataFormats();
+      }
+      
+      res.json(formats);
+    } catch (error) {
+      console.error("Error fetching data formats:", error);
+      res.status(500).json({ message: "Failed to fetch data formats" });
+    }
+  });
+
+  // Get specific data format template
+  app.get('/api/data-formats/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const format = await dataSourceService.getDataFormat(id);
+      if (!format) {
+        return res.status(404).json({ message: "Data format not found" });
+      }
+      res.json(format);
+    } catch (error) {
+      console.error("Error fetching data format:", error);
+      res.status(500).json({ message: "Failed to fetch data format" });
+    }
+  });
+
+  // Master Data Endpoints
+  
+  // Get all master data
+  app.get('/api/master-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const type = req.query.type as string;
+      let masterData;
+      
+      if (type) {
+        masterData = await dataSourceService.getMasterDataByType(type as any);
+      } else {
+        masterData = await dataSourceService.getAllMasterData();
+      }
+      
+      res.json(masterData);
+    } catch (error) {
+      console.error("Error fetching master data:", error);
+      res.status(500).json({ message: "Failed to fetch master data" });
+    }
+  });
+
+  // Get specific master data
+  app.get('/api/master-data/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const masterData = await dataSourceService.getMasterData(id);
+      if (!masterData) {
+        return res.status(404).json({ message: "Master data not found" });
+      }
+      res.json(masterData);
+    } catch (error) {
+      console.error("Error fetching master data:", error);
+      res.status(500).json({ message: "Failed to fetch master data" });
+    }
+  });
+
+  // Update master data
+  app.put('/api/master-data/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { data } = req.body;
+      const masterData = await dataSourceService.updateMasterData(id, data);
+      if (!masterData) {
+        return res.status(404).json({ message: "Master data not found" });
+      }
+      res.json(masterData);
+    } catch (error) {
+      console.error("Error updating master data:", error);
+      res.status(500).json({ message: "Failed to update master data" });
+    }
+  });
+
+  // AI Learning Initialization
+  app.post('/api/ai-learning/initialize', isAuthenticated, async (req: any, res) => {
+    try {
+      const result = await dataSourceService.initializeAILearning();
+      res.json(result);
+    } catch (error) {
+      console.error("Error initializing AI learning:", error);
+      res.status(500).json({ message: "Failed to initialize AI learning" });
     }
   });
 

@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 import { 
   Database, 
   Globe, 
@@ -31,7 +33,13 @@ import {
   BarChart3,
   Download,
   Upload,
-  RefreshCw
+  RefreshCw,
+  FileText,
+  Building,
+  Shield,
+  Workflow,
+  Brain,
+  LineChart
 } from 'lucide-react';
 import PageLayout from '@/components/layout/PageLayout';
 
@@ -47,861 +55,915 @@ interface DataSource {
   error_message: string | null;
   created_at: string;
   updated_at: string;
-}
-
-interface DataSourceType {
-  value: string;
-  name: string;
-  description: string;
-}
-
-interface DatabaseType {
-  value: string;
-  name: string;
-  default_port: number;
-}
-
-interface DataSourceConfig {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
   config: Record<string, any>;
-  is_active: boolean;
-  is_default: boolean;
   metadata: Record<string, any>;
 }
 
-export default function DataSourceConfig() {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const { toast } = useToast();
-  
-  const [dataSources, setDataSources] = useState<DataSource[]>([]);
-  const [dataSourceTypes, setDataSourceTypes] = useState<DataSourceType[]>([]);
-  const [databaseTypes, setDatabaseTypes] = useState<DatabaseType[]>([]);
-  const [selectedSource, setSelectedSource] = useState<DataSource | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, any>>({});
-  const [statistics, setStatistics] = useState<Record<string, any>>({});
+interface ERPConnector {
+  id: string;
+  name: string;
+  type: 'tally' | 'sap' | 'zoho' | 'oracle' | 'manual';
+  config: {
+    baseUrl?: string;
+    apiKey?: string;
+    username?: string;
+    password?: string;
+    database?: string;
+    port?: number;
+    ssl?: boolean;
+    timeout?: number;
+  };
+  status: 'active' | 'inactive' | 'error';
+  last_sync: string | null;
+  data_formats: string[];
+}
 
-  // Form state
-  const [formData, setFormData] = useState({
-    id: '',
-    name: '',
-    type: '',
-    description: '',
-    is_active: true,
-    is_default: false,
-    config: {},
-    metadata: {}
+interface DataFormatTemplate {
+  id: string;
+  name: string;
+  type: 'sales' | 'purchase' | 'gst' | 'tds' | 'payroll' | 'bank_statement' | 'journal';
+  format: 'excel' | 'csv' | 'json' | 'xml';
+  columns: {
+    name: string;
+    type: 'string' | 'number' | 'date' | 'boolean';
+    required: boolean;
+    validation?: string;
+  }[];
+  sample_data: Record<string, any>[];
+  upload_guide: string;
+}
+
+interface MasterData {
+  id: string;
+  type: 'gl_codes' | 'tds_sections' | 'vendors' | 'cost_centers' | 'customers' | 'products';
+  data: Record<string, any>[];
+  last_updated: string;
+  source: string;
+}
+
+interface Stats {
+  total: number;
+  connected: number;
+  disconnected: number;
+  errors: number;
+  active: number;
+}
+
+export default function DataSourceConfig() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('data-sources');
+  
+  // Data Sources
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [dataSourceStats, setDataSourceStats] = useState<Stats>({
+    total: 0, connected: 0, disconnected: 0, errors: 0, active: 0
+  });
+  
+  // ERP Connectors
+  const [erpConnectors, setERPConnectors] = useState<ERPConnector[]>([]);
+  const [erpStats, setERPStats] = useState<Stats>({
+    total: 0, connected: 0, disconnected: 0, errors: 0, active: 0
+  });
+  
+  // Data Format Templates
+  const [dataFormats, setDataFormats] = useState<DataFormatTemplate[]>([]);
+  const [selectedFormatType, setSelectedFormatType] = useState<string>('all');
+  
+  // Master Data
+  const [masterData, setMasterData] = useState<MasterData[]>([]);
+  const [selectedMasterType, setSelectedMasterType] = useState<string>('all');
+  
+  // Testing states
+  const [testingConnections, setTestingConnections] = useState<Set<string>>(new Set());
+  const [syncingERP, setSyncingERP] = useState<Set<string>>(new Set());
+  
+  // AI Learning
+  const [aiLearningStatus, setAILearningStatus] = useState<{
+    initialized: boolean;
+    samplesProcessed: number;
+    lastUpdate: string | null;
+  }>({
+    initialized: false,
+    samplesProcessed: 0,
+    lastUpdate: null
   });
 
-  // Redirect to login if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
+    if (user) {
+      loadDataSources();
+      loadERPConnectors();
+      loadDataFormats();
+      loadMasterData();
+      loadStats();
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [user]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchDataSources();
-      fetchDataSourceTypes();
-      fetchDatabaseTypes();
-    }
-  }, [isAuthenticated]);
-
-  const fetchDataSources = async () => {
+  const loadDataSources = async () => {
     try {
-      const response = await apiRequest('/api/data-sources/');
-      setDataSources(response.data_sources);
+      const response = await apiRequest('/api/data-sources');
+      setDataSources(response);
     } catch (error) {
-      console.error('Error fetching data sources:', error);
+      console.error('Error loading data sources:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch data sources",
-        variant: "destructive",
+        description: "Failed to load data sources",
+        variant: "destructive"
       });
     }
   };
 
-  const fetchDataSourceTypes = async () => {
+  const loadERPConnectors = async () => {
     try {
-      const response = await apiRequest('/api/data-sources/types/available');
-      setDataSourceTypes(response.types);
+      const response = await apiRequest('/api/erp-connectors');
+      setERPConnectors(response);
     } catch (error) {
-      console.error('Error fetching data source types:', error);
+      console.error('Error loading ERP connectors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load ERP connectors",
+        variant: "destructive"
+      });
     }
   };
 
-  const fetchDatabaseTypes = async () => {
+  const loadDataFormats = async () => {
     try {
-      const response = await apiRequest('/api/data-sources/databases/types');
-      setDatabaseTypes(response.database_types);
+      const url = selectedFormatType === 'all' ? '/api/data-formats' : `/api/data-formats?type=${selectedFormatType}`;
+      const response = await apiRequest(url);
+      setDataFormats(response);
     } catch (error) {
-      console.error('Error fetching database types:', error);
+      console.error('Error loading data formats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load data formats",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadMasterData = async () => {
+    try {
+      const url = selectedMasterType === 'all' ? '/api/master-data' : `/api/master-data?type=${selectedMasterType}`;
+      const response = await apiRequest(url);
+      setMasterData(Array.isArray(response) ? response : [response].filter(Boolean));
+    } catch (error) {
+      console.error('Error loading master data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load master data",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const [dsStats, erpStats] = await Promise.all([
+        apiRequest('/api/data-sources/stats'),
+        apiRequest('/api/erp-connectors/stats')
+      ]);
+      setDataSourceStats(dsStats);
+      setERPStats(erpStats);
+    } catch (error) {
+      console.error('Error loading stats:', error);
     }
   };
 
   const testConnection = async (sourceId: string) => {
-    setLoading(true);
+    setTestingConnections(prev => new Set(prev).add(sourceId));
     try {
-      const response = await apiRequest(`/api/data-sources/${sourceId}/test`, {
+      const result = await apiRequest(`/api/data-sources/${sourceId}/test`, {
         method: 'POST'
       });
       
-      setTestResults(prev => ({
-        ...prev,
-        [sourceId]: response
-      }));
+      if (result.success) {
+        toast({
+          title: "Connection Successful",
+          description: `Connected in ${result.duration}ms`
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
       
-      toast({
-        title: response.success ? "Connection Successful" : "Connection Failed",
-        description: response.message,
-        variant: response.success ? "default" : "destructive",
-      });
-      
-      // Refresh data sources to get updated status
-      fetchDataSources();
+      loadDataSources();
+      loadStats();
     } catch (error) {
       console.error('Error testing connection:', error);
       toast({
-        title: "Error",
-        description: "Failed to test connection",
-        variant: "destructive",
+        title: "Test Failed",
+        description: "Unable to test connection",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setTestingConnections(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(sourceId);
+        return newSet;
+      });
     }
   };
 
-  const connectToSource = async (sourceId: string) => {
-    setLoading(true);
+  const syncERPData = async (connectorId: string) => {
+    setSyncingERP(prev => new Set(prev).add(connectorId));
     try {
-      const response = await apiRequest(`/api/data-sources/${sourceId}/connect`, {
+      const result = await apiRequest(`/api/erp-connectors/${connectorId}/sync`, {
         method: 'POST'
       });
       
-      toast({
-        title: response.success ? "Connected" : "Connection Failed",
-        description: response.message,
-        variant: response.success ? "default" : "destructive",
-      });
+      if (result.success) {
+        toast({
+          title: "Sync Successful",
+          description: `Processed ${result.recordsProcessed} records`
+        });
+      } else {
+        toast({
+          title: "Sync Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
       
-      fetchDataSources();
+      loadERPConnectors();
+      loadStats();
     } catch (error) {
-      console.error('Error connecting to source:', error);
+      console.error('Error syncing ERP data:', error);
       toast({
-        title: "Error",
-        description: "Failed to connect to data source",
-        variant: "destructive",
+        title: "Sync Failed",
+        description: "Unable to sync ERP data",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setSyncingERP(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(connectorId);
+        return newSet;
+      });
     }
   };
 
-  const disconnectFromSource = async (sourceId: string) => {
+  const initializeAILearning = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest(`/api/data-sources/${sourceId}/disconnect`, {
+      const result = await apiRequest('/api/ai-learning/initialize', {
         method: 'POST'
       });
       
-      toast({
-        title: response.success ? "Disconnected" : "Disconnection Failed",
-        description: response.message,
-        variant: response.success ? "default" : "destructive",
-      });
-      
-      fetchDataSources();
+      if (result.success) {
+        setAILearningStatus({
+          initialized: true,
+          samplesProcessed: result.samplesProcessed,
+          lastUpdate: new Date().toISOString()
+        });
+        toast({
+          title: "AI Learning Initialized",
+          description: `Processed ${result.samplesProcessed} samples`
+        });
+      } else {
+        toast({
+          title: "Initialization Failed",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
-      console.error('Error disconnecting from source:', error);
+      console.error('Error initializing AI learning:', error);
       toast({
-        title: "Error",
-        description: "Failed to disconnect from data source",
-        variant: "destructive",
+        title: "Initialization Failed",
+        description: "Unable to initialize AI learning",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatistics = async (sourceId: string) => {
-    try {
-      const response = await apiRequest(`/api/data-sources/${sourceId}/stats`);
-      setStatistics(prev => ({
-        ...prev,
-        [sourceId]: response.statistics
-      }));
-    } catch (error) {
-      console.error('Error getting statistics:', error);
-    }
-  };
-
-  const createDataSource = async () => {
-    setLoading(true);
-    try {
-      const response = await apiRequest('/api/data-sources/', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
-      
-      toast({
-        title: "Success",
-        description: "Data source created successfully",
-      });
-      
-      setIsCreateDialogOpen(false);
-      resetForm();
-      fetchDataSources();
-    } catch (error) {
-      console.error('Error creating data source:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create data source",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateDataSource = async () => {
-    if (!selectedSource) return;
-    
-    setLoading(true);
-    try {
-      const response = await apiRequest(`/api/data-sources/${selectedSource.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(formData)
-      });
-      
-      toast({
-        title: "Success",
-        description: "Data source updated successfully",
-      });
-      
-      setIsEditDialogOpen(false);
-      resetForm();
-      fetchDataSources();
-    } catch (error) {
-      console.error('Error updating data source:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update data source",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteDataSource = async (sourceId: string) => {
-    if (!confirm('Are you sure you want to delete this data source?')) return;
-    
-    setLoading(true);
-    try {
-      const response = await apiRequest(`/api/data-sources/${sourceId}`, {
-        method: 'DELETE'
-      });
-      
-      toast({
-        title: "Success",
-        description: "Data source deleted successfully",
-      });
-      
-      fetchDataSources();
-    } catch (error) {
-      console.error('Error deleting data source:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete data source",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      id: '',
-      name: '',
-      type: '',
-      description: '',
-      is_active: true,
-      is_default: false,
-      config: {},
-      metadata: {}
-    });
-    setSelectedSource(null);
-  };
-
-  const openEditDialog = (source: DataSource) => {
-    setSelectedSource(source);
-    setFormData({
-      id: source.id,
-      name: source.name,
-      type: source.type,
-      description: source.description,
-      is_active: source.is_active,
-      is_default: source.is_default,
-      config: {},
-      metadata: {}
-    });
-    setIsEditDialogOpen(true);
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'active':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'disconnected':
+      case 'inactive':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       case 'testing':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
+        return <Clock className="w-4 h-4 text-blue-500 animate-spin" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'bg-green-100 text-green-800';
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      case 'testing':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+        return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'database':
-        return <Database className="h-5 w-5" />;
+        return <Database className="w-4 h-4" />;
       case 'api':
-      case 'gst_portal':
-      case 'mca_portal':
-        return <Globe className="h-5 w-5" />;
+        return <Globe className="w-4 h-4" />;
       case 'file_system':
-        return <FolderOpen className="h-5 w-5" />;
+        return <FolderOpen className="w-4 h-4" />;
       case 'cloud_storage':
-        return <Cloud className="h-5 w-5" />;
-      default:
-        return <Settings className="h-5 w-5" />;
-    }
-  };
-
-  const renderConfigForm = () => {
-    if (!formData.type) return null;
-
-    switch (formData.type) {
-      case 'database':
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="host">Host</Label>
-                <Input
-                  id="host"
-                  placeholder="localhost"
-                  value={formData.config.host || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, host: e.target.value }
-                  })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="port">Port</Label>
-                <Input
-                  id="port"
-                  type="number"
-                  placeholder="5432"
-                  value={formData.config.port || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, port: parseInt(e.target.value) }
-                  })}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="database">Database</Label>
-              <Input
-                id="database"
-                placeholder="database_name"
-                value={formData.config.database || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, database: e.target.value }
-                })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="username"
-                  value={formData.config.username || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, username: e.target.value }
-                  })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="password"
-                  value={formData.config.password || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, password: e.target.value }
-                  })}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="database_type">Database Type</Label>
-              <Select
-                value={formData.config.database_type || ''}
-                onValueChange={(value) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, database_type: value }
-                })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select database type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {databaseTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-      case 'api':
+        return <Cloud className="w-4 h-4" />;
+      case 'erp_system':
+        return <Building className="w-4 h-4" />;
       case 'gst_portal':
       case 'mca_portal':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="base_url">Base URL</Label>
-              <Input
-                id="base_url"
-                placeholder="https://api.example.com"
-                value={formData.config.base_url || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, base_url: e.target.value }
-                })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="api_key">API Key</Label>
-              <Input
-                id="api_key"
-                type="password"
-                placeholder="Your API key"
-                value={formData.config.api_key || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, api_key: e.target.value }
-                })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="auth_type">Authentication Type</Label>
-                <Select
-                  value={formData.config.auth_type || 'api_key'}
-                  onValueChange={(value) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, auth_type: value }
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="api_key">API Key</SelectItem>
-                    <SelectItem value="bearer">Bearer Token</SelectItem>
-                    <SelectItem value="basic">Basic Auth</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="timeout">Timeout (seconds)</Label>
-                <Input
-                  id="timeout"
-                  type="number"
-                  placeholder="30"
-                  value={formData.config.timeout || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    config: { ...formData.config, timeout: parseInt(e.target.value) }
-                  })}
-                />
-              </div>
-            </div>
-          </div>
-        );
-      case 'file_system':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="base_path">Base Path</Label>
-              <Input
-                id="base_path"
-                placeholder="/path/to/files"
-                value={formData.config.base_path || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, base_path: e.target.value }
-                })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="access_mode">Access Mode</Label>
-              <Select
-                value={formData.config.access_mode || 'read_write'}
-                onValueChange={(value) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, access_mode: value }
-                })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="read_only">Read Only</SelectItem>
-                  <SelectItem value="read_write">Read Write</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="file_extensions">Allowed Extensions (comma-separated)</Label>
-              <Input
-                id="file_extensions"
-                placeholder=".pdf,.xlsx,.csv"
-                value={formData.config.file_extensions?.join(',') || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { 
-                    ...formData.config, 
-                    file_extensions: e.target.value.split(',').map(ext => ext.trim())
-                  }
-                })}
-              />
-            </div>
-          </div>
-        );
+        return <Shield className="w-4 h-4" />;
       default:
-        return (
-          <div>
-            <Label htmlFor="custom_config">Configuration (JSON)</Label>
-            <Textarea
-              id="custom_config"
-              placeholder='{"key": "value"}'
-              value={JSON.stringify(formData.config, null, 2)}
-              onChange={(e) => {
-                try {
-                  const config = JSON.parse(e.target.value);
-                  setFormData({ ...formData, config });
-                } catch (error) {
-                  // Invalid JSON, keep as is
-                }
-              }}
-              rows={10}
-            />
-          </div>
-        );
+        return <Settings className="w-4 h-4" />;
     }
   };
 
-  if (isLoading) {
-    return (
-      <PageLayout title="Data Source Configuration">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-          </div>
+  const renderDataSourcesTab = () => (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Database className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium">Total Sources</p>
+                <p className="text-2xl font-bold">{dataSourceStats.total}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Connected</p>
+                <p className="text-2xl font-bold">{dataSourceStats.connected}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              <div>
+                <p className="text-sm font-medium">Disconnected</p>
+                <p className="text-2xl font-bold">{dataSourceStats.disconnected}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <div>
+                <p className="text-sm font-medium">Errors</p>
+                <p className="text-2xl font-bold">{dataSourceStats.errors}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium">Active</p>
+                <p className="text-2xl font-bold">{dataSourceStats.active}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Sources List */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Data Sources</h3>
+        <Button onClick={loadDataSources}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {dataSources.map((source) => (
+          <Card key={source.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {getTypeIcon(source.type)}
+                  <CardTitle className="text-sm">{source.name}</CardTitle>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon(source.status)}
+                  <Badge variant={source.is_active ? "default" : "secondary"}>
+                    {source.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-gray-600 mb-3">{source.description}</p>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Type:</span>
+                  <span className="font-medium">{source.type}</span>
+                </div>
+                
+                {source.last_tested && (
+                  <div className="flex justify-between text-xs">
+                    <span>Last Tested:</span>
+                    <span className="font-medium">
+                      {new Date(source.last_tested).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                
+                {source.error_message && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {source.error_message}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              
+              <div className="flex space-x-2 mt-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => testConnection(source.id)}
+                  disabled={testingConnections.has(source.id)}
+                >
+                  {testingConnections.has(source.id) ? (
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <TestTube className="w-3 h-3 mr-1" />
+                  )}
+                  Test
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Edit
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderERPConnectorsTab = () => (
+    <div className="space-y-6">
+      {/* ERP Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Building className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium">Total Connectors</p>
+                <p className="text-2xl font-bold">{erpStats.total}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Active</p>
+                <p className="text-2xl font-bold">{erpStats.active}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              <div>
+                <p className="text-sm font-medium">Inactive</p>
+                <p className="text-2xl font-bold">{erpStats.inactive}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <div>
+                <p className="text-sm font-medium">Errors</p>
+                <p className="text-2xl font-bold">{erpStats.errors}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ERP Connectors List */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">ERP Connectors</h3>
+        <Button onClick={loadERPConnectors}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {erpConnectors.map((connector) => (
+          <Card key={connector.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Building className="w-4 h-4" />
+                  <CardTitle className="text-sm">{connector.name}</CardTitle>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon(connector.status)}
+                  <Badge variant={connector.status === 'active' ? "default" : "secondary"}>
+                    {connector.status}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Type:</span>
+                  <span className="font-medium capitalize">{connector.type}</span>
+                </div>
+                
+                <div className="flex justify-between text-xs">
+                  <span>Data Formats:</span>
+                  <span className="font-medium">{connector.data_formats.join(', ')}</span>
+                </div>
+                
+                {connector.last_sync && (
+                  <div className="flex justify-between text-xs">
+                    <span>Last Sync:</span>
+                    <span className="font-medium">
+                      {new Date(connector.last_sync).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex space-x-2 mt-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => syncERPData(connector.id)}
+                  disabled={syncingERP.has(connector.id) || connector.status !== 'active'}
+                >
+                  {syncingERP.has(connector.id) ? (
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                  )}
+                  Sync
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Configure
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderDataFormatsTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Data Format Templates</h3>
+        <div className="flex items-center space-x-2">
+          <Select value={selectedFormatType} onValueChange={setSelectedFormatType}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="sales">Sales</SelectItem>
+              <SelectItem value="purchase">Purchase</SelectItem>
+              <SelectItem value="gst">GST</SelectItem>
+              <SelectItem value="tds">TDS</SelectItem>
+              <SelectItem value="payroll">Payroll</SelectItem>
+              <SelectItem value="bank_statement">Bank Statement</SelectItem>
+              <SelectItem value="journal">Journal</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={loadDataFormats}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
         </div>
-      </PageLayout>
-    );
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {dataFormats.map((format) => (
+          <Card key={format.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <CardTitle className="text-sm">{format.name}</CardTitle>
+                </div>
+                <Badge variant="outline">{format.format.toUpperCase()}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Type:</span>
+                  <span className="font-medium capitalize">{format.type}</span>
+                </div>
+                
+                <div className="flex justify-between text-xs">
+                  <span>Columns:</span>
+                  <span className="font-medium">{format.columns.length}</span>
+                </div>
+                
+                <div className="flex justify-between text-xs">
+                  <span>Required Fields:</span>
+                  <span className="font-medium">
+                    {format.columns.filter(c => c.required).length}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-3">
+                <p className="text-xs text-gray-600">{format.upload_guide}</p>
+              </div>
+              
+              <div className="flex space-x-2 mt-4">
+                <Button size="sm" variant="outline" disabled>
+                  <Download className="w-3 h-3 mr-1" />
+                  Download Template
+                </Button>
+                
+                <Button size="sm" variant="outline" disabled>
+                  <FileText className="w-3 h-3 mr-1" />
+                  View Sample
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderMasterDataTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Master Data</h3>
+        <div className="flex items-center space-x-2">
+          <Select value={selectedMasterType} onValueChange={setSelectedMasterType}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="gl_codes">GL Codes</SelectItem>
+              <SelectItem value="tds_sections">TDS Sections</SelectItem>
+              <SelectItem value="vendors">Vendors</SelectItem>
+              <SelectItem value="cost_centers">Cost Centers</SelectItem>
+              <SelectItem value="customers">Customers</SelectItem>
+              <SelectItem value="products">Products</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={loadMasterData}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {masterData.map((data) => (
+          <Card key={data.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Database className="w-4 h-4" />
+                  <CardTitle className="text-sm capitalize">{data.type.replace('_', ' ')}</CardTitle>
+                </div>
+                <Badge variant="outline">{data.data.length} records</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Last Updated:</span>
+                  <span className="font-medium">
+                    {new Date(data.last_updated).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between text-xs">
+                  <span>Source:</span>
+                  <span className="font-medium capitalize">{data.source.replace('_', ' ')}</span>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2 mt-4">
+                <Button size="sm" variant="outline" disabled>
+                  <FileText className="w-3 h-3 mr-1" />
+                  View Data
+                </Button>
+                
+                <Button size="sm" variant="outline" disabled>
+                  <Upload className="w-3 h-3 mr-1" />
+                  Update
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAILearningTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Brain className="w-5 h-5" />
+            <span>AI Learning System</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">AI Learning Status</p>
+                <p className="text-xs text-gray-600">
+                  {aiLearningStatus.initialized 
+                    ? `Initialized with ${aiLearningStatus.samplesProcessed} samples`
+                    : 'Not initialized'
+                  }
+                </p>
+              </div>
+              <Badge variant={aiLearningStatus.initialized ? "default" : "secondary"}>
+                {aiLearningStatus.initialized ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            
+            {aiLearningStatus.initialized && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Samples Processed:</span>
+                  <span className="font-medium">{aiLearningStatus.samplesProcessed}</span>
+                </div>
+                
+                {aiLearningStatus.lastUpdate && (
+                  <div className="flex justify-between text-xs">
+                    <span>Last Update:</span>
+                    <span className="font-medium">
+                      {new Date(aiLearningStatus.lastUpdate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <Button
+              onClick={initializeAILearning}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Brain className="w-4 h-4 mr-2" />
+              )}
+              {aiLearningStatus.initialized ? 'Reinitialize AI Learning' : 'Initialize AI Learning'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <LineChart className="w-5 h-5" />
+            <span>Learning Progress</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Data Template Learning</span>
+                <span>85%</span>
+              </div>
+              <Progress value={85} className="h-2" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Pattern Recognition</span>
+                <span>72%</span>
+              </div>
+              <Progress value={72} className="h-2" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Anomaly Detection</span>
+                <span>91%</span>
+              </div>
+              <Progress value={91} className="h-2" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Classification Accuracy</span>
+                <span>88%</span>
+              </div>
+              <Progress value={88} className="h-2" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  if (!user) {
+    return <div>Please log in to access data source configuration.</div>;
   }
 
   return (
-    <PageLayout title="Data Source Configuration">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Data Source Configuration
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Configure and manage data sources for the QRT platform
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-              <Button variant="outline" onClick={fetchDataSources}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Data Source
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Create New Data Source</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="id">ID</Label>
-                        <Input
-                          id="id"
-                          placeholder="unique_id"
-                          value={formData.id}
-                          onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          placeholder="Data Source Name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="type">Type</Label>
-                      <Select
-                        value={formData.type}
-                        onValueChange={(value) => setFormData({ ...formData, type: value, config: {} })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select data source type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dataSourceTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Description of the data source"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="is_active"
-                          checked={formData.is_active}
-                          onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                        />
-                        <Label htmlFor="is_active">Active</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="is_default"
-                          checked={formData.is_default}
-                          onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked })}
-                        />
-                        <Label htmlFor="is_default">Default</Label>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-3">Configuration</h4>
-                      {renderConfigForm()}
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={createDataSource} disabled={loading}>
-                        {loading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Creating...
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
+    <PageLayout>
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-2">Data Source Configuration</h1>
+          <p className="text-gray-600">
+            Manage your data sources, ERP connectors, and AI learning systems
+          </p>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {dataSources.map((source) => (
-              <Card key={source.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                        {getTypeIcon(source.type)}
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{source.name}</CardTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          {source.type.replace('_', ' ').toUpperCase()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {source.is_default && (
-                        <Badge variant="secondary">Default</Badge>
-                      )}
-                      <Badge className={getStatusColor(source.status)}>
-                        {getStatusIcon(source.status)}
-                        <span className="ml-1">{source.status}</span>
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    {source.description}
-                  </p>
-                  
-                  {source.error_message && (
-                    <Alert className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {source.error_message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Last Tested:</span>
-                      <span>
-                        {source.last_tested 
-                          ? new Date(source.last_tested).toLocaleString()
-                          : 'Never'
-                        }
-                      </span>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => testConnection(source.id)}
-                        disabled={loading}
-                      >
-                        <TestTube className="h-4 w-4 mr-1" />
-                        Test
-                      </Button>
-                      
-                      {source.status === 'connected' ? (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => disconnectFromSource(source.id)}
-                          disabled={loading}
-                        >
-                          <Zap className="h-4 w-4 mr-1" />
-                          Disconnect
-                        </Button>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => connectToSource(source.id)}
-                          disabled={loading}
-                        >
-                          <Zap className="h-4 w-4 mr-1" />
-                          Connect
-                        </Button>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => getStatistics(source.id)}
-                      >
-                        <BarChart3 className="h-4 w-4 mr-1" />
-                        Stats
-                      </Button>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openEditDialog(source)}
-                        className="flex-1"
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      
-                      {!source.is_default && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => deleteDataSource(source.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="data-sources">Data Sources</TabsTrigger>
+            <TabsTrigger value="erp-connectors">ERP Connectors</TabsTrigger>
+            <TabsTrigger value="data-formats">Data Formats</TabsTrigger>
+            <TabsTrigger value="master-data">Master Data</TabsTrigger>
+            <TabsTrigger value="ai-learning">AI Learning</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="data-sources">
+            {renderDataSourcesTab()}
+          </TabsContent>
+
+          <TabsContent value="erp-connectors">
+            {renderERPConnectorsTab()}
+          </TabsContent>
+
+          <TabsContent value="data-formats">
+            {renderDataFormatsTab()}
+          </TabsContent>
+
+          <TabsContent value="master-data">
+            {renderMasterDataTab()}
+          </TabsContent>
+
+          <TabsContent value="ai-learning">
+            {renderAILearningTab()}
+          </TabsContent>
+        </Tabs>
+      </div>
     </PageLayout>
   );
 }
