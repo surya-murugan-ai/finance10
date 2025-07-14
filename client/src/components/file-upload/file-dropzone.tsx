@@ -33,8 +33,11 @@ export default function FileDropzone() {
         f.id === id ? { ...f, status: 'uploading', progress: 0 } : f
       ));
       
-      const response = await apiRequest('POST', '/api/documents/upload', formData);
-      return response.json();
+      const response = await apiRequest('/api/documents/upload', {
+        method: 'POST',
+        body: formData
+      });
+      return response;
     },
     onSuccess: (data, variables) => {
       setFiles(prev => prev.map(f => 
