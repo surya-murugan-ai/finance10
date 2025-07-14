@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
 
 interface FinancialReport {
   id: string;
@@ -13,8 +14,23 @@ interface FinancialReport {
 }
 
 export default function FinancialReportsSection() {
+  const currentYear = new Date().getFullYear().toString();
+  
   const { data: reports, isLoading } = useQuery<FinancialReport[]>({
     queryKey: ['/api/financial-statements'],
+    retry: false,
+  });
+
+  const { data: trialBalance, isLoading: trialBalanceLoading } = useQuery({
+    queryKey: ['/api/reports/trial-balance', currentYear],
+    queryFn: async () => {
+      const response = await apiRequest('/api/reports/trial-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period: currentYear }),
+      });
+      return response;
+    },
     retry: false,
   });
 
@@ -29,6 +45,14 @@ export default function FinancialReportsSection() {
 
   const getReportData = (report: FinancialReport) => {
     if (report.statementType === 'trial_balance') {
+      // Use real trial balance data if available
+      if (trialBalance && !trialBalanceLoading) {
+        return {
+          totalDebits: trialBalance.totalDebits || 0,
+          totalCredits: trialBalance.totalCredits || 0,
+          balance: '₹0',
+        };
+      }
       return {
         totalDebits: report.data?.totalDebits || 0,
         totalCredits: report.data?.totalCredits || 0,
@@ -89,19 +113,19 @@ export default function FinancialReportsSection() {
       id: '1',
       statementType: 'trial_balance',
       status: 'updated' as const,
-      data: { totalDebits: 4567890, totalCredits: 4567890, isBalanced: true }
+      data: { totalDebits: 0, totalCredits: 0, isBalanced: true }
     },
     {
       id: '2',
       statementType: 'profit_loss',
       status: 'processing' as const,
-      data: { totalRevenue: 1234567, totalExpenses: 845123, netProfit: 389444 }
+      data: { totalRevenue: 0, totalExpenses: 0, netProfit: 0 }
     },
     {
       id: '3',
       statementType: 'balance_sheet',
       status: 'queued' as const,
-      data: { totalAssets: 5678901, totalLiabilities: 3456789, totalEquity: 2222112 }
+      data: { totalAssets: 0, totalLiabilities: 0, totalEquity: 0 }
     }
   ];
 

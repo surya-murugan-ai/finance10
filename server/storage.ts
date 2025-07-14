@@ -248,11 +248,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJournalEntriesByPeriod(period: string): Promise<JournalEntry[]> {
-    return await db
-      .select()
-      .from(journalEntries)
-      .where(sql`DATE_PART('year', ${journalEntries.date}) = ${period.split('_')[1]}`)
-      .orderBy(desc(journalEntries.date));
+    const year = period.includes('_') ? period.split('_')[1] : period;
+    console.log(`Fetching journal entries for year: ${year}`);
+    
+    try {
+      const result = await db
+        .select()
+        .from(journalEntries)
+        .where(sql`EXTRACT(YEAR FROM ${journalEntries.date}) = ${parseInt(year)}`)
+        .orderBy(desc(journalEntries.date));
+      
+      console.log(`Found ${result.length} journal entries for year ${year}`);
+      return result;
+    } catch (error) {
+      console.error('Error fetching journal entries by period:', error);
+      // Fallback: return all entries if year filtering fails
+      return await db
+        .select()
+        .from(journalEntries)
+        .orderBy(desc(journalEntries.date));
+    }
   }
 
   async deleteJournalEntry(id: string): Promise<void> {
