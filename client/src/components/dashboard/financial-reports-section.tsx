@@ -24,9 +24,14 @@ export default function FinancialReportsSection() {
     retry: false,
   });
 
-  const { data: trialBalance, isLoading: trialBalanceLoading } = useQuery({
+  const { data: trialBalance, isLoading: trialBalanceLoading, error: trialBalanceError } = useQuery({
     queryKey: ['/api/reports/trial-balance', currentYear],
     queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await apiRequest('/api/reports/trial-balance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,7 +39,8 @@ export default function FinancialReportsSection() {
       });
       return response;
     },
-    retry: false,
+    retry: 1,
+    enabled: !!localStorage.getItem('access_token'),
   });
 
   const getReportTitle = (type: string) => {
