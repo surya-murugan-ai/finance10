@@ -38,11 +38,23 @@ export default function FinancialReports() {
 
   const { data: statements, isLoading: statementsLoading } = useQuery<FinancialStatement[]>({
     queryKey: ["/api/financial-statements", selectedPeriod],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/financial-statements?period=${selectedPeriod}`, {
+        method: 'GET',
+      });
+      return response;
+    },
     retry: false,
   });
 
   const { data: journalEntries, isLoading: journalEntriesLoading, refetch: refetchJournalEntries } = useQuery({
     queryKey: ["/api/journal-entries"],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/journal-entries`, {
+        method: 'GET',
+      });
+      return response;
+    },
     retry: false,
   });
 
