@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Sample Document Testing Suite (July 14, 2025)**: Created comprehensive sample primary documents for testing complete document workflows:
+  - **6 Primary Document Types**: Vendor Invoices, Sales Register, Bank Statements, Salary Register, Fixed Asset Register, TDS Certificates
+  - **Authentic Indian Data**: GST numbers, PAN formats, TDS sections, banking formats compliant with Indian standards
+  - **Complete Testing Guide**: Comprehensive documentation for testing all document processing workflows
+  - **Real Business Logic**: Accurate accounting entries, tax calculations, payroll structures, asset depreciation
+  - **End-to-End Testing**: Covers upload → classification → generation → calculation complete workflows
+  - **Files Location**: All sample files in `test_data/` directory with CSV format for easy testing
+
 - **Document Requirements Table Format (July 14, 2025)**: Enhanced document upload page with comprehensive table-based requirement tracking:
   - **Document Classification**: Clear distinction between Primary Documents (must upload), Derived Documents (system generated), and Calculated Documents (auto calculated)
   - **Primary Documents**: 7 essential documents users must upload (Vendor Invoices, Fixed Asset Register, Purchase Register, Sales Register, TDS Certificates, Bank Statements, Directors Report, Auditor Report, Salary Register)
