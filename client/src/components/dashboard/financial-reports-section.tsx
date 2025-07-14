@@ -45,33 +45,33 @@ export default function FinancialReportsSection() {
 
   const getReportData = (report: FinancialReport) => {
     if (report.statementType === 'trial_balance') {
-      // Always use real trial balance data if available
-      if (trialBalance && !trialBalanceLoading) {
+      // ALWAYS use real trial balance data if available, ignore financial statements data
+      if (trialBalance && !trialBalanceLoading && trialBalance.totalDebits !== undefined) {
         const debits = trialBalance.totalDebits;
         const credits = trialBalance.totalCredits;
-        console.log('Trial balance raw data:', { debits, credits, type: typeof debits });
-        
-        // Ensure we have valid numbers
-        const safeDebits = (typeof debits === 'number' && !isNaN(debits)) ? debits : 0;
-        const safeCredits = (typeof credits === 'number' && !isNaN(credits)) ? credits : 0;
+        console.log('Using live trial balance data:', { debits, credits, type: typeof debits });
         
         return {
-          totalDebits: safeDebits,
-          totalCredits: safeCredits,
+          totalDebits: debits,
+          totalCredits: credits,
           balance: '₹0',
         };
       }
-      // Return loading state if trial balance is still loading
-      if (trialBalanceLoading) {
+      
+      // Fallback to financial statements data only if live data is not available
+      if (report.data?.totalDebits !== undefined) {
+        console.log('Using financial statements data:', report.data);
         return {
-          totalDebits: 0,
-          totalCredits: 0,
+          totalDebits: Number(report.data.totalDebits) || 0,
+          totalCredits: Number(report.data.totalCredits) || 0,
           balance: '₹0',
         };
       }
+      
+      // Loading state
       return {
-        totalDebits: Number(report.data?.totalDebits) || 0,
-        totalCredits: Number(report.data?.totalCredits) || 0,
+        totalDebits: 0,
+        totalCredits: 0,
         balance: '₹0',
       };
     } else if (report.statementType === 'profit_loss') {
@@ -90,7 +90,7 @@ export default function FinancialReportsSection() {
     return {};
   };
 
-  if (isLoading || trialBalanceLoading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {[1, 2, 3].map((i) => (
