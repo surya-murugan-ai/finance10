@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Journal Entry Duplication Prevention (July 14, 2025)**: Implemented comprehensive duplication check system for journal entry generation:
+  - **Duplication Detection**: Added hasJournalEntries() method to efficiently check for existing journal entries per document
+  - **Smart Skipping**: System now skips documents that already have journal entries, preventing data duplication
+  - **Enhanced User Feedback**: Frontend displays detailed messages showing how many documents were processed vs skipped
+  - **Performance Optimization**: Uses SQL count queries instead of fetching all records for duplication checks
+  - **Comprehensive Logging**: Server logs show which documents are skipped with reasons for better debugging
+  - **Database Integrity**: Maintains consistent financial data by preventing duplicate journal entries from inflating balances
+  - **User Experience**: Toast notifications clearly indicate when no new entries are created due to existing data
+
 - **Financial Reports Generation Fix (July 14, 2025)**: Successfully fixed financial reports generation system to create reports from uploaded documents:
   - **API Request Format**: Fixed frontend API request format to match backend expectations
   - **Automatic Journal Entry Generation**: Added system to automatically generate journal entries from uploaded documents

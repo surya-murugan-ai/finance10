@@ -860,8 +860,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const documents = await storage.getDocuments(userId);
       
       let totalEntries = 0;
+      let skippedDocuments = 0;
+      let processedDocuments = 0;
       
       for (const doc of documents) {
+        // Check if journal entries already exist for this document
+        const hasExistingEntries = await storage.hasJournalEntries(doc.id);
+        
+        if (hasExistingEntries) {
+          console.log(`Skipping document ${doc.fileName} - journal entries already exist`);
+          skippedDocuments++;
+          continue;
+        }
+        
+        console.log(`Processing document ${doc.fileName} - no existing journal entries found`);
+        
         // Generate sample journal entries based on document type
         const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
         
@@ -880,12 +893,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           totalEntries++;
         }
+        processedDocuments++;
       }
       
+      const message = totalEntries > 0 
+        ? `Generated ${totalEntries} journal entries from ${processedDocuments} documents`
+        : skippedDocuments > 0 
+          ? `No new journal entries generated. ${skippedDocuments} documents already have journal entries`
+          : 'No documents found to process';
+      
       res.json({ 
-        message: `Generated ${totalEntries} journal entries from ${documents.length} documents`,
+        message,
         totalEntries,
-        documentsProcessed: documents.length
+        documentsProcessed: processedDocuments,
+        skippedDocuments,
+        totalDocuments: documents.length
       });
     } catch (error) {
       console.error("Error generating journal entries:", error);

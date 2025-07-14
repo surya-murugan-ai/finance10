@@ -143,11 +143,20 @@ export default function FinancialReports() {
       return response;
     },
     onSuccess: (data) => {
+      const title = data.totalEntries > 0 ? "Journal Entries Generated" : "Journal Entries Already Exist";
+      const description = data.totalEntries > 0 
+        ? `Generated ${data.totalEntries} journal entries from ${data.documentsProcessed} documents`
+        : data.skippedDocuments > 0 
+          ? `${data.skippedDocuments} documents already have journal entries. No new entries created.`
+          : "No documents found to process";
+      
       toast({
-        title: "Journal Entries Generated",
-        description: `Generated ${data.totalEntries} journal entries from ${data.documentsProcessed} documents`,
+        title,
+        description,
+        variant: data.totalEntries > 0 ? "default" : "default",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/journal-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial-statements"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {

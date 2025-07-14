@@ -253,6 +253,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(journalEntries).where(eq(journalEntries.id, id));
   }
 
+  async hasJournalEntries(documentId: string): Promise<boolean> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(journalEntries)
+      .where(eq(journalEntries.documentId, documentId));
+    return (result?.count || 0) > 0;
+  }
+
   // Financial statement operations
   async createFinancialStatement(statement: InsertFinancialStatement): Promise<FinancialStatement> {
     const [financialStatement] = await db.insert(financialStatements).values(statement).returning();
