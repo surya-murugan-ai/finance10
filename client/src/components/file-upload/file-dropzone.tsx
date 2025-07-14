@@ -6,7 +6,7 @@ import { CloudUpload, FileText, X, CheckCircle, AlertCircle } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
+
 import { cn } from "@/lib/utils";
 
 interface FileUploadItem {
@@ -37,6 +37,12 @@ export default function FileDropzone() {
       try {
         console.log("Sending request to /api/documents/upload");
         console.log("Auth token:", localStorage.getItem('access_token'));
+        console.log("File details:", {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
+        
         const response = await apiRequest('/api/documents/upload', {
           method: 'POST',
           body: formData
@@ -65,23 +71,31 @@ export default function FileDropzone() {
     },
     onError: (error: any, variables) => {
       console.error("Upload error:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error object:", JSON.stringify(error, null, 2));
+      
       setFiles(prev => prev.map(f => 
         f.id === variables.id ? { 
           ...f, 
           status: 'error', 
           progress: 0,
-          error: error.message 
+          error: error.message || 'Upload failed'
         } : f
       ));
       
-      if (isUnauthorizedError(error)) {
+      // Check if this is an unauthorized error
+      const isUnauthorized = error.message?.includes('401') || 
+                            error.message?.includes('Unauthorized') ||
+                            error.status === 401;
+      
+      if (isUnauthorized) {
         toast({
           title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          description: "You are logged out. Please login again.",
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/";
         }, 500);
         return;
       }
