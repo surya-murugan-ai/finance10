@@ -265,30 +265,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/auth/user', async (req, res) => {
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, message: 'No token provided' });
-      }
+      const userId = req.user.claims.sub;
+      const email = req.user.claims.email;
       
-      const token = authHeader.split(' ')[1];
+      const user = {
+        id: userId,
+        email: email,
+        first_name: 'Test',
+        last_name: 'User',
+        company_name: 'Test Company Ltd',
+        is_active: true
+      };
       
-      try {
-        const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-        const user = {
-          id: decoded.userId,
-          email: decoded.email,
-          first_name: 'Test',
-          last_name: 'User',
-          company_name: 'Test Company Ltd',
-          is_active: true
-        };
-        
-        res.json({ success: true, user: user });
-      } catch (decodeError) {
-        res.status(401).json({ success: false, message: 'Invalid token' });
-      }
+      res.json({ success: true, user: user });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }

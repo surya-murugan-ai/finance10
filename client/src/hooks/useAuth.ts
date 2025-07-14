@@ -23,8 +23,7 @@ export function useAuth() {
         throw new Error("No token found");
       }
       
-      const response = await apiRequest('GET', '/api/auth/user');
-      const result = await response.json();
+      const result = await apiRequest('/api/auth/user', { method: 'GET' });
       
       if (result.success) {
         return result.user;
@@ -51,7 +50,7 @@ export function useAuth() {
     try {
       const currentToken = localStorage.getItem('access_token');
       if (currentToken) {
-        await apiRequest('POST', '/api/auth/logout');
+        await apiRequest('/api/auth/logout', { method: 'POST' });
       }
     } catch (error) {
       console.error('Logout error:', error);
