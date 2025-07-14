@@ -53,7 +53,7 @@ export default function FileDropzone() {
       
       toast({
         title: "Success",
-        description: "Document uploaded successfully and processing started",
+        description: "Document uploaded and saved successfully",
       });
       
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });

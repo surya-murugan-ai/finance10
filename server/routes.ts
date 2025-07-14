@@ -528,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         document,
         workflowId: workflowId || 'none',
-        message: "Document uploaded successfully" + (workflowId ? " and processing started" : ""),
+        message: "Document uploaded and saved successfully",
       });
     } catch (error) {
       console.error("Error uploading document:", error);
