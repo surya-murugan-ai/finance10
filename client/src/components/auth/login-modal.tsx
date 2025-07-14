@@ -43,8 +43,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
   const [errors, setErrors] = useState<string[]>([]);
   
   const [loginData, setLoginData] = useState<LoginData>({
-    email: '',
-    password: ''
+    email: 'testuser@example.com',
+    password: 'TestPassword123!'
   });
   
   const [registerData, setRegisterData] = useState<RegisterData>({
