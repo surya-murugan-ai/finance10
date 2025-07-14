@@ -35,6 +35,8 @@ export default function FileDropzone() {
       ));
       
       try {
+        console.log("Sending request to /api/documents/upload");
+        console.log("Auth token:", localStorage.getItem('access_token'));
         const response = await apiRequest('/api/documents/upload', {
           method: 'POST',
           body: formData
@@ -43,6 +45,8 @@ export default function FileDropzone() {
         return response;
       } catch (error) {
         console.error("Upload API error:", error);
+        console.error("Error details:", error.message);
+        console.error("Error stack:", error.stack);
         throw error;
       }
     },
