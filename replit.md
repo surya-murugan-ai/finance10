@@ -10,6 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Comprehensive Document Requirements Checklist (July 14, 2025)**: Enhanced document upload page with complete requirement tracking system:
+  - Added comprehensive document requirements covering 12 document types across 5 categories (Primary Financial, GST Compliance, TDS Compliance, Banking, Statutory)
+  - Implemented progress tracking with completion percentage and visual progress bar
+  - Built intelligent document matching system that automatically detects uploaded documents against requirements
+  - Added category-based filtering for easy navigation (All Categories, Primary Financial, GST Compliance, TDS Compliance, Banking, Statutory)
+  - Created detailed requirement cards showing priority levels, due dates, file formats, compliance standards, and upload status
+  - Integrated tabbed interface with separate sections for Requirements, Upload, and Uploaded Files
+  - Added real-time statistics showing completed/pending documents, high priority items, and documents due soon
+  - Each requirement shows specific compliance standards (Companies Act 2013, GST Act, Income Tax Act, etc.)
+  - System automatically marks requirements as complete when matching documents are uploaded
+  - Enhanced user experience with status icons, priority badges, and file type indicators
+
 - **Document Status Management Fix (July 13, 2025)**: Fixed critical issue where documents were stuck in intermediate processing states:
   - Identified root cause: LangGraph workflow failures due to AI rate limiting causing documents to remain in "uploaded", "classified", or "extracted" states
   - Updated all stuck documents to "completed" status with SQL update query
