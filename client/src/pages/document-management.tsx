@@ -44,8 +44,10 @@ export default function DocumentManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (documentId: string) => {
-      const response = await apiRequest('DELETE', `/api/documents/${documentId}`);
-      return response.json();
+      const response = await apiRequest(`/api/documents/${documentId}`, {
+        method: 'DELETE'
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -57,6 +59,7 @@ export default function DocumentManagement() {
       refetch();
     },
     onError: (error) => {
+      console.error("Document deletion error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -70,7 +73,7 @@ export default function DocumentManagement() {
       }
       toast({
         title: "Error",
-        description: "Failed to delete document",
+        description: `Failed to delete document: ${error.message}`,
         variant: "destructive",
       });
     },
