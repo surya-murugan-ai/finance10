@@ -10,17 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **Comprehensive Document Requirements Checklist (July 14, 2025)**: Enhanced document upload page with complete requirement tracking system:
-  - Added comprehensive document requirements covering 12 document types across 5 categories (Primary Financial, GST Compliance, TDS Compliance, Banking, Statutory)
-  - Implemented progress tracking with completion percentage and visual progress bar
-  - Built intelligent document matching system that automatically detects uploaded documents against requirements
-  - Added category-based filtering for easy navigation (All Categories, Primary Financial, GST Compliance, TDS Compliance, Banking, Statutory)
-  - Created detailed requirement cards showing priority levels, due dates, file formats, compliance standards, and upload status
-  - Integrated tabbed interface with separate sections for Requirements, Upload, and Uploaded Files
-  - Added real-time statistics showing completed/pending documents, high priority items, and documents due soon
-  - Each requirement shows specific compliance standards (Companies Act 2013, GST Act, Income Tax Act, etc.)
-  - System automatically marks requirements as complete when matching documents are uploaded
-  - Enhanced user experience with status icons, priority badges, and file type indicators
+- **Document Requirements Table Format (July 14, 2025)**: Enhanced document upload page with comprehensive table-based requirement tracking:
+  - **Document Classification**: Clear distinction between Primary Documents (must upload), Derived Documents (system generated), and Calculated Documents (auto calculated)
+  - **Primary Documents**: 6 essential documents users must upload (Journal Entries, Fixed Asset Register, Purchase Register, Sales Register, TDS Certificates, Bank Statements, Directors Report, Auditor Report)
+  - **Derived Documents**: 5 documents generated from primary uploads (Trial Balance, GSTR-2A, GSTR-3B, Form 26Q, Bank Reconciliation)
+  - **Calculated Documents**: 4 financial reports auto-calculated by system (P&L Statement, Balance Sheet, Cash Flow Statement, Depreciation Schedule)
+  - **Table Format**: Comprehensive table with columns for Document Name, Type, Priority, Status, Frequency, Due Date, File Types, Generated From, Compliance, and Actions
+  - **Smart Status Indicators**: "Must Upload" for primary documents, "Can Generate" for derived/calculated documents, "Complete" for uploaded items
+  - **Generation Dependencies**: Shows which documents are derived from others (e.g., "Trial Balance" from "Journal Entries")
+  - **Generate Buttons**: Action buttons for system-generated documents with clear workflow dependencies
+  - **Progress Tracking**: Statistics focus only on primary documents that must be uploaded (6 total)
+  - **Compliance Standards**: Each document shows relevant compliance requirements (Companies Act 2013, GST Act, Income Tax Act, etc.)
 
 - **Document Status Management Fix (July 13, 2025)**: Fixed critical issue where documents were stuck in intermediate processing states:
   - Identified root cause: LangGraph workflow failures due to AI rate limiting causing documents to remain in "uploaded", "classified", or "extracted" states

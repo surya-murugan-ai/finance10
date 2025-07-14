@@ -533,7 +533,7 @@ export default function DocumentUpload() {
               </CardContent>
             </Card>
 
-            {/* Document Requirements List */}
+            {/* Document Requirements Table */}
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -541,53 +541,81 @@ export default function DocumentUpload() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {filteredRequirements.map((requirement) => (
-                    <div key={requirement.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            {getStatusIcon(requirement)}
-                            <h3 className="font-semibold">{requirement.name}</h3>
-                            {getPriorityBadge(requirement.priority)}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[200px]">Document Name</TableHead>
+                        <TableHead className="w-[120px]">Type</TableHead>
+                        <TableHead className="w-[100px]">Priority</TableHead>
+                        <TableHead className="w-[100px]">Status</TableHead>
+                        <TableHead className="w-[120px]">Frequency</TableHead>
+                        <TableHead className="w-[120px]">Due Date</TableHead>
+                        <TableHead className="w-[150px]">File Types</TableHead>
+                        <TableHead className="w-[200px]">Generated From</TableHead>
+                        <TableHead className="w-[200px]">Compliance</TableHead>
+                        <TableHead className="w-[120px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRequirements.map((requirement) => (
+                        <TableRow key={requirement.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              {getStatusIcon(requirement)}
+                              <span>{requirement.name}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {requirement.description}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             {getDocumentTypeBadge(requirement.documentType)}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">{requirement.description}</p>
-                          
-                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                          </TableCell>
+                          <TableCell>
+                            {getPriorityBadge(requirement.priority)}
+                          </TableCell>
+                          <TableCell>
+                            {requirement.isUploaded ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                Complete
+                              </Badge>
+                            ) : requirement.documentType === 'primary' ? (
+                              <Badge variant="destructive">
+                                Must Upload
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">
+                                {requirement.canGenerate ? 'Can Generate' : 'Pending'}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-3 w-3" />
-                              <span>{requirement.frequency}</span>
+                              <span className="text-sm">{requirement.frequency}</span>
                             </div>
-                            {requirement.dueDate && (
-                              <div className="flex items-center space-x-1">
-                                <span>Due: {new Date(requirement.dueDate).toLocaleDateString()}</span>
-                              </div>
+                          </TableCell>
+                          <TableCell>
+                            {requirement.dueDate ? (
+                              <span className="text-sm">
+                                {new Date(requirement.dueDate).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
                             )}
-                            <div className="flex items-center space-x-1">
-                              <FileIcon className="h-3 w-3" />
-                              <span>{requirement.fileTypes.join(', ')}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {requirement.fileTypes.map((type, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {type}
+                                </Badge>
+                              ))}
                             </div>
-                          </div>
-
-                          {requirement.isUploaded && (
-                            <div className="mt-2">
-                              <div className="text-xs text-green-600 mb-1">Uploaded Files:</div>
-                              <div className="flex flex-wrap gap-1">
-                                {requirement.uploadedFiles.map((file, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
-                                    {file}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {requirement.derivedFrom && requirement.derivedFrom.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs text-muted-foreground mb-1">
-                                {requirement.documentType === 'derived' ? 'Generated from:' : 'Calculated from:'}
-                              </div>
+                          </TableCell>
+                          <TableCell>
+                            {requirement.derivedFrom && requirement.derivedFrom.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {requirement.derivedFrom.map((source, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
@@ -595,11 +623,11 @@ export default function DocumentUpload() {
                                   </Badge>
                                 ))}
                               </div>
-                            </div>
-                          )}
-
-                          <div className="mt-2">
-                            <div className="text-xs text-muted-foreground mb-1">Compliance:</div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {requirement.compliance.map((comp, index) => (
                                 <Badge key={index} variant="outline" className="text-xs">
@@ -607,32 +635,25 @@ export default function DocumentUpload() {
                                 </Badge>
                               ))}
                             </div>
-                          </div>
-                        </div>
-                        
-                        <div className="ml-4 flex flex-col space-y-1">
-                          {requirement.isUploaded ? (
-                            <Badge className="bg-green-100 text-green-800">
-                              Complete
-                            </Badge>
-                          ) : requirement.documentType === 'primary' ? (
-                            <Badge variant="destructive">
-                              Must Upload
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">
-                              {requirement.canGenerate ? 'Can Generate' : 'Pending'}
-                            </Badge>
-                          )}
-                          {requirement.canGenerate && requirement.documentType !== 'primary' && (
-                            <Button variant="outline" size="sm" className="text-xs">
-                              Generate Document
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              {requirement.canGenerate && requirement.documentType !== 'primary' && (
+                                <Button variant="outline" size="sm" className="text-xs">
+                                  Generate
+                                </Button>
+                              )}
+                              {requirement.isUploaded && (
+                                <Button variant="ghost" size="sm" className="text-xs">
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
