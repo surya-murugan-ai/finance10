@@ -1,0 +1,103 @@
+{
+  "summary": {
+    "total_tests": 13,
+    "passed": 13,
+    "failed": 0,
+    "success_rate": 100.0,
+    "timestamp": "2025-07-14T13:54:12.725407"
+  },
+  "test_results": [
+    {
+      "test_name": "Authentication",
+      "status": "PASSED",
+      "details": "User authenticated: testuser@example.com",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:09.712399"
+    },
+    {
+      "test_name": "Document List",
+      "status": "PASSED",
+      "details": "Found 17 documents",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.050791"
+    },
+    {
+      "test_name": "Document Deletion",
+      "status": "PASSED",
+      "details": "Successfully deleted document a6fc442c-acf3-442f-9cac-84176d2baff9",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.399732"
+    },
+    {
+      "test_name": "Journal Entries",
+      "status": "PASSED",
+      "details": "Found 234 entries. Debit: 26136682.00, Credit: 26136682.00, Balanced: True",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.545862"
+    },
+    {
+      "test_name": "Financial Statements",
+      "status": "PASSED",
+      "details": "Found 43 statements",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.619794"
+    },
+    {
+      "test_name": "Trial Balance Generation",
+      "status": "PASSED",
+      "details": "Generated trial balance: 13647086.00 debits, 13647086.00 credits",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.760638"
+    },
+    {
+      "test_name": "Profit & Loss Generation",
+      "status": "PASSED",
+      "details": "Generated P&L: Revenue 835291.00, Expenses 9000.00, Net Profit 826291.00",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:10.906075"
+    },
+    {
+      "test_name": "Balance Sheet Generation",
+      "status": "PASSED",
+      "details": "Generated Balance Sheet: Assets 13647086.00, Liabilities 12811795.00",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:11.048086"
+    },
+    {
+      "test_name": "Journal Generation",
+      "status": "PASSED",
+      "details": "Generated 0 entries, skipped 16 documents",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:12.170859"
+    },
+    {
+      "test_name": "Dashboard Stats",
+      "status": "PASSED",
+      "details": "Docs: 16, Agents: 2, Issues: 0",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:12.509388"
+    },
+    {
+      "test_name": "Compliance Checks",
+      "status": "PASSED",
+      "details": "Found 0 compliance checks",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:12.578795"
+    },
+    {
+      "test_name": "Audit Trail",
+      "status": "PASSED",
+      "details": "Found 50 audit entries",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:12.650772"
+    },
+    {
+      "test_name": "Extracted Data",
+      "status": "PASSED",
+      "details": "Found 16 extracted data records",
+      "response_data": null,
+      "timestamp": "2025-07-14T13:54:12.722935"
+    }
+  ],
+  "failed_tests": []
+}

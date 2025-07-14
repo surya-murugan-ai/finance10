@@ -566,7 +566,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/documents/:id', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const document = await storage.getDocument(req.params.id);
+      const documentId = req.params.id;
+      
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(documentId)) {
+        return res.status(400).json({ message: "Invalid document ID format" });
+      }
+      
+      const document = await storage.getDocument(documentId);
       
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
@@ -576,14 +584,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized to delete this document" });
       }
 
-      await storage.deleteDocument(req.params.id);
+      await storage.deleteDocument(documentId);
       await fileProcessorService.deleteFile(document.filePath);
 
       // Log audit trail
       await storage.createAuditTrail({
         action: 'document_deleted',
         entityType: 'document',
-        entityId: req.params.id,
+        entityId: documentId,
         userId,
         details: { fileName: document.originalName },
       });
