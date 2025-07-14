@@ -35,6 +35,7 @@ export default function FileDropzone() {
       ));
       
       try {
+        console.log("=== STARTING UPLOAD ===");
         console.log("Sending request to /api/documents/upload");
         console.log("Auth token:", localStorage.getItem('access_token'));
         console.log("File details:", {
@@ -43,16 +44,33 @@ export default function FileDropzone() {
           type: file.type
         });
         
+        // Check if we have a token
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+        
+        console.log("FormData contents:");
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}:`, value);
+        }
+        
         const response = await apiRequest('/api/documents/upload', {
           method: 'POST',
           body: formData
         });
         console.log("Upload response:", response);
+        console.log("=== UPLOAD SUCCESS ===");
         return response;
       } catch (error) {
+        console.error("=== UPLOAD FAILED ===");
         console.error("Upload API error:", error);
         console.error("Error details:", error.message);
         console.error("Error stack:", error.stack);
+        console.error("Error type:", typeof error);
+        if (error.response) {
+          console.error("Error response:", error.response);
+        }
         throw error;
       }
     },
