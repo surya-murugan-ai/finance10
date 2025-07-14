@@ -1,0 +1,325 @@
+{
+  "test_summary": {
+    "execution_date": "2025-07-14T03:34:43.226826",
+    "total_tests": 43,
+    "passed_tests": 11,
+    "failed_tests": 32,
+    "success_rate": "25.6%"
+  },
+  "test_categories": {
+    "document_upload": 15,
+    "ai_workflows": 2,
+    "financial_reports": 8,
+    "compliance_checks": 4,
+    "performance_tests": 2,
+    "error_handling": 2
+  },
+  "detailed_results": [
+    {
+      "test_name": "Upload vendor_invoices_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.006355762481689453,
+      "timestamp": "2025-07-14T03:34:42.944433"
+    },
+    {
+      "test_name": "Upload sales_register_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.0042078495025634766,
+      "timestamp": "2025-07-14T03:34:42.948799"
+    },
+    {
+      "test_name": "Upload salary_register_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.004779815673828125,
+      "timestamp": "2025-07-14T03:34:42.953815"
+    },
+    {
+      "test_name": "Upload bank_statement_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.007467508316040039,
+      "timestamp": "2025-07-14T03:34:42.961484"
+    },
+    {
+      "test_name": "Upload trial_balance_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.004410505294799805,
+      "timestamp": "2025-07-14T03:34:42.966051"
+    },
+    {
+      "test_name": "Upload journal_entries_comprehensive.csv",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.0043299198150634766,
+      "timestamp": "2025-07-14T03:34:42.970582"
+    },
+    {
+      "test_name": "Upload purchase_register_comprehensive.csv",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.006361484527587891,
+      "timestamp": "2025-07-14T03:34:42.977179"
+    },
+    {
+      "test_name": "AI Agent Chat Workflow",
+      "passed": false,
+      "details": "Agent chat failed",
+      "duration": 0.026088714599609375,
+      "timestamp": "2025-07-14T03:34:43.003659"
+    },
+    {
+      "test_name": "Data Extraction - All Documents",
+      "passed": false,
+      "details": "Data extraction failed",
+      "duration": 0.004550933837890625,
+      "timestamp": "2025-07-14T03:34:43.008577"
+    },
+    {
+      "test_name": "Data Extraction - vendor_invoice",
+      "passed": false,
+      "details": "Failed to extract vendor_invoice data",
+      "duration": 0.0039746761322021484,
+      "timestamp": "2025-07-14T03:34:43.012651"
+    },
+    {
+      "test_name": "Data Extraction - sales_register",
+      "passed": false,
+      "details": "Failed to extract sales_register data",
+      "duration": 0.0033922195434570312,
+      "timestamp": "2025-07-14T03:34:43.016169"
+    },
+    {
+      "test_name": "Data Extraction - salary_register",
+      "passed": false,
+      "details": "Failed to extract salary_register data",
+      "duration": 0.0043637752532958984,
+      "timestamp": "2025-07-14T03:34:43.020675"
+    },
+    {
+      "test_name": "Data Extraction - bank_statement",
+      "passed": false,
+      "details": "Failed to extract bank_statement data",
+      "duration": 0.004084348678588867,
+      "timestamp": "2025-07-14T03:34:43.024917"
+    },
+    {
+      "test_name": "Generate Trial Balance",
+      "passed": true,
+      "details": "Trial Balance generated successfully",
+      "duration": 0.014382123947143555,
+      "timestamp": "2025-07-14T03:34:43.039786"
+    },
+    {
+      "test_name": "Generate Profit & Loss",
+      "passed": true,
+      "details": "Profit & Loss generated successfully",
+      "duration": 0.013255596160888672,
+      "timestamp": "2025-07-14T03:34:43.053141"
+    },
+    {
+      "test_name": "Generate Balance Sheet",
+      "passed": true,
+      "details": "Balance Sheet generated successfully",
+      "duration": 0.009023666381835938,
+      "timestamp": "2025-07-14T03:34:43.062382"
+    },
+    {
+      "test_name": "Generate Cash Flow",
+      "passed": true,
+      "details": "Cash Flow generated successfully",
+      "duration": 0.007887125015258789,
+      "timestamp": "2025-07-14T03:34:43.070430"
+    },
+    {
+      "test_name": "GST Compliance Check",
+      "passed": false,
+      "details": "Compliance check failed",
+      "duration": 0.00490880012512207,
+      "timestamp": "2025-07-14T03:34:43.075706"
+    },
+    {
+      "test_name": "Create Compliance Check",
+      "passed": true,
+      "details": "Compliance check created",
+      "duration": 0.006681919097900391,
+      "timestamp": "2025-07-14T03:34:43.082709"
+    },
+    {
+      "test_name": "Dashboard Performance",
+      "passed": false,
+      "details": "Dashboard load failed",
+      "duration": 0.006289005279541016,
+      "timestamp": "2025-07-14T03:34:43.089263"
+    },
+    {
+      "test_name": "Document Listing Performance",
+      "passed": false,
+      "details": "Document listing failed",
+      "duration": 0.00412440299987793,
+      "timestamp": "2025-07-14T03:34:43.093599"
+    },
+    {
+      "test_name": "Invalid File Upload Handling",
+      "passed": false,
+      "details": "Error handling failed",
+      "duration": 0.009169340133666992,
+      "timestamp": "2025-07-14T03:34:43.103130"
+    },
+    {
+      "test_name": "Unauthorized Access Handling",
+      "passed": true,
+      "details": "Unauthorized access properly blocked",
+      "duration": 0.0041124820709228516,
+      "timestamp": "2025-07-14T03:34:43.107890"
+    },
+    {
+      "test_name": "Upload vendor_invoices_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.004256486892700195,
+      "timestamp": "2025-07-14T03:34:43.112644"
+    },
+    {
+      "test_name": "Upload sales_register_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.004662036895751953,
+      "timestamp": "2025-07-14T03:34:43.117490"
+    },
+    {
+      "test_name": "Upload salary_register_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.004209756851196289,
+      "timestamp": "2025-07-14T03:34:43.121855"
+    },
+    {
+      "test_name": "Upload bank_statement_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.0043239593505859375,
+      "timestamp": "2025-07-14T03:34:43.126492"
+    },
+    {
+      "test_name": "Upload trial_balance_comprehensive.xlsx",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.0038993358612060547,
+      "timestamp": "2025-07-14T03:34:43.130540"
+    },
+    {
+      "test_name": "Upload journal_entries_comprehensive.csv",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.0046236515045166016,
+      "timestamp": "2025-07-14T03:34:43.135387"
+    },
+    {
+      "test_name": "Upload purchase_register_comprehensive.csv",
+      "passed": false,
+      "details": "Upload failed",
+      "duration": 0.003684520721435547,
+      "timestamp": "2025-07-14T03:34:43.139205"
+    },
+    {
+      "test_name": "AI Agent Chat Workflow",
+      "passed": false,
+      "details": "Agent chat failed",
+      "duration": 0.0032684803009033203,
+      "timestamp": "2025-07-14T03:34:43.143026"
+    },
+    {
+      "test_name": "Data Extraction - All Documents",
+      "passed": false,
+      "details": "Data extraction failed",
+      "duration": 0.003268003463745117,
+      "timestamp": "2025-07-14T03:34:43.146833"
+    },
+    {
+      "test_name": "Data Extraction - vendor_invoice",
+      "passed": false,
+      "details": "Failed to extract vendor_invoice data",
+      "duration": 0.0035660266876220703,
+      "timestamp": "2025-07-14T03:34:43.150517"
+    },
+    {
+      "test_name": "Data Extraction - sales_register",
+      "passed": false,
+      "details": "Failed to extract sales_register data",
+      "duration": 0.003608226776123047,
+      "timestamp": "2025-07-14T03:34:43.154234"
+    },
+    {
+      "test_name": "Data Extraction - salary_register",
+      "passed": false,
+      "details": "Failed to extract salary_register data",
+      "duration": 0.0045812129974365234,
+      "timestamp": "2025-07-14T03:34:43.159202"
+    },
+    {
+      "test_name": "Data Extraction - bank_statement",
+      "passed": false,
+      "details": "Failed to extract bank_statement data",
+      "duration": 0.004320383071899414,
+      "timestamp": "2025-07-14T03:34:43.163722"
+    },
+    {
+      "test_name": "Generate Trial Balance",
+      "passed": true,
+      "details": "Trial Balance generated successfully",
+      "duration": 0.006707429885864258,
+      "timestamp": "2025-07-14T03:34:43.170898"
+    },
+    {
+      "test_name": "Generate Profit & Loss",
+      "passed": true,
+      "details": "Profit & Loss generated successfully",
+      "duration": 0.017251253128051758,
+      "timestamp": "2025-07-14T03:34:43.188737"
+    },
+    {
+      "test_name": "Generate Balance Sheet",
+      "passed": true,
+      "details": "Balance Sheet generated successfully",
+      "duration": 0.011658906936645508,
+      "timestamp": "2025-07-14T03:34:43.200526"
+    },
+    {
+      "test_name": "Generate Cash Flow",
+      "passed": true,
+      "details": "Cash Flow generated successfully",
+      "duration": 0.00867605209350586,
+      "timestamp": "2025-07-14T03:34:43.209587"
+    },
+    {
+      "test_name": "GST Compliance Check",
+      "passed": false,
+      "details": "Compliance check failed",
+      "duration": 0.006183147430419922,
+      "timestamp": "2025-07-14T03:34:43.216309"
+    },
+    {
+      "test_name": "Create Compliance Check",
+      "passed": true,
+      "details": "Compliance check created",
+      "duration": 0.009341955184936523,
+      "timestamp": "2025-07-14T03:34:43.225852"
+    },
+    {
+      "test_name": "Complete Quarterly Closure Workflow",
+      "passed": false,
+      "details": "Workflow had failures",
+      "duration": 0.11846780776977539,
+      "timestamp": "2025-07-14T03:34:43.226665"
+    }
+  ],
+  "recommendations": [
+    "Review failed test cases and implement fixes",
+    "Improve file upload error handling and validation",
+    "Implement better AI service error handling and fallbacks"
+  ]
+}
