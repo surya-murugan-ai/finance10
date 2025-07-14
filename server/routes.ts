@@ -274,11 +274,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/auth/register', async (req, res) => {
+    console.log('Registration endpoint called with body:', req.body);
+    
     try {
       const { email, password, first_name, last_name, company_name, phone } = req.body;
       
       // Basic validation
       if (!email || !password || !first_name || !last_name) {
+        console.log('Registration validation failed - missing required fields');
         return res.status(400).json({ 
           success: false, 
           message: 'Email, password, first name, and last name are required' 
@@ -299,6 +302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a simple token (in production, use proper JWT)
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
+      
+      console.log('Registration successful for user:', email);
       
       res.json({
         success: true,
