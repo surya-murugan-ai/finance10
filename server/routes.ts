@@ -1002,9 +1002,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate trial balance
-  app.post('/api/reports/trial-balance', isAuthenticated, async (req: any, res) => {
+  app.post('/api/reports/trial-balance', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.userId || req.user.claims?.sub;
+      const userId = req.user.userId;
       const { period } = req.body;
       
       let journalEntries = await storage.getJournalEntriesByPeriod(period);
@@ -1044,7 +1044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statementType: 'trial_balance',
         period,
         data: formattedTrialBalance,
-        generatedBy: userId || 'system',
+        generatedBy: userId,
       });
 
       res.json(formattedTrialBalance);
