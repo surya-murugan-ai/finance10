@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Download, Trash2, Eye, CheckCircle, XCircle, AlertCircle, Calendar, FileIcon } from "lucide-react";
+import { FileText, Download, Trash2, Eye, CheckCircle, XCircle, AlertCircle, Calendar, FileIcon, Upload, HelpCircle, Edit, Cog, Calculator, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Document } from "@shared/schema";
 
@@ -38,6 +38,81 @@ export default function DocumentUpload() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('requirements');
+
+  // Action handlers for document operations
+  const handleUpload = (docId: string) => {
+    setActiveTab('upload');
+    toast({
+      title: "Upload Document",
+      description: "Switched to upload tab. Select files to upload.",
+    });
+  };
+
+  const handleGenerate = (docId: string, docName: string) => {
+    toast({
+      title: "Generating Document",
+      description: `Processing ${docName}... This may take a few moments.`,
+    });
+    // TODO: Implement generation logic
+  };
+
+  const handleCalculate = (docId: string, docName: string) => {
+    toast({
+      title: "Calculating Report",
+      description: `Generating ${docName}... This may take a few moments.`,
+    });
+    // TODO: Implement calculation logic
+  };
+
+  const handleView = (docId: string, docName: string) => {
+    toast({
+      title: "View Document",
+      description: `Opening ${docName}...`,
+    });
+    // TODO: Implement view logic
+  };
+
+  const handleEdit = (docId: string, docName: string) => {
+    toast({
+      title: "Edit Document",
+      description: `Opening ${docName} for editing...`,
+    });
+    // TODO: Implement edit logic
+  };
+
+  const handleDelete = (docId: string, docName: string) => {
+    toast({
+      title: "Delete Document",
+      description: `Are you sure you want to delete ${docName}?`,
+      variant: "destructive",
+    });
+    // TODO: Implement delete logic
+  };
+
+  const handleDownload = (docId: string, docName: string) => {
+    toast({
+      title: "Download Document",
+      description: `Downloading ${docName}...`,
+    });
+    // TODO: Implement download logic
+  };
+
+  const handleHelp = (docId: string, docName: string) => {
+    toast({
+      title: "Help",
+      description: `Need help with ${docName}? Check the documentation or contact support.`,
+    });
+    // TODO: Implement help logic
+  };
+
+  const handleRefresh = (docId: string, docName: string) => {
+    toast({
+      title: "Refresh Document",
+      description: `Refreshing ${docName}...`,
+    });
+    // TODO: Implement refresh logic
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -537,7 +612,7 @@ export default function DocumentUpload() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="requirements" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="requirements">Document Requirements</TabsTrigger>
             <TabsTrigger value="upload">Upload Documents</TabsTrigger>
@@ -671,15 +746,141 @@ export default function DocumentUpload() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col space-y-1">
-                              {requirement.canGenerate && requirement.documentType !== 'primary' && (
-                                <Button variant="outline" size="sm" className="text-xs">
-                                  Generate
-                                </Button>
+                              {/* Primary Documents - Upload Actions */}
+                              {requirement.documentType === 'primary' && !requirement.isUploaded && (
+                                <div className="flex space-x-1">
+                                  <Button 
+                                    variant="default" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleUpload(requirement.id)}
+                                  >
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    Upload
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleHelp(requirement.id, requirement.name)}
+                                  >
+                                    <HelpCircle className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               )}
-                              {requirement.isUploaded && (
-                                <Button variant="ghost" size="sm" className="text-xs">
-                                  <Eye className="h-3 w-3" />
-                                </Button>
+                              
+                              {/* Primary Documents - View/Edit Actions */}
+                              {requirement.documentType === 'primary' && requirement.isUploaded && (
+                                <div className="flex space-x-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleView(requirement.id, requirement.name)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleEdit(requirement.id, requirement.name)}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs text-destructive"
+                                    onClick={() => handleDelete(requirement.id, requirement.name)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* Derived Documents - Generate Actions */}
+                              {requirement.documentType === 'derived' && requirement.canGenerate && (
+                                <div className="flex space-x-1">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    disabled={!requirement.derivedFrom?.every(source => 
+                                      documentRequirements.find(req => req.id === source)?.isUploaded
+                                    )}
+                                    onClick={() => handleGenerate(requirement.id, requirement.name)}
+                                  >
+                                    <Cog className="h-3 w-3 mr-1" />
+                                    Generate
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleDownload(requirement.id, requirement.name)}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* Calculated Documents - Auto-Calculate Actions */}
+                              {requirement.documentType === 'calculated' && (
+                                <div className="flex space-x-1">
+                                  <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    disabled={!documentRequirements.filter(req => req.documentType === 'derived').every(req => req.isUploaded)}
+                                    onClick={() => handleCalculate(requirement.id, requirement.name)}
+                                  >
+                                    <Calculator className="h-3 w-3 mr-1" />
+                                    Calculate
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleView(requirement.id, requirement.name)}
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* View Generated/Calculated Documents */}
+                              {(requirement.documentType === 'derived' || requirement.documentType === 'calculated') && requirement.isUploaded && (
+                                <div className="flex space-x-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleView(requirement.id, requirement.name)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleDownload(requirement.id, requirement.name)}
+                                  >
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Export
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-xs"
+                                    onClick={() => handleRefresh(requirement.id, requirement.name)}
+                                  >
+                                    <RefreshCw className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           </TableCell>
