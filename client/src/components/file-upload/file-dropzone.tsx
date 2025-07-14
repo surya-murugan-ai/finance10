@@ -25,6 +25,7 @@ export default function FileDropzone() {
 
   const uploadMutation = useMutation({
     mutationFn: async ({ file, id }: { file: File; id: string }) => {
+      console.log("Starting upload for file:", file.name);
       const formData = new FormData();
       formData.append('file', file);
       
@@ -33,11 +34,17 @@ export default function FileDropzone() {
         f.id === id ? { ...f, status: 'uploading', progress: 0 } : f
       ));
       
-      const response = await apiRequest('/api/documents/upload', {
-        method: 'POST',
-        body: formData
-      });
-      return response;
+      try {
+        const response = await apiRequest('/api/documents/upload', {
+          method: 'POST',
+          body: formData
+        });
+        console.log("Upload response:", response);
+        return response;
+      } catch (error) {
+        console.error("Upload API error:", error);
+        throw error;
+      }
     },
     onSuccess: (data, variables) => {
       setFiles(prev => prev.map(f => 
@@ -53,6 +60,7 @@ export default function FileDropzone() {
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
     },
     onError: (error: any, variables) => {
+      console.error("Upload error:", error);
       setFiles(prev => prev.map(f => 
         f.id === variables.id ? { 
           ...f, 
