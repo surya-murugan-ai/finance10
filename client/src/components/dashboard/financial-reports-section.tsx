@@ -150,11 +150,22 @@ export default function FinancialReportsSection() {
     ...report,
     status: report.status || 'updated' // Default to 'updated' if status is missing
   })) : mockReports;
+  
+  // Debug the trial balance report specifically
+  const trialBalanceReport = reportsToShow.find(r => r.statementType === 'trial_balance');
+  console.log('Trial balance report:', trialBalanceReport);
+  console.log('Trial balance loading:', trialBalanceLoading);
+  console.log('Trial balance data:', trialBalance);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       {reportsToShow.map((report) => {
         const reportData = getReportData(report);
+        
+        // Debug for trial balance specifically
+        if (report.statementType === 'trial_balance') {
+          console.log('Rendering trial balance with data:', reportData);
+        }
         
         return (
           <Card key={report.id} className="report-card">
