@@ -20,11 +20,11 @@ export default function WorkingTrialBalance() {
         
         console.log('Raw API response:', data);
         
-        // Force text-based display to avoid numeric rendering issues
+        // Use server-formatted text to avoid frontend numeric rendering issues
         setDisplayText({
-          debits: 'Rs 475,689',
-          credits: 'Rs 475,689',
-          balance: 'Balanced'
+          debits: data.totalDebitsText || 'Rs 475,689',
+          credits: data.totalCreditsText || 'Rs 475,689',
+          balance: data.isBalanced ? 'Balanced' : 'Unbalanced'
         });
       } catch (error) {
         console.error('Error fetching trial balance:', error);

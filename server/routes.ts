@@ -14,6 +14,12 @@ import { nanoid } from "nanoid";
 import { writeFile } from "fs/promises";
 import path from "path";
 
+// Helper function to format currency numbers as text
+function formatCurrency(amount: number): string {
+  if (amount === 0) return 'Rs 0';
+  return `Rs ${amount.toLocaleString('en-IN')}`;
+}
+
 // JWT middleware for API endpoints
 const jwtAuth = (req: any, res: any, next: any) => {
   try {
@@ -960,15 +966,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const trialBalance = await financialReportsService.generateTrialBalance(journalEntries);
       
+      // Format numbers as text to bypass frontend rendering issues
+      const formattedTrialBalance = {
+        ...trialBalance,
+        totalDebitsText: formatCurrency(trialBalance.totalDebits),
+        totalCreditsText: formatCurrency(trialBalance.totalCredits),
+        entries: trialBalance.entries.map((entry: any) => ({
+          ...entry,
+          debitBalanceText: formatCurrency(entry.debitBalance),
+          creditBalanceText: formatCurrency(entry.creditBalance)
+        }))
+      };
+      
       // Save the report
       await storage.createFinancialStatement({
         statementType: 'trial_balance',
         period,
-        data: trialBalance,
+        data: formattedTrialBalance,
         generatedBy: userId,
       });
 
-      res.json(trialBalance);
+      res.json(formattedTrialBalance);
     } catch (error) {
       console.error("Error generating trial balance:", error);
       res.status(500).json({ message: "Failed to generate trial balance" });
