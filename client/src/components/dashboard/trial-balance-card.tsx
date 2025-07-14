@@ -69,19 +69,21 @@ export default function TrialBalanceCard() {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Total Debits</span>
-            <span className="text-sm font-semibold" style={{color: '#000000'}}>
-              INR 475,689
+            <span className="text-sm font-semibold" style={{color: '#000000', fontFamily: 'monospace'}}>
+              <span dangerouslySetInnerHTML={{__html: 'INR&nbsp;475,689'}} />
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Total Credits</span>
-            <span className="text-sm font-semibold" style={{color: '#000000'}}>
-              INR 475,689
+            <span className="text-sm font-semibold" style={{color: '#000000', fontFamily: 'monospace'}}>
+              <span dangerouslySetInnerHTML={{__html: 'INR&nbsp;475,689'}} />
             </span>
           </div>
           <div className="flex justify-between border-t pt-2">
             <span className="text-sm font-medium text-foreground">Balance</span>
-            <span className="text-sm font-semibold text-green-600">₹0</span>
+            <span className="text-sm font-semibold" style={{color: '#16a34a', fontFamily: 'monospace'}}>
+              <span dangerouslySetInnerHTML={{__html: 'INR&nbsp;0'}} />
+            </span>
           </div>
         </div>
         <Button 

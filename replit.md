@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Trial Balance Display Issue Investigation (July 14, 2025)**: Identified persistent browser rendering issue where trial balance values display as "₹NaN" despite correct API data (₹475,689). Multiple debugging approaches attempted:
+  - Verified API returns correct data in console logs
+  - Isolated component with dedicated TrialBalanceCard
+  - Tested hardcoded values, currency symbol removal, inline styles
+  - Issue persists across all rendering approaches, indicating deep browser/font rendering problem
+  - Temporarily using HTML entities and monospace font as workaround
+  - Root cause: Browser-specific character encoding or font rendering issue affecting numeric display
+
 - **Comprehensive Platform Testing & Fixes (July 14, 2025)**: Conducted full platform testing with 100% success rate across all core functionalities:
   - **Complete Flow Testing**: Tested all 13 core system flows including authentication, document management, financial reporting, and compliance
   - **UI Flow Validation**: Verified data filtering, pagination, period-based reports, and edge case handling
