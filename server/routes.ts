@@ -725,6 +725,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statements = await storage.getFinancialStatements(period);
       }
       
+      // If no statements exist, generate them from journal entries
+      if (!statements || statements.length === 0) {
+        const journalEntries = await storage.getJournalEntries();
+        
+        if (journalEntries.length > 0) {
+          // Generate trial balance
+          const trialBalance = await generateTrialBalance(journalEntries);
+          const trialBalanceStatement = await storage.createFinancialStatement({
+            statementType: 'trial_balance',
+            period: period || 'Q3_2025',
+            data: trialBalance,
+            generatedAt: new Date(),
+            status: 'updated'
+          });
+          
+          // Generate profit & loss
+          const profitLoss = await generateProfitLoss(journalEntries);
+          const profitLossStatement = await storage.createFinancialStatement({
+            statementType: 'profit_loss',
+            period: period || 'Q3_2025',
+            data: profitLoss,
+            generatedAt: new Date(),
+            status: 'updated'
+          });
+          
+          // Generate balance sheet
+          const balanceSheet = await generateBalanceSheet(journalEntries);
+          const balanceSheetStatement = await storage.createFinancialStatement({
+            statementType: 'balance_sheet',
+            period: period || 'Q3_2025',
+            data: balanceSheet,
+            generatedAt: new Date(),
+            status: 'updated'
+          });
+          
+          statements = [trialBalanceStatement, profitLossStatement, balanceSheetStatement];
+        } else {
+          statements = [];
+        }
+      }
+      
       res.json(statements);
     } catch (error) {
       console.error("Error fetching financial statements:", error);
@@ -2473,4 +2514,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Helper functions for generating financial statements
+async function generateTrialBalance(journalEntries: any[]): Promise<any> {
+  const accountTotals = new Map();
+  
+  for (const entry of journalEntries) {
+    const accountCode = entry.accountCode;
+    const accountName = entry.accountName;
+    const debitAmount = parseFloat(entry.debitAmount) || 0;
+    const creditAmount = parseFloat(entry.creditAmount) || 0;
+    
+    if (!accountTotals.has(accountCode)) {
+      accountTotals.set(accountCode, {
+        accountCode,
+        accountName,
+        debitBalance: 0,
+        creditBalance: 0
+      });
+    }
+    
+    const account = accountTotals.get(accountCode);
+    account.debitBalance += debitAmount;
+    account.creditBalance += creditAmount;
+  }
+  
+  const entries = Array.from(accountTotals.values());
+  const totalDebits = entries.reduce((sum, entry) => sum + entry.debitBalance, 0);
+  const totalCredits = entries.reduce((sum, entry) => sum + entry.creditBalance, 0);
+  
+  return {
+    entries,
+    totalDebits,
+    totalCredits,
+    isBalanced: Math.abs(totalDebits - totalCredits) < 0.01
+  };
+}
+
+async function generateProfitLoss(journalEntries: any[]): Promise<any> {
+  const revenue = journalEntries.filter(entry => 
+    entry.accountCode.startsWith('4') && parseFloat(entry.creditAmount) > 0
+  );
+  const expenses = journalEntries.filter(entry => 
+    entry.accountCode.startsWith('5') && parseFloat(entry.debitAmount) > 0
+  );
+  
+  const totalRevenue = revenue.reduce((sum, entry) => sum + parseFloat(entry.creditAmount), 0);
+  const totalExpenses = expenses.reduce((sum, entry) => sum + parseFloat(entry.debitAmount), 0);
+  
+  return {
+    revenue: revenue.map(entry => ({
+      accountCode: entry.accountCode,
+      accountName: entry.accountName,
+      amount: parseFloat(entry.creditAmount),
+      type: 'revenue'
+    })),
+    expenses: expenses.map(entry => ({
+      accountCode: entry.accountCode,
+      accountName: entry.accountName,
+      amount: parseFloat(entry.debitAmount),
+      type: 'expense'
+    })),
+    totalRevenue,
+    totalExpenses,
+    netProfit: totalRevenue - totalExpenses
+  };
+}
+
+async function generateBalanceSheet(journalEntries: any[]): Promise<any> {
+  const assets = journalEntries.filter(entry => 
+    entry.accountCode.startsWith('1') && parseFloat(entry.debitAmount) > 0
+  );
+  const liabilities = journalEntries.filter(entry => 
+    entry.accountCode.startsWith('2') && parseFloat(entry.creditAmount) > 0
+  );
+  
+  const totalAssets = assets.reduce((sum, entry) => sum + parseFloat(entry.debitAmount), 0);
+  const totalLiabilities = liabilities.reduce((sum, entry) => sum + parseFloat(entry.creditAmount), 0);
+  
+  return {
+    assets: assets.map(entry => ({
+      accountCode: entry.accountCode,
+      accountName: entry.accountName,
+      amount: parseFloat(entry.debitAmount),
+      type: 'asset'
+    })),
+    liabilities: liabilities.map(entry => ({
+      accountCode: entry.accountCode,
+      accountName: entry.accountName,
+      amount: parseFloat(entry.creditAmount),
+      type: 'liability'
+    })),
+    totalAssets,
+    totalLiabilities,
+    totalEquity: totalAssets - totalLiabilities
+  };
 }

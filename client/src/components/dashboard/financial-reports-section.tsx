@@ -105,7 +105,11 @@ export default function FinancialReportsSection() {
     }
   ];
 
-  const reportsToShow = reports || mockReports;
+  // Add default status to reports if missing
+  const reportsToShow = reports ? reports.map(report => ({
+    ...report,
+    status: report.status || 'updated' // Default to 'updated' if status is missing
+  })) : mockReports;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

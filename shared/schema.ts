@@ -131,6 +131,7 @@ export const financialStatements = pgTable("financial_statements", {
   period: varchar("period").notNull(), // Q1_2025, Q2_2025, etc.
   entity: varchar("entity"),
   data: jsonb("data").notNull(),
+  status: varchar("status").notNull().default("updated"), // updated, processing, queued
   generatedBy: varchar("generated_by").references(() => users.id),
   generatedAt: timestamp("generated_at").defaultNow(),
 });
