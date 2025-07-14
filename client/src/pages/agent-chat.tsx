@@ -179,8 +179,14 @@ export default function AgentChat() {
 
   const startWorkflowMutation = useMutation({
     mutationFn: async (data: { message: string; documentId?: string }) => {
-      const response = await apiRequest('POST', '/api/agent-chat/start', data);
-      return response.json();
+      const response = await apiRequest('/api/agent-chat/start', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
     },
     onSuccess: (data) => {
       setIsRunning(true);
@@ -203,9 +209,10 @@ export default function AgentChat() {
       simulateAgentWorkflow(data.workflowId);
     },
     onError: (error) => {
+      console.error("Workflow start error:", error);
       toast({
         title: "Error",
-        description: "Failed to start workflow",
+        description: `Failed to start workflow: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -213,8 +220,14 @@ export default function AgentChat() {
 
   const stopWorkflowMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/agent-chat/stop', {});
-      return response.json();
+      const response = await apiRequest('/api/agent-chat/stop', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
     },
     onSuccess: () => {
       setIsRunning(false);
@@ -228,8 +241,14 @@ export default function AgentChat() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest('POST', '/api/agent-chat/message', { message });
-      return response.json();
+      const response = await apiRequest('/api/agent-chat/message', {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
     },
     onSuccess: (data) => {
       const agentResponse: ChatMessage = {
