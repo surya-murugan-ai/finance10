@@ -1307,17 +1307,39 @@ const AddRecordForm = ({ type, existingData, onSave, onCancel, loading }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {Object.keys(fieldTemplate).map((field) => (
-        <div key={field} className="space-y-2">
-          <Label className="capitalize">{field.replace('_', ' ')}</Label>
-          <Input
-            value={formData[field] || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-            placeholder={`Enter ${field.replace('_', ' ')}`}
-            required
-          />
-        </div>
-      ))}
+      {Object.keys(fieldTemplate).map((field) => {
+        const options = getFieldOptions(field, type);
+        
+        return (
+          <div key={field} className="space-y-2">
+            <Label className="capitalize">{field.replace('_', ' ')}</Label>
+            {options ? (
+              <Select
+                value={formData[field] || ''}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, [field]: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${field.replace('_', ' ')}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={formData[field] || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+                placeholder={`Enter ${field.replace('_', ' ')}`}
+                required
+              />
+            )}
+          </div>
+        );
+      })}
       
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -1350,19 +1372,49 @@ const EditRecordForm = ({ record, onSave, onCancel, loading }: {
     onSave(formData);
   };
 
+  // Determine data type from record structure
+  const dataType = Object.keys(record).includes('code') && Object.keys(record).includes('category') ? 'gl_codes' :
+                   Object.keys(record).includes('section') ? 'tds_sections' :
+                   Object.keys(record).includes('vendor_id') ? 'vendors' :
+                   Object.keys(record).includes('customer_id') ? 'customers' :
+                   Object.keys(record).includes('product_id') ? 'products' :
+                   Object.keys(record).includes('department') ? 'cost_centers' : '';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {Object.keys(record).map((field) => (
-        <div key={field} className="space-y-2">
-          <Label className="capitalize">{field.replace('_', ' ')}</Label>
-          <Input
-            value={formData[field] || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-            placeholder={`Enter ${field.replace('_', ' ')}`}
-            required
-          />
-        </div>
-      ))}
+      {Object.keys(record).map((field) => {
+        const options = getFieldOptions(field, dataType);
+        
+        return (
+          <div key={field} className="space-y-2">
+            <Label className="capitalize">{field.replace('_', ' ')}</Label>
+            {options ? (
+              <Select
+                value={formData[field] || ''}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, [field]: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${field.replace('_', ' ')}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={formData[field] || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+                placeholder={`Enter ${field.replace('_', ' ')}`}
+                required
+              />
+            )}
+          </div>
+        );
+      })}
       
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -1393,4 +1445,33 @@ const getDefaultFieldTemplate = (type: string): Record<string, any> => {
   };
   
   return templates[type as keyof typeof templates] || { name: '', value: '' };
+};
+
+// Helper function to get dropdown options for specific fields
+const getFieldOptions = (fieldName: string, dataType: string): string[] | null => {
+  const options: Record<string, Record<string, string[]>> = {
+    gl_codes: {
+      category: ['Assets', 'Liabilities', 'Equity', 'Revenue', 'Expenses', 'COGS'],
+      type: ['Current Asset', 'Fixed Asset', 'Current Liability', 'Long-term Liability', 'Capital', 'Retained Earnings', 'Operating Revenue', 'Other Revenue', 'Operating Expense', 'Administrative Expense', 'Financial Expense', 'Direct Cost', 'Indirect Cost']
+    },
+    tds_sections: {
+      section: ['194A', '194B', '194C', '194D', '194E', '194F', '194G', '194H', '194I', '194J', '194K', '194LA', '194LB', '194M', '194N', '194O', '194P', '194Q', '194R', '194S'],
+      rate: ['1%', '2%', '5%', '10%', '20%', '30%']
+    },
+    vendors: {
+      category: ['Raw Material Supplier', 'Service Provider', 'Contractor', 'Consultant', 'Equipment Supplier', 'Utilities', 'Professional Services']
+    },
+    cost_centers: {
+      department: ['Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'IT', 'R&D', 'Production', 'Quality', 'Admin']
+    },
+    customers: {
+      category: ['Retail', 'Wholesale', 'Corporate', 'Government', 'Export', 'Domestic']
+    },
+    products: {
+      category: ['Raw Material', 'Finished Goods', 'Work in Progress', 'Trading Goods', 'Services', 'Consumables'],
+      unit: ['Nos', 'Kg', 'Ltr', 'Mtr', 'Sq Mtr', 'Cu Mtr', 'Box', 'Pcs', 'Set', 'Pack', 'Hour', 'Day']
+    }
+  };
+
+  return options[dataType]?.[fieldName] || null;
 };
