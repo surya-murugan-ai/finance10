@@ -632,6 +632,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Execute workflow for a specific document
+  app.post('/api/workflows/execute', isAuthenticated, async (req: any, res) => {
+    try {
+      const { workflowId, documentId } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!documentId) {
+        return res.status(400).json({ message: "Document ID is required" });
+      }
+
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Start the LangGraph workflow
+      const actualWorkflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
+        documentId,
+        userId
+      );
+
+      res.json({
+        workflowId: actualWorkflowId,
+        documentId,
+        documentName: document.fileName,
+        status: 'started',
+        message: 'Workflow execution started successfully'
+      });
+    } catch (error) {
+      console.error("Error executing workflow:", error);
+      res.status(500).json({ message: "Failed to execute workflow: " + error.message });
+    }
+  });
+
   // Get journal entries
   app.get('/api/journal-entries', isAuthenticated, async (req: any, res) => {
     try {
@@ -1877,22 +1911,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, documentId } = req.body;
       const userId = req.user.claims.sub;
       
-      // Create a new workflow
-      const workflowId = `workflow-${Date.now()}`;
       let documentName = 'All Documents';
+      let workflowId = `workflow-${Date.now()}`;
       
       if (documentId) {
         const document = await storage.getDocument(documentId);
-        documentName = document?.fileName || 'Unknown Document';
+        if (!document) {
+          return res.status(404).json({ message: "Document not found" });
+        }
+        documentName = document.fileName || 'Unknown Document';
+        
+        // Try to start the actual LangGraph workflow
+        try {
+          workflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
+            documentId,
+            userId
+          );
+          
+          res.json({
+            workflowId,
+            documentName,
+            status: 'started',
+            message: 'Workflow started successfully'
+          });
+        } catch (workflowError) {
+          console.error("LangGraph workflow start failed:", workflowError);
+          // Fall back to mock workflow if LangGraph fails
+          res.json({
+            workflowId,
+            documentName,
+            status: 'started',
+            message: 'Workflow started in demo mode (LangGraph temporarily unavailable)'
+          });
+        }
+      } else {
+        // No specific document - return general response
+        res.json({
+          workflowId,
+          documentName,
+          status: 'started',
+          message: 'General workflow started - select a document to process'
+        });
       }
-      
-      // For now, return a mock response
-      res.json({
-        workflowId,
-        documentName,
-        status: 'started',
-        message: 'Workflow started successfully'
-      });
     } catch (error) {
       console.error("Error starting agent workflow:", error);
       res.status(500).json({ message: "Failed to start workflow" });

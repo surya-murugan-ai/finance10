@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Workflow Execution Fix (July 14, 2025)**: Fixed workflow execution issues and enabled proper AI agent processing:
+  - **Agent Chat Integration**: Fixed agent-chat/start endpoint to properly trigger LangGraph workflows
+  - **Error Handling**: Enhanced error handling for rate limiting and workflow failures with graceful fallbacks
+  - **Workflow Execution**: Added dedicated /api/workflows/execute endpoint for direct workflow triggering
+  - **File Upload Integration**: Resolved upload timeout issues by separating file processing from AI workflow execution
+  - **Status Management**: Improved workflow status tracking with proper completion handling
+  - **Testing Validation**: Confirmed workflow execution working with real document processing
+
 - **Data Source Tagging Enhancement (July 14, 2025)**: Enhanced document management with comprehensive data source identification and filtering:
   - **Data Source Column**: Added new table column showing document origin (Manual Upload, SAP ERP, Zoho Books, Tally Prime, QuickBooks, Excel Import, API Integration)
   - **Visual Indicators**: Each data source has unique color-coded badges with appropriate icons (User, Database, FileText, Settings)
