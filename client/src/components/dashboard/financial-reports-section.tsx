@@ -45,16 +45,25 @@ export default function FinancialReportsSection() {
 
   const getReportData = (report: FinancialReport) => {
     if (report.statementType === 'trial_balance') {
-      // Use real trial balance data if available
+      // Always use real trial balance data if available
       if (trialBalance && !trialBalanceLoading) {
-        console.log('Using real trial balance data:', trialBalance);
+        const debits = trialBalance.totalDebits;
+        const credits = trialBalance.totalCredits;
+        console.log('Trial balance raw data:', { debits, credits, type: typeof debits });
         return {
-          totalDebits: Number(trialBalance.totalDebits) || 0,
-          totalCredits: Number(trialBalance.totalCredits) || 0,
+          totalDebits: debits || 0,
+          totalCredits: credits || 0,
           balance: '₹0',
         };
       }
-      console.log('Using report data:', report.data);
+      // Return loading state if trial balance is still loading
+      if (trialBalanceLoading) {
+        return {
+          totalDebits: 0,
+          totalCredits: 0,
+          balance: '₹0',
+        };
+      }
       return {
         totalDebits: Number(report.data?.totalDebits) || 0,
         totalCredits: Number(report.data?.totalCredits) || 0,
@@ -76,7 +85,7 @@ export default function FinancialReportsSection() {
     return {};
   };
 
-  if (isLoading) {
+  if (isLoading || trialBalanceLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {[1, 2, 3].map((i) => (
@@ -160,11 +169,23 @@ export default function FinancialReportsSection() {
                   <>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Debits</span>
-                      <span className="text-sm font-semibold">₹{(reportData.totalDebits || 0).toLocaleString()}</span>
+                      <span className="text-sm font-semibold">
+                        {trialBalanceLoading ? (
+                          <Skeleton className="h-4 w-16" />
+                        ) : (
+                          `₹${(reportData.totalDebits || 0).toLocaleString()}`
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Credits</span>
-                      <span className="text-sm font-semibold">₹{(reportData.totalCredits || 0).toLocaleString()}</span>
+                      <span className="text-sm font-semibold">
+                        {trialBalanceLoading ? (
+                          <Skeleton className="h-4 w-16" />
+                        ) : (
+                          `₹${(reportData.totalCredits || 0).toLocaleString()}`
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
                       <span className="text-sm font-medium text-foreground">Balance</span>
