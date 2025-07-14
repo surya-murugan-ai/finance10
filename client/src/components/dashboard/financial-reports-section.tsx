@@ -145,11 +145,22 @@ export default function FinancialReportsSection() {
     }
   ];
 
-  // Add default status to reports if missing
-  const reportsToShow = reports ? reports.map(report => ({
-    ...report,
-    status: report.status || 'updated' // Default to 'updated' if status is missing
-  })) : mockReports;
+  // Add default status to reports if missing and filter to unique types
+  const reportsToShow = reports ? (() => {
+    const uniqueTypes = new Set();
+    return reports
+      .filter(report => {
+        if (uniqueTypes.has(report.statementType)) {
+          return false;
+        }
+        uniqueTypes.add(report.statementType);
+        return true;
+      })
+      .map(report => ({
+        ...report,
+        status: report.status || 'updated' // Default to 'updated' if status is missing
+      }));
+  })() : mockReports;
   
   // Debug the trial balance report specifically
   const trialBalanceReport = reportsToShow.find(r => r.statementType === 'trial_balance');
@@ -165,6 +176,8 @@ export default function FinancialReportsSection() {
         // Debug for trial balance specifically
         if (report.statementType === 'trial_balance') {
           console.log('Rendering trial balance with data:', reportData);
+          console.log('Report ID:', report.id);
+          console.log('Component render timestamp:', Date.now());
         }
         
         return (
@@ -186,21 +199,19 @@ export default function FinancialReportsSection() {
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Debits</span>
                       <span className="text-sm font-semibold">
-                        {(() => {
-                          const value = reportData.totalDebits;
-                          console.log('Rendering debit value:', value, typeof value);
-                          return `₹${(value || 0).toLocaleString()}`;
-                        })()}
+${report.statementType === 'trial_balance' && trialBalance && !trialBalanceLoading ? 
+                          `₹${trialBalance.totalDebits.toLocaleString()}` : 
+                          `₹${(reportData.totalDebits || 0).toLocaleString()}`
+                        }
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Credits</span>
                       <span className="text-sm font-semibold">
-                        {(() => {
-                          const value = reportData.totalCredits;
-                          console.log('Rendering credit value:', value, typeof value);
-                          return `₹${(value || 0).toLocaleString()}`;
-                        })()}
+${report.statementType === 'trial_balance' && trialBalance && !trialBalanceLoading ? 
+                          `₹${trialBalance.totalCredits.toLocaleString()}` : 
+                          `₹${(reportData.totalCredits || 0).toLocaleString()}`
+                        }
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
