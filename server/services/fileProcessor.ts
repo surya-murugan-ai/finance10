@@ -24,6 +24,9 @@ export class FileProcessorService {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
     'application/vnd.ms-excel', // .xls
     'text/csv', // .csv
+    'application/csv', // .csv (alternative)
+    'text/plain', // .csv (sometimes detected as plain text)
+    'application/octet-stream', // .csv (generic binary)
     'application/pdf', // .pdf
   ];
   private readonly maxFileSize = 100 * 1024 * 1024; // 100MB
@@ -49,12 +52,33 @@ export class FileProcessorService {
       };
     }
 
-    // Check MIME type
-    if (!this.allowedMimeTypes.includes(file.mimetype)) {
+    // Check file extension
+    const allowedExtensions = ['.xlsx', '.xls', '.csv', '.pdf'];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
       return {
         isValid: false,
-        error: `File type ${file.mimetype} not supported. Allowed types: Excel (.xlsx, .xls), CSV (.csv), PDF (.pdf)`,
+        error: `File extension ${fileExtension} not supported. Allowed types: .xlsx, .xls, .csv, .pdf`,
       };
+    }
+
+    // For CSV files, allow common MIME types
+    if (fileExtension === '.csv') {
+      const csvMimeTypes = ['text/csv', 'application/csv', 'text/plain', 'application/octet-stream'];
+      if (!csvMimeTypes.includes(file.mimetype)) {
+        return {
+          isValid: false,
+          error: `CSV file detected with unsupported MIME type: ${file.mimetype}`,
+        };
+      }
+    } else {
+      // For other files, check standard MIME types
+      if (!this.allowedMimeTypes.includes(file.mimetype)) {
+        return {
+          isValid: false,
+          error: `File type ${file.mimetype} not supported. Allowed types: Excel (.xlsx, .xls), CSV (.csv), PDF (.pdf)`,
+        };
+      }
     }
 
     // Additional validation based on file content

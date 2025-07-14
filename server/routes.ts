@@ -448,9 +448,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Document upload route
-  app.post('/api/documents/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/documents/upload', jwtAuth, upload.single('file'), async (req: any, res) => {
     try {
+      console.log("Upload request received");
+      
       if (!req.file) {
+        console.log("No file in request");
         return res.status(400).json({ message: "No file uploaded" });
       }
 
@@ -458,8 +461,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const file = req.file;
       const fileName = `${nanoid()}_${file.originalname}`;
 
+      console.log("File details:", {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        userId
+      });
+
       // Validate file first
+      console.log("Starting file validation");
       const validation = await fileProcessorService.validateFile(file);
+      console.log("File validation result:", validation);
+      
       if (!validation.isValid) {
         return res.status(400).json({ message: validation.error });
       }
@@ -483,11 +496,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: fileResult.metadata,
       });
 
-      // Start LangGraph workflow
-      const workflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
-        document.id,
-        userId
-      );
+      // Start LangGraph workflow (temporarily disabled for debugging)
+      let workflowId = null;
+      try {
+        workflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
+          document.id,
+          userId
+        );
+      } catch (error) {
+        console.error("Workflow start failed:", error);
+        // Continue without workflow for now
+      }
 
       // Log audit trail
       await storage.createAuditTrail({
@@ -498,14 +517,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: {
           fileName: file.originalname,
           fileSize: file.size,
-          workflowId,
+          workflowId: workflowId || 'none',
         },
       });
 
       res.json({
         document,
-        workflowId,
-        message: "Document uploaded successfully and processing started",
+        workflowId: workflowId || 'none',
+        message: "Document uploaded successfully" + (workflowId ? " and processing started" : ""),
       });
     } catch (error) {
       console.error("Error uploading document:", error);
@@ -514,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get documents
-  app.get('/api/documents', isAuthenticated, async (req: any, res) => {
+  app.get('/api/documents', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const documents = await storage.getDocuments(userId);
@@ -526,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get document by ID
-  app.get('/api/documents/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/documents/:id', jwtAuth, async (req: any, res) => {
     try {
       const document = await storage.getDocument(req.params.id);
       if (!document) {
@@ -540,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete document
-  app.delete('/api/documents/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/documents/:id', jwtAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const document = await storage.getDocument(req.params.id);

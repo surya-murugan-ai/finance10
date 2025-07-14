@@ -80,14 +80,11 @@ export default function FileDropzone() {
   });
 
   const validateFile = (file: File): string | null => {
-    const allowedTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-      'text/csv',
-      'application/pdf'
-    ];
+    // Check file extension instead of MIME type for better compatibility
+    const allowedExtensions = ['.xlsx', '.xls', '.csv', '.pdf'];
+    const fileExtension = file.name.toLowerCase().split('.').pop();
     
-    if (!allowedTypes.includes(file.type)) {
+    if (!fileExtension || !allowedExtensions.includes(`.${fileExtension}`)) {
       return "File type not supported. Please upload Excel (.xlsx, .xls), CSV, or PDF files.";
     }
     
