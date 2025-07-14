@@ -11,6 +11,8 @@ import { financialReportsService } from "./services/financialReports";
 import { dataSourceService } from "./services/dataSourceService";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
+import { writeFile } from "fs/promises";
+import path from "path";
 
 // JWT middleware for API endpoints
 const jwtAuth = (req: any, res: any, next: any) => {
@@ -468,45 +470,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       });
 
-      // Validate file first
-      console.log("Starting file validation");
-      const validation = await fileProcessorService.validateFile(file);
-      console.log("File validation result:", validation);
+      // Simple extension validation only
+      const allowedExtensions = ['.xlsx', '.xls', '.csv', '.pdf'];
+      const fileExtension = path.extname(file.originalname).toLowerCase();
       
-      if (!validation.isValid) {
-        return res.status(400).json({ message: validation.error });
+      if (!allowedExtensions.includes(fileExtension)) {
+        return res.status(400).json({ message: `File type ${fileExtension} not supported` });
       }
 
-      // Process and save file
-      const fileResult = await fileProcessorService.saveFile(file, fileName);
-      
-      if (!fileResult.success) {
-        return res.status(400).json({ message: fileResult.error });
-      }
+      // Save file directly without complex validation
+      console.log("Saving file directly");
+      const filePath = path.join(process.cwd(), 'uploads', fileName);
+      await writeFile(filePath, file.buffer);
+      console.log("File saved to:", filePath);
 
       // Create document record
+      console.log("Creating document record");
       const document = await storage.createDocument({
         fileName,
         originalName: file.originalname,
         mimeType: file.mimetype,
         fileSize: file.size,
-        filePath: fileResult.filePath!,
+        filePath: filePath,
         uploadedBy: userId,
         status: 'uploaded',
-        metadata: fileResult.metadata,
+        metadata: { size: file.size, mimeType: file.mimetype },
       });
+      console.log("Document created:", document.id);
 
       // Start LangGraph workflow (temporarily disabled for debugging)
       let workflowId = null;
-      try {
-        workflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
-          document.id,
-          userId
-        );
-      } catch (error) {
-        console.error("Workflow start failed:", error);
-        // Continue without workflow for now
-      }
+      console.log("Skipping LangGraph workflow for now");
+      // TODO: Re-enable workflow after fixing timeout issues
+      // try {
+      //   workflowId = await langGraphOrchestrator.startDocumentProcessingWorkflow(
+      //     document.id,
+      //     userId
+      //   );
+      // } catch (error) {
+      //   console.error("Workflow start failed:", error);
+      //   // Continue without workflow for now
+      // }
 
       // Log audit trail
       await storage.createAuditTrail({
