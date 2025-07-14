@@ -134,6 +134,8 @@ export default function DataSourceConfig() {
   // Master Data
   const [masterData, setMasterData] = useState<MasterData[]>([]);
   const [selectedMasterType, setSelectedMasterType] = useState<string>('all');
+  const [viewingMasterData, setViewingMasterData] = useState<MasterData | null>(null);
+  const [updatingMasterData, setUpdatingMasterData] = useState<MasterData | null>(null);
   
   // Testing states
   const [testingConnections, setTestingConnections] = useState<Set<string>>(new Set());
@@ -336,6 +338,49 @@ export default function DataSourceConfig() {
       toast({
         title: "Initialization Failed",
         description: "Unable to initialize AI learning",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Master Data functions
+  const handleViewMasterData = (data: MasterData) => {
+    setViewingMasterData(data);
+  };
+
+  const handleUpdateMasterData = (data: MasterData) => {
+    setUpdatingMasterData(data);
+  };
+
+  const handleSaveMasterData = async (updatedData: MasterData) => {
+    try {
+      setLoading(true);
+      const result = await apiRequest(`/api/master-data/${updatedData.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ data: updatedData.data })
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Master data updated successfully"
+        });
+        loadMasterData();
+        setUpdatingMasterData(null);
+      } else {
+        toast({
+          title: "Update Failed",
+          description: result.message || "Failed to update master data",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating master data:', error);
+      toast({
+        title: "Update Failed",
+        description: "Unable to update master data",
         variant: "destructive"
       });
     } finally {
@@ -797,12 +842,20 @@ export default function DataSourceConfig() {
               </div>
               
               <div className="flex space-x-2 mt-4">
-                <Button size="sm" variant="outline" disabled>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleViewMasterData(data)}
+                >
                   <FileText className="w-3 h-3 mr-1" />
                   View Data
                 </Button>
                 
-                <Button size="sm" variant="outline" disabled>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleUpdateMasterData(data)}
+                >
                   <Upload className="w-3 h-3 mr-1" />
                   Update
                 </Button>
@@ -963,6 +1016,125 @@ export default function DataSourceConfig() {
             {renderAILearningTab()}
           </TabsContent>
         </Tabs>
+        
+        {/* View Master Data Dialog */}
+        <Dialog open={!!viewingMasterData} onOpenChange={() => setViewingMasterData(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                View {viewingMasterData?.type.replace('_', ' ').toUpperCase()} Data
+              </DialogTitle>
+            </DialogHeader>
+            {viewingMasterData && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Badge variant="outline">{viewingMasterData.data.length} records</Badge>
+                  <div className="text-sm text-gray-600">
+                    Last updated: {new Date(viewingMasterData.last_updated).toLocaleString()}
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {viewingMasterData.data.length > 0 && 
+                          Object.keys(viewingMasterData.data[0]).map((key) => (
+                            <TableHead key={key} className="capitalize">
+                              {key.replace('_', ' ')}
+                            </TableHead>
+                          ))
+                        }
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewingMasterData.data.slice(0, 100).map((record, index) => (
+                        <TableRow key={index}>
+                          {Object.values(record).map((value, valueIndex) => (
+                            <TableCell key={valueIndex} className="max-w-xs truncate">
+                              {String(value)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {viewingMasterData.data.length > 100 && (
+                  <div className="text-sm text-gray-600 text-center">
+                    Showing first 100 records of {viewingMasterData.data.length} total records
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Update Master Data Dialog */}
+        <Dialog open={!!updatingMasterData} onOpenChange={() => setUpdatingMasterData(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Update {updatingMasterData?.type.replace('_', ' ').toUpperCase()} Data
+              </DialogTitle>
+            </DialogHeader>
+            {updatingMasterData && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Master data updates require careful consideration. Changes will affect all related processes.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="space-y-2">
+                  <Label>Data Source</Label>
+                  <Input 
+                    value={updatingMasterData.source}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Record Count</Label>
+                  <Input 
+                    value={`${updatingMasterData.data.length} records`}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Last Updated</Label>
+                  <Input 
+                    value={new Date(updatingMasterData.last_updated).toLocaleString()}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setUpdatingMasterData(null)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => handleSaveMasterData(updatingMasterData)}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Sync from Source
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
