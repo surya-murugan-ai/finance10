@@ -50,9 +50,14 @@ export default function FinancialReportsSection() {
         const debits = trialBalance.totalDebits;
         const credits = trialBalance.totalCredits;
         console.log('Trial balance raw data:', { debits, credits, type: typeof debits });
+        
+        // Ensure we have valid numbers
+        const safeDebits = (typeof debits === 'number' && !isNaN(debits)) ? debits : 0;
+        const safeCredits = (typeof credits === 'number' && !isNaN(credits)) ? credits : 0;
+        
         return {
-          totalDebits: debits || 0,
-          totalCredits: credits || 0,
+          totalDebits: safeDebits,
+          totalCredits: safeCredits,
           balance: '₹0',
         };
       }
@@ -173,7 +178,7 @@ export default function FinancialReportsSection() {
                         {trialBalanceLoading ? (
                           <Skeleton className="h-4 w-16" />
                         ) : (
-                          `₹${(reportData.totalDebits || 0).toLocaleString()}`
+                          `₹${Math.max(0, reportData.totalDebits || 0).toLocaleString()}`
                         )}
                       </span>
                     </div>
@@ -183,7 +188,7 @@ export default function FinancialReportsSection() {
                         {trialBalanceLoading ? (
                           <Skeleton className="h-4 w-16" />
                         ) : (
-                          `₹${(reportData.totalCredits || 0).toLocaleString()}`
+                          `₹${Math.max(0, reportData.totalCredits || 0).toLocaleString()}`
                         )}
                       </span>
                     </div>
