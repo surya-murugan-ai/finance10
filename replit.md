@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Data Source Tagging Enhancement (July 14, 2025)**: Enhanced document management with comprehensive data source identification and filtering:
+  - **Data Source Column**: Added new table column showing document origin (Manual Upload, SAP ERP, Zoho Books, Tally Prime, QuickBooks, Excel Import, API Integration)
+  - **Visual Indicators**: Each data source has unique color-coded badges with appropriate icons (User, Database, FileText, Settings)
+  - **Smart Detection**: Automatic data source detection based on file naming patterns and metadata
+  - **Filter System**: Dropdown filter to view documents by specific data source with reset functionality
+  - **Enhanced Statistics**: Updated summary cards to show System Extracted vs Manual Upload counts
+  - **Document Details**: Added data source and processing method information to document details modal
+  - **Empty State Handling**: Context-aware empty states showing filtered results with option to show all documents
+
 - **Sample Document Testing Suite (July 14, 2025)**: Created comprehensive sample primary documents for testing complete document workflows:
   - **6 Primary Document Types**: Vendor Invoices, Sales Register, Bank Statements, Salary Register, Fixed Asset Register, TDS Certificates
   - **Authentic Indian Data**: GST numbers, PAN formats, TDS sections, banking formats compliant with Indian standards

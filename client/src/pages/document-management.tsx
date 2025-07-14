@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { FileText, Upload, Download, Eye, Trash2, Calendar, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Upload, Download, Eye, Trash2, Calendar, RefreshCw, Database, User, Settings, Filter } from "lucide-react";
 import { format } from "date-fns";
 import type { Document } from "@shared/schema";
 
@@ -19,6 +20,7 @@ export default function DocumentManagement() {
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [dataSourceFilter, setDataSourceFilter] = useState<string>("all");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -98,6 +100,40 @@ export default function DocumentManagement() {
     }
   };
 
+  const getDataSourceInfo = (document: Document) => {
+    // Mock data source information - in real implementation, this would come from the document metadata
+    const dataSources = [
+      { id: 'manual', name: 'Manual Upload', icon: User, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+      { id: 'sap', name: 'SAP ERP', icon: Database, color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      { id: 'zoho', name: 'Zoho Books', icon: Database, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+      { id: 'tally', name: 'Tally Prime', icon: Database, color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+      { id: 'quickbooks', name: 'QuickBooks', icon: Database, color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' },
+      { id: 'excel', name: 'Excel Import', icon: FileText, color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      { id: 'api', name: 'API Integration', icon: Settings, color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' }
+    ];
+
+    // Determine data source based on document properties
+    const fileName = document.originalName.toLowerCase();
+    const documentType = document.documentType;
+    
+    // Logic to determine data source based on file patterns or metadata
+    if (fileName.includes('sap') || fileName.includes('_sap_')) {
+      return dataSources.find(ds => ds.id === 'sap') || dataSources[0];
+    } else if (fileName.includes('zoho') || fileName.includes('_zoho_')) {
+      return dataSources.find(ds => ds.id === 'zoho') || dataSources[0];
+    } else if (fileName.includes('tally') || fileName.includes('_tally_')) {
+      return dataSources.find(ds => ds.id === 'tally') || dataSources[0];
+    } else if (fileName.includes('quickbooks') || fileName.includes('_qb_')) {
+      return dataSources.find(ds => ds.id === 'quickbooks') || dataSources[0];
+    } else if (fileName.includes('api') || document.extractedData?.source === 'api') {
+      return dataSources.find(ds => ds.id === 'api') || dataSources[0];
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      return dataSources.find(ds => ds.id === 'excel') || dataSources[0];
+    } else {
+      return dataSources.find(ds => ds.id === 'manual') || dataSources[0];
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -148,12 +184,15 @@ export default function DocumentManagement() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Completed
+                System Extracted
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {documents?.filter(d => d.status === 'completed').length || 0}
+                {documents?.filter(d => getDataSourceInfo(d).id !== 'manual').length || 0}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                SAP, Zoho, APIs
               </div>
             </CardContent>
           </Card>
@@ -161,12 +200,15 @@ export default function DocumentManagement() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Processing
+                Manual Upload
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {documents?.filter(d => d.status === 'processing').length || 0}
+                {documents?.filter(d => getDataSourceInfo(d).id === 'manual').length || 0}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                User uploaded
               </div>
             </CardContent>
           </Card>
@@ -174,23 +216,66 @@ export default function DocumentManagement() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Failed
+                Completed
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {documents?.filter(d => d.status === 'failed').length || 0}
+              <div className="text-2xl font-bold text-purple-600">
+                {documents?.filter(d => d.status === 'completed').length || 0}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Ready for use
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Filter Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Data Source:</label>
+                <Select value={dataSourceFilter} onValueChange={setDataSourceFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="manual">Manual Upload</SelectItem>
+                    <SelectItem value="sap">SAP ERP</SelectItem>
+                    <SelectItem value="zoho">Zoho Books</SelectItem>
+                    <SelectItem value="tally">Tally Prime</SelectItem>
+                    <SelectItem value="quickbooks">QuickBooks</SelectItem>
+                    <SelectItem value="excel">Excel Import</SelectItem>
+                    <SelectItem value="api">API Integration</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDataSourceFilter("all")}
+                className="text-gray-600"
+              >
+                Reset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Documents Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              All Documents
+              {dataSourceFilter === "all" ? "All Documents" : `Documents from ${dataSourceFilter === "manual" ? "Manual Upload" : dataSourceFilter.toUpperCase()}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,6 +285,7 @@ export default function DocumentManagement() {
                   <TableRow>
                     <TableHead>Document</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Data Source</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Size</TableHead>
                     <TableHead>Uploaded</TableHead>
@@ -207,98 +293,128 @@ export default function DocumentManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {documents.map((document: Document) => (
-                    <TableRow key={document.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getDocumentTypeIcon(document.documentType)}
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {document.originalName}
+                  {documents
+                    .filter(document => 
+                      dataSourceFilter === "all" || 
+                      getDataSourceInfo(document).id === dataSourceFilter
+                    )
+                    .map((document: Document) => {
+                      const dataSourceInfo = getDataSourceInfo(document);
+                      const DataSourceIcon = dataSourceInfo.icon;
+                      
+                      return (
+                        <TableRow key={document.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getDocumentTypeIcon(document.documentType)}
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {document.originalName}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {document.id.substring(0, 8)}...
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {document.id.substring(0, 8)}...
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {getDocumentTypeName(document.documentType)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge className={dataSourceInfo.color}>
+                                <DataSourceIcon className="h-3 w-3 mr-1" />
+                                {dataSourceInfo.name}
+                              </Badge>
                             </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {getDocumentTypeName(document.documentType)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(document.status)}>
-                          {document.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {document.fileSize ? formatFileSize(document.fileSize) : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(document.createdAt), 'MMM dd, yyyy')}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedDocument(document)}
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          {document.filePath && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(`/uploads/${document.filePath}`, '_blank')}
-                            >
-                              <Download className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(document.status)}>
+                              {document.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {document.fileSize ? formatFileSize(document.fileSize) : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(document.createdAt), 'MMM dd, yyyy')}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 hover:text-red-700"
+                                onClick={() => setSelectedDocument(document)}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Eye className="h-3 w-3" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Document</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{document.originalName}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteMutation.mutate(document.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                              {document.filePath && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(`/uploads/${document.filePath}`, '_blank')}
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{document.originalName}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteMutation.mutate(document.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             ) : (
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">
-                  No documents uploaded yet
+                  {dataSourceFilter === "all" 
+                    ? "No documents uploaded yet" 
+                    : `No documents found from ${dataSourceFilter === "manual" ? "manual upload" : dataSourceFilter.toUpperCase()}`
+                  }
                 </p>
+                {dataSourceFilter !== "all" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setDataSourceFilter("all")}
+                    className="mt-4"
+                  >
+                    Show All Documents
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -344,6 +460,34 @@ export default function DocumentManagement() {
                     </label>
                     <p className="text-gray-900 dark:text-white">
                       {selectedDocument.fileSize ? formatFileSize(selectedDocument.fileSize) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Data Source
+                    </label>
+                    <div className="flex items-center gap-2 mt-1">
+                      {(() => {
+                        const dataSourceInfo = getDataSourceInfo(selectedDocument);
+                        const DataSourceIcon = dataSourceInfo.icon;
+                        return (
+                          <Badge className={dataSourceInfo.color}>
+                            <DataSourceIcon className="h-3 w-3 mr-1" />
+                            {dataSourceInfo.name}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Processing Method
+                    </label>
+                    <p className="text-gray-900 dark:text-white">
+                      {getDataSourceInfo(selectedDocument).id === 'manual' ? 'Manual Upload' : 'Automated Extraction'}
                     </p>
                   </div>
                 </div>
