@@ -199,19 +199,23 @@ export default function FinancialReportsSection() {
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Debits</span>
                       <span className="text-sm font-semibold">
-${report.statementType === 'trial_balance' && trialBalance && !trialBalanceLoading ? 
-                          `₹${trialBalance.totalDebits.toLocaleString()}` : 
-                          `₹${(reportData.totalDebits || 0).toLocaleString()}`
-                        }
+                        {(() => {
+                          if (trialBalance && trialBalance.totalDebits) {
+                            return `₹${trialBalance.totalDebits.toLocaleString()}`;
+                          }
+                          return '₹0';
+                        })()}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Credits</span>
                       <span className="text-sm font-semibold">
-${report.statementType === 'trial_balance' && trialBalance && !trialBalanceLoading ? 
-                          `₹${trialBalance.totalCredits.toLocaleString()}` : 
-                          `₹${(reportData.totalCredits || 0).toLocaleString()}`
-                        }
+                        {(() => {
+                          if (trialBalance && trialBalance.totalCredits) {
+                            return `₹${trialBalance.totalCredits.toLocaleString()}`;
+                          }
+                          return '₹0';
+                        })()}
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
