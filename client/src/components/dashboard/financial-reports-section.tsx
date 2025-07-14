@@ -186,21 +186,21 @@ export default function FinancialReportsSection() {
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Debits</span>
                       <span className="text-sm font-semibold">
-                        {trialBalanceLoading ? (
-                          <Skeleton className="h-4 w-16" />
-                        ) : (
-                          `₹${Math.max(0, reportData.totalDebits || 0).toLocaleString()}`
-                        )}
+                        {(() => {
+                          const value = reportData.totalDebits;
+                          console.log('Rendering debit value:', value, typeof value);
+                          return `₹${(value || 0).toLocaleString()}`;
+                        })()}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Total Credits</span>
                       <span className="text-sm font-semibold">
-                        {trialBalanceLoading ? (
-                          <Skeleton className="h-4 w-16" />
-                        ) : (
-                          `₹${Math.max(0, reportData.totalCredits || 0).toLocaleString()}`
-                        )}
+                        {(() => {
+                          const value = reportData.totalCredits;
+                          console.log('Rendering credit value:', value, typeof value);
+                          return `₹${(value || 0).toLocaleString()}`;
+                        })()}
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
