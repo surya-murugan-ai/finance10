@@ -136,6 +136,8 @@ export default function DataSourceConfig() {
   const [selectedMasterType, setSelectedMasterType] = useState<string>('all');
   const [viewingMasterData, setViewingMasterData] = useState<MasterData | null>(null);
   const [updatingMasterData, setUpdatingMasterData] = useState<MasterData | null>(null);
+  const [addingMasterData, setAddingMasterData] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<{data: MasterData, recordIndex: number} | null>(null);
   
   // Testing states
   const [testingConnections, setTestingConnections] = useState<Set<string>>(new Set());
@@ -381,6 +383,95 @@ export default function DataSourceConfig() {
       toast({
         title: "Update Failed",
         description: "Unable to update master data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMasterData = (type: string) => {
+    setAddingMasterData(type);
+  };
+
+  const handleEditRecord = (data: MasterData, recordIndex: number) => {
+    setEditingRecord({ data, recordIndex });
+  };
+
+  const handleSaveRecord = async (updatedRecord: Record<string, any>) => {
+    if (!editingRecord) return;
+    
+    try {
+      setLoading(true);
+      const updatedData = { ...editingRecord.data };
+      updatedData.data[editingRecord.recordIndex] = updatedRecord;
+      
+      const result = await apiRequest(`/api/master-data/${updatedData.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ data: updatedData.data })
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Record updated successfully"
+        });
+        loadMasterData();
+        setEditingRecord(null);
+        setViewingMasterData(null);
+      } else {
+        toast({
+          title: "Update Failed",
+          description: result.message || "Failed to update record",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating record:', error);
+      toast({
+        title: "Update Failed",
+        description: "Unable to update record",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddNewRecord = async (newRecord: Record<string, any>, type: string) => {
+    try {
+      setLoading(true);
+      const existingData = masterData.find(data => data.type === type);
+      
+      if (existingData) {
+        const updatedData = { ...existingData };
+        updatedData.data.push(newRecord);
+        
+        const result = await apiRequest(`/api/master-data/${existingData.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ data: updatedData.data })
+        });
+        
+        if (result.success) {
+          toast({
+            title: "Success",
+            description: "New record added successfully"
+          });
+          loadMasterData();
+          setAddingMasterData(null);
+        } else {
+          toast({
+            title: "Add Failed",
+            description: result.message || "Failed to add record",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error adding record:', error);
+      toast({
+        title: "Add Failed",
+        description: "Unable to add record",
         variant: "destructive"
       });
     } finally {
@@ -807,6 +898,13 @@ export default function DataSourceConfig() {
               <SelectItem value="products">Products</SelectItem>
             </SelectContent>
           </Select>
+          <Button 
+            onClick={() => handleAddMasterData(selectedMasterType === 'all' ? 'gl_codes' : selectedMasterType)}
+            variant="outline"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New
+          </Button>
           <Button onClick={loadMasterData}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -1045,16 +1143,26 @@ export default function DataSourceConfig() {
                             </TableHead>
                           ))
                         }
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {viewingMasterData.data.slice(0, 100).map((record, index) => (
-                        <TableRow key={index}>
+                        <TableRow key={index} className="hover:bg-gray-50">
                           {Object.values(record).map((value, valueIndex) => (
                             <TableCell key={valueIndex} className="max-w-xs truncate">
                               {String(value)}
                             </TableCell>
                           ))}
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditRecord(viewingMasterData, index)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1135,7 +1243,154 @@ export default function DataSourceConfig() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Add New Record Dialog */}
+        <Dialog open={!!addingMasterData} onOpenChange={() => setAddingMasterData(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Add New {addingMasterData?.replace('_', ' ').toUpperCase()} Record
+              </DialogTitle>
+            </DialogHeader>
+            {addingMasterData && (
+              <AddRecordForm
+                type={addingMasterData}
+                existingData={masterData.find(d => d.type === addingMasterData)}
+                onSave={(newRecord) => handleAddNewRecord(newRecord, addingMasterData)}
+                onCancel={() => setAddingMasterData(null)}
+                loading={loading}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Record Dialog */}
+        <Dialog open={!!editingRecord} onOpenChange={() => setEditingRecord(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Edit {editingRecord?.data.type.replace('_', ' ').toUpperCase()} Record
+              </DialogTitle>
+            </DialogHeader>
+            {editingRecord && (
+              <EditRecordForm
+                record={editingRecord.data.data[editingRecord.recordIndex]}
+                onSave={handleSaveRecord}
+                onCancel={() => setEditingRecord(null)}
+                loading={loading}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
 }
+
+// Add Record Form Component
+const AddRecordForm = ({ type, existingData, onSave, onCancel, loading }: {
+  type: string;
+  existingData?: MasterData;
+  onSave: (record: Record<string, any>) => void;
+  onCancel: () => void;
+  loading: boolean;
+}) => {
+  const [formData, setFormData] = useState<Record<string, any>>({});
+
+  // Get field template from existing data
+  const fieldTemplate = existingData?.data[0] || getDefaultFieldTemplate(type);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {Object.keys(fieldTemplate).map((field) => (
+        <div key={field} className="space-y-2">
+          <Label className="capitalize">{field.replace('_', ' ')}</Label>
+          <Input
+            value={formData[field] || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+            placeholder={`Enter ${field.replace('_', ' ')}`}
+            required
+          />
+        </div>
+      ))}
+      
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? (
+            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
+          )}
+          Add Record
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+// Edit Record Form Component
+const EditRecordForm = ({ record, onSave, onCancel, loading }: {
+  record: Record<string, any>;
+  onSave: (record: Record<string, any>) => void;
+  onCancel: () => void;
+  loading: boolean;
+}) => {
+  const [formData, setFormData] = useState<Record<string, any>>(record);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {Object.keys(record).map((field) => (
+        <div key={field} className="space-y-2">
+          <Label className="capitalize">{field.replace('_', ' ')}</Label>
+          <Input
+            value={formData[field] || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+            placeholder={`Enter ${field.replace('_', ' ')}`}
+            required
+          />
+        </div>
+      ))}
+      
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? (
+            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Edit className="w-4 h-4 mr-2" />
+          )}
+          Save Changes
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+// Helper function to get default field template
+const getDefaultFieldTemplate = (type: string): Record<string, any> => {
+  const templates = {
+    gl_codes: { code: '', name: '', category: '', type: '' },
+    tds_sections: { section: '', description: '', rate: '', threshold: '' },
+    vendors: { vendor_id: '', name: '', email: '', phone: '', address: '' },
+    cost_centers: { code: '', name: '', department: '', budget: '' },
+    customers: { customer_id: '', name: '', email: '', phone: '', address: '' },
+    products: { product_id: '', name: '', category: '', price: '', unit: '' }
+  };
+  
+  return templates[type as keyof typeof templates] || { name: '', value: '' };
+};
