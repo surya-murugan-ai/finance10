@@ -25,6 +25,7 @@ const jwtAuth = (req: any, res: any, next: any) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('JWT Auth: No valid Authorization header');
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
@@ -39,11 +40,14 @@ const jwtAuth = (req: any, res: any, next: any) => {
         userId: decoded.userId,
         email: decoded.email
       };
+      console.log('JWT Auth: Success for user', decoded.userId);
       next();
     } catch (decodeError) {
+      console.log('JWT Auth: Token decode error', decodeError);
       return res.status(401).json({ message: 'Unauthorized' });
     }
   } catch (error) {
+    console.log('JWT Auth: General error', error);
     return res.status(401).json({ message: 'Unauthorized' });
   }
 };
@@ -1006,6 +1010,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.userId;
       const { period } = req.body;
+      
+      console.log('Trial Balance Request:', { userId, period });
       
       let journalEntries = await storage.getJournalEntriesByPeriod(period);
       
