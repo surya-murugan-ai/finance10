@@ -2733,29 +2733,75 @@ async function generateTrialBalance(journalEntries: any[]): Promise<any> {
 }
 
 async function generateProfitLoss(journalEntries: any[]): Promise<any> {
-  const revenue = journalEntries.filter(entry => 
-    entry.accountCode.startsWith('4') && parseFloat(entry.creditAmount) > 0
-  );
-  const expenses = journalEntries.filter(entry => 
-    entry.accountCode.startsWith('5') && parseFloat(entry.debitAmount) > 0
-  );
+  // Group entries by account code first to calculate net balances
+  const accountBalances = new Map<string, {
+    accountName: string;
+    totalDebits: number;
+    totalCredits: number;
+    netBalance: number;
+  }>();
+
+  for (const entry of journalEntries) {
+    const code = entry.accountCode;
+    const current = accountBalances.get(code) || {
+      accountName: entry.accountName,
+      totalDebits: 0,
+      totalCredits: 0,
+      netBalance: 0
+    };
+    
+    current.totalDebits += parseFloat(entry.debitAmount || 0);
+    current.totalCredits += parseFloat(entry.creditAmount || 0);
+    current.netBalance = current.totalDebits - current.totalCredits;
+    
+    accountBalances.set(code, current);
+  }
   
-  const totalRevenue = revenue.reduce((sum, entry) => sum + parseFloat(entry.creditAmount), 0);
-  const totalExpenses = expenses.reduce((sum, entry) => sum + parseFloat(entry.debitAmount), 0);
+  const revenue = [];
+  const expenses = [];
+  let totalRevenue = 0;
+  let totalExpenses = 0;
+  
+  // Process each account based on account code ranges
+  for (const [code, balance] of accountBalances) {
+    if (code.startsWith('4')) {
+      // Revenue accounts (4xxx) - normal credit balance
+      // Revenue = credit balance, so we use totalCredits for revenue accounts
+      const amount = balance.totalCredits;
+      if (amount > 0) {
+        revenue.push({
+          accountCode: code,
+          accountName: balance.accountName,
+          amount: amount,
+          type: 'revenue'
+        });
+        totalRevenue += amount;
+      }
+    } else if (code.startsWith('5')) {
+      // Expense accounts (5xxx) - normal debit balance
+      // For expense accounts, we use totalDebits OR totalCredits depending on the journal structure
+      // If totalDebits > 0, use totalDebits (normal expense entry)
+      // If totalCredits > 0, use totalCredits (reverse entry like TDS)
+      const amount = balance.totalDebits > 0 ? balance.totalDebits : balance.totalCredits;
+      if (amount > 0) {
+        expenses.push({
+          accountCode: code,
+          accountName: balance.accountName,
+          amount: amount,
+          type: 'expense'
+        });
+        totalExpenses += amount;
+      }
+    }
+  }
+  
+  // Sort by account code
+  revenue.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+  expenses.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
   
   return {
-    revenue: revenue.map(entry => ({
-      accountCode: entry.accountCode,
-      accountName: entry.accountName,
-      amount: parseFloat(entry.creditAmount),
-      type: 'revenue'
-    })),
-    expenses: expenses.map(entry => ({
-      accountCode: entry.accountCode,
-      accountName: entry.accountName,
-      amount: parseFloat(entry.debitAmount),
-      type: 'expense'
-    })),
+    revenue,
+    expenses,
     totalRevenue,
     totalExpenses,
     netProfit: totalRevenue - totalExpenses

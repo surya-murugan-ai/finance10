@@ -97,86 +97,59 @@ export class FinancialReportsService {
     const revenue: ProfitLossEntry[] = [];
     const expenses: ProfitLossEntry[] = [];
 
-    // Group entries by account
-    const accountTotals = new Map<string, {
+    // Group entries by account code first to calculate net balances
+    const accountBalances = new Map<string, {
       accountName: string;
-      netAmount: number;
+      totalDebits: number;
+      totalCredits: number;
     }>();
 
     for (const entry of journalEntries) {
-      const key = entry.accountCode;
-      const current = accountTotals.get(key) || {
+      const code = entry.accountCode;
+      const current = accountBalances.get(code) || {
         accountName: entry.accountName,
-        netAmount: 0,
+        totalDebits: 0,
+        totalCredits: 0,
       };
-
-      const debit = parseFloat(entry.debitAmount?.toString() || '0');
-      const credit = parseFloat(entry.creditAmount?.toString() || '0');
       
-      // For P&L, we need to consider the nature of accounts
-      // Revenue accounts typically have credit balances
-      // Expense accounts typically have debit balances
-      current.netAmount += (credit - debit);
-
-      accountTotals.set(key, current);
+      current.totalDebits += parseFloat(entry.debitAmount?.toString() || '0');
+      current.totalCredits += parseFloat(entry.creditAmount?.toString() || '0');
+      
+      accountBalances.set(code, current);
     }
 
     let totalRevenue = 0;
     let totalExpenses = 0;
 
-    for (const [accountCode, total] of accountTotals) {
-      // Classify accounts based on account code patterns
-      const isRevenueAccount = this.isRevenueAccount(accountCode);
-      const isExpenseAccount = this.isExpenseAccount(accountCode);
-      const isMiscAccount = this.isMiscAccount(accountCode);
-
-      if (isRevenueAccount && total.netAmount > 0) {
-        const entry: ProfitLossEntry = {
-          accountCode,
-          accountName: total.accountName,
-          amount: total.netAmount,
-          type: 'revenue',
-        };
-        revenue.push(entry);
-        totalRevenue += total.netAmount;
-      } else if (isExpenseAccount && total.netAmount < 0) {
-        const entry: ProfitLossEntry = {
-          accountCode,
-          accountName: total.accountName,
-          amount: Math.abs(total.netAmount),
-          type: 'expense',
-        };
-        expenses.push(entry);
-        totalExpenses += Math.abs(total.netAmount);
-      } else if (isMiscAccount) {
-        // For MISC accounts, we need to look at individual entries since they balance to zero
-        // Calculate total debits and credits separately
-        const accountEntries = journalEntries.filter(entry => entry.accountCode === accountCode);
-        const totalDebits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.debitAmount?.toString() || '0'), 0);
-        const totalCredits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.creditAmount?.toString() || '0'), 0);
-        
-
-        
-        if (totalCredits > 0) {
-          const entry: ProfitLossEntry = {
-            accountCode,
-            accountName: total.accountName,
-            amount: totalCredits,
-            type: 'revenue',
-          };
-          revenue.push(entry);
-          totalRevenue += totalCredits;
+    // Process each account based on account code ranges
+    for (const [code, balance] of accountBalances) {
+      if (code.startsWith('4')) {
+        // Revenue accounts (4xxx) - normal credit balance
+        // Revenue = credit balance, so we use totalCredits for revenue accounts
+        const amount = balance.totalCredits;
+        if (amount > 0) {
+          revenue.push({
+            accountCode: code,
+            accountName: balance.accountName,
+            amount: amount,
+            type: 'revenue'
+          });
+          totalRevenue += amount;
         }
-        
-        if (totalDebits > 0) {
-          const entry: ProfitLossEntry = {
-            accountCode: accountCode + '_EXP',
-            accountName: total.accountName + ' - Expenses',
-            amount: totalDebits,
-            type: 'expense',
-          };
-          expenses.push(entry);
-          totalExpenses += totalDebits;
+      } else if (code.startsWith('5')) {
+        // Expense accounts (5xxx) - normal debit balance
+        // For expense accounts, we use totalDebits OR totalCredits depending on the journal structure
+        // If totalDebits > 0, use totalDebits (normal expense entry)
+        // If totalCredits > 0, use totalCredits (reverse entry like TDS)
+        const amount = balance.totalDebits > 0 ? balance.totalDebits : balance.totalCredits;
+        if (amount > 0) {
+          expenses.push({
+            accountCode: code,
+            accountName: balance.accountName,
+            amount: amount,
+            type: 'expense'
+          });
+          totalExpenses += amount;
         }
       }
     }

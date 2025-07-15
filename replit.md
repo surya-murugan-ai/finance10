@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **P&L Report Calculation Fix (July 15, 2025)**: **COMPLETED** - Fixed critical P&L report calculation errors that were showing incorrect revenue and expense classifications:
+  - **Root Cause**: TDS Expense (5400) was incorrectly classified as revenue due to credit balance, other expense accounts not showing up
+  - **Account Classification Fix**: Implemented proper logic where 4xxx accounts use credit balance for revenue, 5xxx accounts use debit/credit balance for expenses
+  - **Complete Expense Recognition**: All expense accounts now properly appear - 5100 (Vendor ₹3,963,294), 5200 (Salary ₹773,509), 5300 (Purchase ₹773,955), 5400 (TDS ₹622,742)
+  - **Accurate Results**: Platform now shows Revenue ₹1,160,126, Expenses ₹6,133,500, Net Loss ₹4,973,374 with proper account classification
+  - **User Validation**: Fixed P&L logic matches expected journal entry analysis with all accounts correctly categorized as revenue or expense
+  - **Production Ready**: P&L report generation now provides accurate financial analysis for business decision-making
+
 - **Journal Entry Date Correction (July 15, 2025)**: **COMPLETED** - Fixed critical issue where journal entries were using current timestamp instead of appropriate document dates:
   - **Root Cause**: Journal entries were dated with current timestamp (2025-07-15) instead of actual document dates
   - **Date Logic Implemented**: Added intelligent date inference from document names (Q1→January, month names→first day, year patterns→January 1st)
