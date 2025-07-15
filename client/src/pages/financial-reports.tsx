@@ -1363,6 +1363,86 @@ export default function FinancialReports() {
                     );
                   }
                   
+                  // Special formatting for Bank Reconciliation
+                  if (viewReportModal.statement.statementType === 'bank_reconciliation') {
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-muted p-3 rounded">
+                          <h4 className="font-medium mb-2">Bank Reconciliation Statement - {data.period}</h4>
+                          <div className="text-sm text-muted-foreground">
+                            Status: <span className="font-semibold text-green-600">{data.summary?.status || 'Reconciled'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-medium mb-2">Bank Statement</h4>
+                            <div className="bg-muted p-3 rounded text-sm space-y-1">
+                              <div>Opening Balance: <span className="font-semibold">₹{data.bankStatement?.openingBalance?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>Total Deposits: <span className="font-semibold">₹{data.bankStatement?.totalDeposits?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>Total Withdrawals: <span className="font-semibold">₹{data.bankStatement?.totalWithdrawals?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>Bank Charges: <span className="font-semibold">₹{data.bankStatement?.bankCharges?.toLocaleString('en-IN') || 0}</span></div>
+                              <div className="border-t pt-1">Closing Balance: <span className="font-semibold">₹{data.bankStatement?.closingBalance?.toLocaleString('en-IN') || 0}</span></div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium mb-2">Book Balance</h4>
+                            <div className="bg-muted p-3 rounded text-sm space-y-1">
+                              <div>Opening Balance: <span className="font-semibold">₹{data.bookBalance?.openingBalance?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>Total Receipts: <span className="font-semibold">₹{data.bookBalance?.totalReceipts?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>Total Payments: <span className="font-semibold">₹{data.bookBalance?.totalPayments?.toLocaleString('en-IN') || 0}</span></div>
+                              <div className="border-t pt-1">Closing Balance: <span className="font-semibold">₹{data.bookBalance?.closingBalance?.toLocaleString('en-IN') || 0}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {data.reconciliationItems && data.reconciliationItems.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Reconciliation Items</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                  <tr className="bg-muted">
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Description</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Type</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {data.reconciliationItems.map((item, index) => (
+                                    <tr key={index}>
+                                      <td className="border border-gray-300 px-2 py-1">{item.description}</td>
+                                      <td className="border border-gray-300 px-2 py-1">
+                                        <span className={`text-xs px-2 py-1 rounded ${
+                                          item.type.includes('add') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                        }`}>
+                                          {item.type.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                      </td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{item.amount?.toLocaleString('en-IN')}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Reconciliation Summary</h4>
+                          <div className="bg-muted p-3 rounded text-sm space-y-1">
+                            <div>Total Items: <span className="font-semibold">{data.summary?.totalItems || 0}</span></div>
+                            <div>Total Adjustments: <span className="font-semibold">₹{data.summary?.totalAdjustments?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Reconciled Balance: <span className="font-semibold">₹{data.reconciledBalance?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Variance: <span className="font-semibold">₹{data.totalVariance?.toLocaleString('en-IN') || 0}</span></div>
+                            <div className="border-t pt-1">Status: <span className="font-semibold text-green-600">{data.summary?.status || 'Reconciled'}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
                   // Default JSON display for other reports
                   return (
                     <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
