@@ -1053,6 +1053,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
       };
       
+      // Get user's tenant_id
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        throw new Error(`User tenant information not found for user ${userId}`);
+      }
+
       // Save the report
       await storage.createFinancialStatement({
         statementType: 'trial_balance',
@@ -1060,6 +1066,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: formattedTrialBalance,
         isValid: trialBalance.isBalanced,
         generatedBy: userId,
+        tenantId: user.tenantId,
       });
 
       res.json(formattedTrialBalance);
@@ -1106,6 +1113,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const profitLoss = await financialReportsService.generateProfitLoss(journalEntries);
       
+      // Get user's tenant_id
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        throw new Error('User tenant information not found');
+      }
+
       // Save the report
       await storage.createFinancialStatement({
         statementType: 'profit_loss',
@@ -1113,6 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: profitLoss,
         isValid: true, // P&L is always valid if generated successfully
         generatedBy: userId,
+        tenantId: user.tenantId,
       });
 
       res.json(profitLoss);
@@ -1159,6 +1173,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const balanceSheet = await financialReportsService.generateBalanceSheet(journalEntries);
       
+      // Get user's tenant_id
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        throw new Error('User tenant information not found');
+      }
+
       // Save the report
       await storage.createFinancialStatement({
         statementType: 'balance_sheet',
@@ -1166,6 +1186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: balanceSheet,
         isValid: true, // Balance sheet is always valid if generated successfully
         generatedBy: userId,
+        tenantId: user.tenantId,
       });
 
       res.json(balanceSheet);
@@ -1212,6 +1233,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cashFlow = await financialReportsService.generateCashFlow(journalEntries);
       
+      // Get user's tenant_id
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        throw new Error('User tenant information not found');
+      }
+
       // Save the report
       await storage.createFinancialStatement({
         statementType: 'cash_flow',
@@ -1219,6 +1246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: cashFlow,
         isValid: true, // Cash flow is always valid if generated successfully
         generatedBy: userId,
+        tenantId: user.tenantId,
       });
 
       res.json(cashFlow);

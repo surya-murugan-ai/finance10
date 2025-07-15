@@ -27,6 +27,44 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Company/Tenant role enum
+export const tenantRoleEnum = pgEnum("tenant_role", [
+  "admin",
+  "finance_manager", 
+  "finance_exec",
+  "auditor",
+  "viewer"
+]);
+
+// Company subscription enum
+export const subscriptionPlanEnum = pgEnum("subscription_plan", [
+  "starter",
+  "professional", 
+  "enterprise",
+  "trial"
+]);
+
+// Tenant/Company table
+export const tenants = pgTable("tenants", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyName: varchar("company_name").notNull(),
+  cin: varchar("cin").unique(), // Company Identification Number
+  gstin: varchar("gstin"), // GST Identification Number
+  pan: varchar("pan"), // PAN Number
+  registeredAddress: text("registered_address"),
+  city: varchar("city"),
+  state: varchar("state"),
+  pinCode: varchar("pin_code"),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  website: varchar("website"),
+  industryType: varchar("industry_type"),
+  subscriptionPlan: subscriptionPlanEnum("subscription_plan").default("trial").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table (mandatory for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
@@ -35,6 +73,9 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").default("finance_exec").notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantRole: tenantRoleEnum("tenant_role").default("finance_exec").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -85,6 +126,7 @@ export const documents = pgTable("documents", {
   documentType: documentTypeEnum("document_type"),
   status: documentStatusEnum("status").default("uploaded").notNull(),
   uploadedBy: varchar("uploaded_by").references(() => users.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   metadata: jsonb("metadata"),
   extractedData: jsonb("extracted_data"),
   validationErrors: jsonb("validation_errors"),
@@ -99,6 +141,7 @@ export const agentJobs = pgTable("agent_jobs", {
   agentName: varchar("agent_name").notNull(),
   status: agentStatusEnum("status").default("idle").notNull(),
   documentId: uuid("document_id").references(() => documents.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   input: jsonb("input"),
   output: jsonb("output"),
   error: text("error"),
@@ -120,6 +163,7 @@ export const journalEntries = pgTable("journal_entries", {
   narration: text("narration"),
   entity: varchar("entity"),
   documentId: uuid("document_id").references(() => documents.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -132,6 +176,7 @@ export const financialStatements = pgTable("financial_statements", {
   entity: varchar("entity"),
   data: jsonb("data").notNull(),
   isValid: boolean("is_valid").notNull().default(true),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   generatedBy: varchar("generated_by").references(() => users.id),
   generatedAt: timestamp("generated_at").defaultNow(),
 });
@@ -141,6 +186,7 @@ export const complianceChecks = pgTable("compliance_checks", {
   id: uuid("id").primaryKey().defaultRandom(),
   checkType: varchar("check_type").notNull(), // gst, tds, ind_as, companies_act
   documentId: uuid("document_id").references(() => documents.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   status: varchar("status").default("pending").notNull(), // pending, compliant, non_compliant
   findings: jsonb("findings"),
   checkedBy: varchar("checked_by").references(() => users.id),
@@ -154,6 +200,7 @@ export const auditTrail = pgTable("audit_trail", {
   entityType: varchar("entity_type").notNull(), // document, job, user, etc.
   entityId: varchar("entity_id").notNull(),
   userId: varchar("user_id").references(() => users.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   details: jsonb("details"),
   timestamp: timestamp("timestamp").defaultNow(),
 });
@@ -170,6 +217,7 @@ export const reconciliationRules = pgTable("reconciliation_rules", {
   autoReconcile: boolean("auto_reconcile").notNull().default(false),
   priority: integer("priority").notNull().default(1),
   isActive: boolean("is_active").notNull().default(true),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -188,6 +236,7 @@ export const reconciliationMatches = pgTable("reconciliation_matches", {
   status: varchar("status").notNull().default("matched"), // matched, unmatched, disputed
   ruleId: uuid("rule_id").references(() => reconciliationRules.id),
   period: varchar("period").notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -204,6 +253,7 @@ export const intercompanyTransactions = pgTable("intercompany_transactions", {
   documentIds: text("document_ids").array().notNull(),
   isReconciled: boolean("is_reconciled").notNull().default(false),
   reconciliationId: uuid("reconciliation_id").references(() => reconciliationMatches.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -219,12 +269,54 @@ export const reconciliationReports = pgTable("reconciliation_reports", {
   reconciliationRate: decimal("reconciliation_rate", { precision: 5, scale: 4 }).notNull(),
   recommendations: text("recommendations").array().notNull(),
   reportData: jsonb("report_data"),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by").references(() => users.id).notNull(),
 });
 
+// Data sources table
+export const dataSources = pgTable("data_sources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(), // database, api, file_system, ftp, cloud_storage, erp, banking_api, gst_portal, mca_portal
+  connectionString: text("connection_string"),
+  host: varchar("host"),
+  port: integer("port"),
+  username: varchar("username"),
+  password: varchar("password"),
+  database: varchar("database"),
+  schema: varchar("schema"),
+  table: varchar("table"),
+  apiKey: varchar("api_key"),
+  apiSecret: varchar("api_secret"),
+  baseUrl: varchar("base_url"),
+  authToken: varchar("auth_token"),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastSync: timestamp("last_sync"),
+  syncFrequency: varchar("sync_frequency").default("daily"), // hourly, daily, weekly, monthly, manual
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Define relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+  documents: many(documents),
+  agentJobs: many(agentJobs),
+  journalEntries: many(journalEntries),
+  financialStatements: many(financialStatements),
+  complianceChecks: many(complianceChecks),
+  auditTrail: many(auditTrail),
+  reconciliationReports: many(reconciliationReports),
+  dataSources: many(dataSources),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
   documents: many(documents),
   agentJobs: many(agentJobs),
   journalEntries: many(journalEntries),
@@ -238,6 +330,10 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   uploadedBy: one(users, {
     fields: [documents.uploadedBy],
     references: [users.id],
+  }),
+  tenant: one(tenants, {
+    fields: [documents.tenantId],
+    references: [tenants.id],
   }),
   agentJobs: many(agentJobs),
   journalEntries: many(journalEntries),
@@ -353,46 +449,10 @@ export const insertAuditTrailSchema = createInsertSchema(auditTrail).omit({
   timestamp: true,
 });
 
-// Data source types enum
-export const dataSourceTypeEnum = pgEnum("data_source_type", [
-  "database",
-  "api", 
-  "file_system",
-  "ftp",
-  "cloud_storage",
-  "erp_system",
-  "banking_api",
-  "gst_portal",
-  "mca_portal",
-  "sftp",
-  "webhook"
-]);
-
-// Data source status enum
-export const dataSourceStatusEnum = pgEnum("data_source_status", [
-  "connected",
-  "disconnected",
-  "error",
-  "testing",
-  "configured"
-]);
-
-// Data sources table
-export const dataSources = pgTable("data_sources", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }).notNull(),
-  type: dataSourceTypeEnum("type").notNull(),
-  description: text("description"),
-  config: jsonb("config").notNull().default({}),
-  isActive: boolean("is_active").default(true).notNull(),
-  isDefault: boolean("is_default").default(false).notNull(),
-  status: dataSourceStatusEnum("status").default("configured").notNull(),
-  lastTested: timestamp("last_tested"),
-  errorMessage: text("error_message"),
-  metadata: jsonb("metadata").default({}),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const insertTenantSchema = createInsertSchema(tenants).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertDataSourceSchema = createInsertSchema(dataSources).omit({
@@ -404,6 +464,9 @@ export const insertDataSourceSchema = createInsertSchema(dataSources).omit({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+export type InsertTenant = z.infer<typeof insertTenantSchema>;
+export type Tenant = typeof tenants.$inferSelect;
 
 
 
