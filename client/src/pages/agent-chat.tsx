@@ -179,6 +179,10 @@ export default function AgentChat() {
 
   const startWorkflowMutation = useMutation({
     mutationFn: async (data: { message: string; documentId?: string }) => {
+      // Debug: Check token before making request
+      const token = localStorage.getItem('access_token');
+      console.log('StartWorkflow - Token check:', { hasToken: !!token, tokenLength: token?.length });
+      
       const response = await apiRequest('/api/agent-chat/start', {
         method: 'POST',
         body: JSON.stringify(data),

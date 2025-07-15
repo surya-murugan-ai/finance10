@@ -30,7 +30,7 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
   
-  console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!token });
+  console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!token, tokenPreview: token?.substring(0, 20) + '...' });
   
   const res = await fetch(fullUrl, {
     method: options.method || 'GET',
