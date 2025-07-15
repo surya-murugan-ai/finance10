@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Critical Security Vulnerability Fix (July 15, 2025)**: **COMPLETED** - Fixed major security vulnerability in multitenant architecture that allowed unauthorized cross-tenant data access:
+  - **Root Cause**: Demo authentication system was creating users without tenant assignment and allowing them to see other tenant's data
+  - **Security Issue**: New users could authenticate but access financial data from other tenants due to missing tenant validation
+  - **Complete Fix**: Removed demo authentication bypass and implemented strict tenant validation on all financial endpoints
+  - **Authentication Hardening**: Login system now requires users to exist in database with proper tenant assignment
+  - **Data Access Control**: Added tenant_id filtering to all journal entry queries to prevent cross-tenant data leakage
+  - **Endpoint Security**: All financial report endpoints now validate user tenant assignment before processing requests
+  - **Error Handling**: Proper 403 errors returned for unauthorized access attempts with detailed logging
+  - **Production Ready**: Complete data isolation now enforced with zero cross-tenant data visibility
+
 - **Multitenant Architecture Implementation (July 15, 2025)**: **COMPLETED** - Successfully transformed platform from single-tenant to multitenant with complete data isolation:
   - **Database Migration**: Added `tenants` table with subscription plans and company information
   - **User Association**: Updated `users` table with tenant_id and tenant_role (admin, finance_manager, finance_exec, auditor, viewer)

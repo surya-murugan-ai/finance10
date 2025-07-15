@@ -39,6 +39,7 @@ import { eq, desc, and, sql, count } from "drizzle-orm";
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
 
   // Document operations
@@ -131,6 +132,11 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
@@ -233,40 +239,73 @@ export class DatabaseStorage implements IStorage {
     return journalEntry;
   }
 
-  async getJournalEntries(documentId?: string): Promise<JournalEntry[]> {
+  async getJournalEntries(documentId?: string, tenantId?: string): Promise<JournalEntry[]> {
     if (documentId) {
+      if (tenantId) {
+        return await db
+          .select()
+          .from(journalEntries)
+          .where(and(
+            eq(journalEntries.documentId, documentId),
+            eq(journalEntries.tenantId, tenantId)
+          ))
+          .orderBy(desc(journalEntries.date));
+      } else {
+        return await db
+          .select()
+          .from(journalEntries)
+          .where(eq(journalEntries.documentId, documentId))
+          .orderBy(desc(journalEntries.date));
+      }
+    }
+    
+    if (tenantId) {
       return await db
         .select()
         .from(journalEntries)
-        .where(eq(journalEntries.documentId, documentId))
+        .where(eq(journalEntries.tenantId, tenantId))
         .orderBy(desc(journalEntries.date));
     }
+    
     return await db
       .select()
       .from(journalEntries)
       .orderBy(desc(journalEntries.date));
   }
 
-  async getJournalEntriesByPeriod(period: string): Promise<JournalEntry[]> {
+  async getJournalEntriesByPeriod(period: string, tenantId?: string): Promise<JournalEntry[]> {
     const year = period.includes('_') ? period.split('_')[1] : period;
-    console.log(`Fetching journal entries for year: ${year}`);
+    console.log(`Fetching journal entries for year: ${year}, tenantId: ${tenantId}`);
     
     try {
+      let whereClause = sql`EXTRACT(YEAR FROM ${journalEntries.date}) = ${parseInt(year)}`;
+      
+      if (tenantId) {
+        whereClause = and(
+          whereClause,
+          eq(journalEntries.tenantId, tenantId)
+        );
+      }
+      
       const result = await db
         .select()
         .from(journalEntries)
-        .where(sql`EXTRACT(YEAR FROM ${journalEntries.date}) = ${parseInt(year)}`)
+        .where(whereClause)
         .orderBy(desc(journalEntries.date));
       
-      console.log(`Found ${result.length} journal entries for year ${year}`);
+      console.log(`Found ${result.length} journal entries for year ${year} and tenant ${tenantId}`);
       return result;
     } catch (error) {
       console.error('Error fetching journal entries by period:', error);
-      // Fallback: return all entries if year filtering fails
-      return await db
-        .select()
-        .from(journalEntries)
-        .orderBy(desc(journalEntries.date));
+      // Fallback: return tenant-filtered entries if year filtering fails
+      if (tenantId) {
+        return await db
+          .select()
+          .from(journalEntries)
+          .where(eq(journalEntries.tenantId, tenantId))
+          .orderBy(desc(journalEntries.date));
+      }
+      return [];
     }
   }
 

@@ -281,31 +281,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           access_token: token,
           user: user
         });
-      } else if (email && password) {
-        // For demo purposes, accept any valid email/password combination
-        // In production, validate against database
-        const user = {
-          id: nanoid(),
-          email: email,
-          first_name: 'Demo',
-          last_name: 'User',
-          company_name: 'Demo Company',
-          is_active: true
-        };
-        
-        // Create a simple token (in production, use proper JWT)
-        const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
-        
-        console.log('Login successful for demo user:', email);
-        
-        res.json({
-          success: true,
-          access_token: token,
-          user: user
-        });
       } else {
-        console.log('Login failed - invalid credentials for:', email);
-        res.status(401).json({ success: false, message: 'Invalid credentials' });
+        // Check if user exists in database
+        const user = await storage.getUserByEmail(email);
+        
+        if (!user) {
+          console.log('Login failed - user not found:', email);
+          return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+        
+        // For demo purposes, accept any password for existing users
+        // In production, validate password hash
+        if (password) {
+          const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
+          
+          console.log('Login successful for existing user:', email);
+          
+          res.json({
+            success: true,
+            access_token: token,
+            user: {
+              id: user.id,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+              company_name: user.companyName || 'Default Company',
+              is_active: user.isActive
+            }
+          });
+        } else {
+          console.log('Login failed - no password provided');
+          res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -1021,7 +1028,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Trial Balance Request:', { userId, period });
       
-      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access trial balance without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      let journalEntries = await storage.getJournalEntriesByPeriod(period, user.tenantId);
       
       // Don't auto-generate mock data - only show real data from uploaded documents
       if (journalEntries.length === 0) {
@@ -1052,12 +1066,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           creditBalanceText: formatCurrency(entry.creditBalance)
         }))
       };
-      
-      // Get user's tenant_id
-      const user = await storage.getUser(userId);
-      if (!user?.tenantId) {
-        throw new Error(`User tenant information not found for user ${userId}`);
-      }
 
       // Save the report
       await storage.createFinancialStatement({
@@ -1082,7 +1090,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.userId;
       const { period } = req.body;
       
-      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access P&L without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      let journalEntries = await storage.getJournalEntriesByPeriod(period, user.tenantId);
       
       // If no journal entries exist, create them from uploaded documents
       if (journalEntries.length === 0) {
@@ -1112,12 +1127,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const profitLoss = await financialReportsService.generateProfitLoss(journalEntries);
-      
-      // Get user's tenant_id
-      const user = await storage.getUser(userId);
-      if (!user?.tenantId) {
-        throw new Error('User tenant information not found');
-      }
 
       // Save the report
       await storage.createFinancialStatement({
@@ -1142,7 +1151,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.userId;
       const { period } = req.body;
       
-      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access balance sheet without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      let journalEntries = await storage.getJournalEntriesByPeriod(period, user.tenantId);
       
       // If no journal entries exist, create them from uploaded documents
       if (journalEntries.length === 0) {
@@ -1172,12 +1188,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const balanceSheet = await financialReportsService.generateBalanceSheet(journalEntries);
-      
-      // Get user's tenant_id
-      const user = await storage.getUser(userId);
-      if (!user?.tenantId) {
-        throw new Error('User tenant information not found');
-      }
 
       // Save the report
       await storage.createFinancialStatement({
@@ -1202,7 +1212,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.userId;
       const { period } = req.body;
       
-      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access cash flow without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      let journalEntries = await storage.getJournalEntriesByPeriod(period, user.tenantId);
       
       // If no journal entries exist, create them from uploaded documents
       if (journalEntries.length === 0) {
@@ -1232,12 +1249,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const cashFlow = await financialReportsService.generateCashFlow(journalEntries);
-      
-      // Get user's tenant_id
-      const user = await storage.getUser(userId);
-      if (!user?.tenantId) {
-        throw new Error('User tenant information not found');
-      }
 
       // Save the report
       await storage.createFinancialStatement({
