@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **API Request Error Fix (July 15, 2025)**: **COMPLETED** - Fixed malformed API request issue in financial reports page:
+  - **Root Cause**: apiRequest function was creating malformed URLs causing "GET /POST" errors
+  - **Solution**: Replaced problematic apiRequest calls with direct fetch calls for better control
+  - **Authentication Fix**: Added proper JWT token handling to all financial report queries
+  - **Error Handling**: Enhanced error handling with proper status code validation
+  - **Production Ready**: All financial report queries now work correctly with proper tenant security
+
 - **Critical Security Vulnerability Fix (July 15, 2025)**: **COMPLETED** - Fixed major security vulnerability in multitenant architecture that allowed unauthorized cross-tenant data access:
   - **Root Cause**: Demo authentication system was creating users without tenant assignment and allowing them to see other tenant's data
   - **Security Issue**: New users could authenticate but access financial data from other tenants due to missing tenant validation

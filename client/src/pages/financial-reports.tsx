@@ -48,10 +48,24 @@ export default function FinancialReports() {
   const { data: statements, isLoading: statementsLoading } = useQuery<FinancialStatement[]>({
     queryKey: ["/api/financial-statements", selectedPeriod],
     queryFn: async () => {
-      const response = await apiRequest(`/api/financial-statements?period=${selectedPeriod}`, {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`/api/financial-statements?period=${selectedPeriod}`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     retry: false,
   });
@@ -59,10 +73,24 @@ export default function FinancialReports() {
   const { data: journalEntries, isLoading: journalEntriesLoading, refetch: refetchJournalEntries } = useQuery({
     queryKey: ["/api/journal-entries"],
     queryFn: async () => {
-      const response = await apiRequest(`/api/journal-entries`, {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`/api/journal-entries`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     retry: false,
   });
