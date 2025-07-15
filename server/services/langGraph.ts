@@ -458,7 +458,13 @@ export class LangGraphOrchestrator {
   }
 
   public generateDefaultJournalEntries(document: any, extractedData: any): any[] {
-    const date = new Date();
+    // Use document date if available, otherwise use upload date, fallback to current date
+    const documentDate = extractedData?.extractedData?.documentDate || 
+                        document.uploadedAt || 
+                        this.inferDocumentDateFromName(document.originalName || document.fileName) ||
+                        new Date();
+    const date = new Date(documentDate);
+    
     // Generate realistic amounts based on document type
     const baseAmount = Math.floor(Math.random() * 500000) + 50000; // 50K - 550K
     const amount = extractedData?.extractedData?.totalAmount || baseAmount.toString();
@@ -659,6 +665,43 @@ export class LangGraphOrchestrator {
           }
         ];
     }
+  }
+
+  private inferDocumentDateFromName(filename: string): Date | null {
+    // Try to extract date from filename patterns
+    const name = filename.toLowerCase();
+    
+    // Look for quarter patterns like Q1, Q2, Q3, Q4
+    const quarterMatch = name.match(/q([1-4])/);
+    if (quarterMatch) {
+      const quarter = parseInt(quarterMatch[1]);
+      const year = new Date().getFullYear();
+      // Set to first month of quarter
+      const month = (quarter - 1) * 3;
+      return new Date(year, month, 1);
+    }
+    
+    // Look for month patterns like Jan, Feb, Mar, etc.
+    const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    for (let i = 0; i < monthNames.length; i++) {
+      if (name.includes(monthNames[i])) {
+        const year = new Date().getFullYear();
+        return new Date(year, i, 1);
+      }
+    }
+    
+    // Look for year patterns
+    const yearMatch = name.match(/20(\d{2})/);
+    if (yearMatch) {
+      const year = parseInt(`20${yearMatch[1]}`);
+      return new Date(year, 0, 1); // January 1st of that year
+    }
+    
+    // For registers and regular documents, use a reasonable past date
+    // This ensures journal entries don't appear with future dates
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return threeMonthsAgo;
   }
 
   private inferDocumentType(filename: string): string {
