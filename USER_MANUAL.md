@@ -1,8 +1,8 @@
-# QRT Closure Agent Platform - User Manual (Python/FastAPI Version)
+# QRT Closure Agent Platform - User Manual (Multitenant Architecture)
 
 ## Overview
 
-The QRT Closure Agent Platform has been successfully refactored from Node.js/TypeScript to Python/FastAPI, providing enhanced AI integration, improved performance, and better scalability for financial automation workflows.
+The QRT Closure Agent Platform is a comprehensive multitenant financial automation platform that enables multiple companies to use the same system while maintaining complete data isolation and security. Built with Python/FastAPI backend and React frontend, the platform provides enhanced AI integration, improved performance, and enterprise-grade scalability for financial automation workflows.
 
 ## Getting Started
 
@@ -51,7 +51,26 @@ The API will be available at `http://localhost:8000` with auto-generated documen
 
 ## Core Features
 
-### 1. Authentication System
+### 1. Multitenant Architecture
+
+**Enterprise-Grade Multitenancy:**
+- **Complete Data Isolation**: Each company's data is completely segregated
+- **Tenant-Specific Access**: Users can only access data within their company
+- **Subscription Management**: Support for Basic, Premium, and Enterprise plans
+- **Role-Based Access Control**: Tenant-specific roles (admin, finance_manager, finance_exec, auditor, viewer)
+
+**Supported Subscription Tiers:**
+- **Basic**: Small businesses with essential features
+- **Premium**: Mid-size companies with advanced reporting
+- **Enterprise**: Large organizations with full compliance suite
+
+**Company Management:**
+- Company registration with CIN, GSTIN, PAN details
+- Registered address and location management
+- User management within tenant boundaries
+- Custom configuration per company
+
+### 2. Authentication System
 
 **JWT-Based Authentication:**
 - Secure token-based authentication

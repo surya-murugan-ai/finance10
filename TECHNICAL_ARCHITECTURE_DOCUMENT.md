@@ -2,36 +2,40 @@
 
 ## Document Information
 - **Document Title**: Technical Architecture Document
-- **Version**: 1.0
-- **Date**: July 13, 2025
+- **Version**: 2.0
+- **Date**: July 15, 2025
 - **Prepared By**: Technical Architecture Team
 - **Reviewed By**: Senior Engineering Team
 - **Approved By**: Chief Technology Officer
+- **Latest Update**: Multitenant Architecture Implementation
 
 ## Table of Contents
 1. [Architecture Overview](#architecture-overview)
-2. [System Architecture Diagrams](#system-architecture-diagrams)
-3. [Component Architecture](#component-architecture)
-4. [Data Architecture](#data-architecture)
-5. [AI/ML Architecture](#aiml-architecture)
-6. [Security Architecture](#security-architecture)
-7. [Integration Architecture](#integration-architecture)
-8. [Deployment Architecture](#deployment-architecture)
-9. [Scalability Architecture](#scalability-architecture)
-10. [Monitoring Architecture](#monitoring-architecture)
+2. [Multitenant Architecture](#multitenant-architecture)
+3. [System Architecture Diagrams](#system-architecture-diagrams)
+4. [Component Architecture](#component-architecture)
+5. [Data Architecture](#data-architecture)
+6. [AI/ML Architecture](#aiml-architecture)
+7. [Security Architecture](#security-architecture)
+8. [Integration Architecture](#integration-architecture)
+9. [Deployment Architecture](#deployment-architecture)
+10. [Scalability Architecture](#scalability-architecture)
+11. [Monitoring Architecture](#monitoring-architecture)
 
 ## Architecture Overview
 
 ### Executive Summary
-The QRT Closure Agent Platform employs a modern, cloud-native architecture designed for high availability, scalability, and security. The platform integrates cutting-edge AI technologies with robust financial processing capabilities to deliver an enterprise-grade solution for quarterly closure automation.
+The QRT Closure Agent Platform employs a modern, cloud-native multitenant architecture designed for high availability, scalability, and security. The platform integrates cutting-edge AI technologies with robust financial processing capabilities to deliver an enterprise-grade solution for quarterly closure automation. With the latest multitenant implementation, the platform now supports multiple companies with complete data isolation, ensuring secure and compliant operations for multiple tenants.
 
 ### Architectural Principles
+- **Multitenant Architecture**: Complete data isolation with tenant-based segregation
 - **Microservices-Inspired Design**: Clear separation of concerns with modular components
 - **API-First Architecture**: Well-defined APIs for all integrations
 - **Cloud-Native**: Containerized deployment with orchestration capabilities
 - **Event-Driven Processing**: Asynchronous processing for scalability
-- **Security by Design**: Multi-layer security implementation
+- **Security by Design**: Multi-layer security implementation with row-level security
 - **Observability**: Comprehensive monitoring and logging
+- **Data Sovereignty**: Complete tenant isolation with subscription-based access control
 
 ### Technology Stack Summary
 ```
@@ -42,6 +46,77 @@ AI/ML: Anthropic Claude 4.0 + OpenAI GPT-4o + Scikit-learn
 Infrastructure: Docker + Kubernetes + NGINX
 Monitoring: Prometheus + Grafana + ELK Stack
 ```
+
+## Multitenant Architecture
+
+### Overview
+The QRT Closure Agent Platform implements a comprehensive multitenant architecture that enables multiple companies to use the same platform instance while maintaining complete data isolation and security. This architecture supports enterprise-grade requirements for data sovereignty, compliance, and scalability.
+
+### Tenant Architecture Components
+
+#### 1. Tenant Management System
+- **Tenant Database Schema**: Central `tenants` table with company information, subscription plans, and configuration
+- **Tenant Isolation**: Row-level security ensuring complete data segregation
+- **Subscription Management**: Support for Basic, Premium, and Enterprise subscription tiers
+- **Tenant Configuration**: Company-specific settings (CIN, GSTIN, PAN, registered address)
+
+#### 2. User Management & Access Control
+- **Tenant Association**: Every user belongs to exactly one tenant
+- **Role-Based Access Control**: Tenant-specific roles (admin, finance_manager, finance_exec, auditor, viewer)
+- **User Isolation**: Users can only access data within their tenant boundary
+- **Multi-role Support**: Users can have different roles within their tenant
+
+#### 3. Data Isolation Strategy
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          MULTITENANT DATA ISOLATION                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Tenant A                    │  Tenant B                    │  Tenant C      │
+│  (Default Company)           │  (ABC Manufacturing)         │  (XYZ Corp)    │
+│                             │                              │                │
+│  ┌─────────────────────────┐ │  ┌─────────────────────────┐ │  ┌───────────┐ │
+│  │ Documents               │ │  │ Documents               │ │  │ Documents │ │
+│  │ Journal Entries         │ │  │ Journal Entries         │ │  │ Journal E │ │
+│  │ Financial Statements    │ │  │ Financial Statements    │ │  │ Financial │ │
+│  │ Compliance Reports      │ │  │ Compliance Reports      │ │  │ Complianc │ │
+│  │ Audit Trail            │ │  │ Audit Trail            │ │  │ Audit Tra │ │
+│  └─────────────────────────┘ │  └─────────────────────────┘ │  └───────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 4. Database Schema Design
+All core tables include `tenant_id` foreign key with indexes:
+- `documents` - Document uploads and processing
+- `journal_entries` - Accounting entries
+- `financial_statements` - Generated reports
+- `compliance_checks` - Regulatory compliance
+- `audit_trail` - Activity logging
+
+#### 5. API-Level Tenant Isolation
+- **JWT Token Enhancement**: Includes tenant context for every request
+- **Middleware Security**: Automatic tenant filtering on all database queries
+- **Route Protection**: All endpoints validate tenant access rights
+- **Cross-Tenant Prevention**: Strict validation prevents cross-tenant data access
+
+### Migration Strategy
+The platform successfully migrated from single-tenant to multitenant architecture:
+- **Backward Compatibility**: All existing data migrated to "Default Company" tenant
+- **Zero Downtime**: Migration executed without service interruption
+- **Data Preservation**: Complete historical data integrity maintained
+- **Feature Parity**: All existing features work seamlessly with multitenant architecture
+
+### Security Features
+- **Row-Level Security**: Database-level tenant isolation
+- **Access Control**: Tenant-specific user permissions
+- **Data Sovereignty**: Complete tenant data isolation
+- **Audit Trail**: Tenant-specific activity logging
+- **Compliance**: Meets enterprise security requirements
+
+### Scalability Benefits
+- **Horizontal Scaling**: Support for unlimited tenants
+- **Resource Optimization**: Shared infrastructure with isolated data
+- **Cost Efficiency**: Multiple companies on single platform instance
+- **Subscription Management**: Flexible pricing and feature tiers
 
 ## System Architecture Diagrams
 
