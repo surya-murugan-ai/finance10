@@ -705,6 +705,7 @@ export default function FinancialReports() {
                             <TableHead>Journal ID</TableHead>
                             <TableHead>Account Code</TableHead>
                             <TableHead>Account Name</TableHead>
+                            <TableHead>Vendor/Party</TableHead>
                             <TableHead className="text-right">Debit</TableHead>
                             <TableHead className="text-right">Credit</TableHead>
                             <TableHead>Narration</TableHead>
@@ -718,6 +719,9 @@ export default function FinancialReports() {
                               <TableCell className="font-mono">{entry.journalId}</TableCell>
                               <TableCell className="font-mono">{entry.accountCode}</TableCell>
                               <TableCell>{entry.accountName}</TableCell>
+                              <TableCell className="text-sm">
+                                {entry.entity || '-'}
+                              </TableCell>
                               <TableCell className="text-right font-mono">
                                 {entry.debitAmount > 0 ? formatCurrency(entry.debitAmount) : '-'}
                               </TableCell>
