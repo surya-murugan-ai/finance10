@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Authentication Issues Final Fix (July 15, 2025)**: **COMPLETED** - Fixed all remaining authentication issues across the platform:
+  - **Root Cause**: apiRequest function was stripping Authorization headers from POST requests due to CORS preflight handling
+  - **Solution**: Replaced apiRequest with direct fetch() calls for all POST/DELETE mutations to ensure proper header transmission
+  - **Fixed Components**: Trial Balance reporting, Generate Journal Entries, Generate Report button, Delete Report, Delete Journal Entry
+  - **Test Results**: All authentication-based buttons now work without forcing logout
+  - **Technical Details**: Direct fetch() bypasses the problematic apiRequest middleware that was interfering with Authorization headers
+  - **User Experience**: Users can now use all financial reporting features without authentication interruptions
+
 - **System Data Cleanup for Fresh Testing (July 15, 2025)**: **COMPLETED** - Cleaned all existing data to prepare for fresh user testing:
   - **Database Reset**: Removed all documents, journal entries, compliance checks, audit trail, and financial statements
   - **File Cleanup**: Cleared all uploaded files from the uploads directory

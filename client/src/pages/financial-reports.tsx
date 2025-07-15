@@ -60,16 +60,29 @@ export default function FinancialReports() {
 
   const generateReportMutation = useMutation({
     mutationFn: async (reportType: string) => {
-      const response = await apiRequest(`/api/reports/${reportType}`, {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Use direct fetch to avoid apiRequest Authorization header issues
+      const response = await fetch(`/api/reports/${reportType}`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           period: selectedPeriod,
         }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (data, reportType) => {
       toast({
@@ -101,8 +114,25 @@ export default function FinancialReports() {
 
   const deleteReportMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/financial-statements/${id}`);
-      return response.json();
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Use direct fetch to avoid apiRequest Authorization header issues
+      const response = await fetch(`/api/financial-statements/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -194,8 +224,25 @@ export default function FinancialReports() {
 
   const deleteJournalEntryMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/journal-entries/${id}`);
-      return response.json();
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Use direct fetch to avoid apiRequest Authorization header issues
+      const response = await fetch(`/api/journal-entries/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
