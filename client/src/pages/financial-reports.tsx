@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, RefreshCw, TrendingUp, Calendar, BarChart3, Trash2, AlertCircle } from "lucide-react";
+import { FileText, Download, RefreshCw, TrendingUp, Calendar, BarChart3, Trash2, AlertCircle, Grid, List } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { FinancialStatement } from "@shared/schema";
 
@@ -20,6 +20,7 @@ export default function FinancialReports() {
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState("Q3_2025");
+  const [displayFormat, setDisplayFormat] = useState<'detailed' | 'compact'>('detailed');
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -296,6 +297,94 @@ export default function FinancialReports() {
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const formatCurrencyCompact = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Render compact account format
+  const renderCompactPLFormat = (plData: any) => {
+    const allAccounts = [
+      ...(plData.revenue || []).map((item: any) => ({
+        ...item,
+        section: 'Revenue',
+        isTotal: false
+      })),
+      {
+        accountCode: '',
+        accountName: 'Total Revenue',
+        amount: plData.totalRevenue || 0,
+        section: 'Revenue',
+        isTotal: true
+      },
+      ...(plData.expenses || []).map((item: any) => ({
+        ...item,
+        section: 'Expenses',
+        isTotal: false
+      })),
+      {
+        accountCode: '',
+        accountName: 'Total Expenses',
+        amount: plData.totalExpenses || 0,
+        section: 'Expenses',
+        isTotal: true
+      },
+      {
+        accountCode: '',
+        accountName: 'Net Profit',
+        amount: plData.netProfit || 0,
+        section: 'Net Result',
+        isTotal: true
+      }
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Account</TableHead>
+                <TableHead className="text-right font-semibold">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allAccounts.map((account, index) => (
+                <TableRow 
+                  key={index} 
+                  className={account.isTotal ? 'font-semibold border-t' : ''}
+                >
+                  <TableCell className={account.isTotal ? 'font-semibold' : ''}>
+                    {account.section === 'Revenue' && !account.isTotal && (
+                      <span className="text-green-600 mr-2">●</span>
+                    )}
+                    {account.section === 'Expenses' && !account.isTotal && (
+                      <span className="text-red-600 mr-2">●</span>
+                    )}
+                    {account.accountCode && (
+                      <span className="font-mono text-sm text-muted-foreground mr-2">
+                        {account.accountCode}
+                      </span>
+                    )}
+                    {account.accountName}
+                  </TableCell>
+                  <TableCell className={`text-right font-mono ${account.isTotal ? 'font-semibold' : ''} ${
+                    account.section === 'Net Result' 
+                      ? account.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                      : ''
+                  }`}>
+                    {formatCurrencyCompact(account.amount)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
   };
 
   // Calculate real trial balance from journal entries
@@ -730,15 +819,37 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Profit & Loss Statement - {selectedPeriod}</CardTitle>
-                    <Button
-                      onClick={() => generateReportMutation.mutate('profit-loss')}
-                      disabled={generateReportMutation.isPending}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Generate Report
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
+                        <Button
+                          onClick={() => setDisplayFormat('detailed')}
+                          variant={displayFormat === 'detailed' ? 'default' : 'ghost'}
+                          size="sm"
+                          className="h-7 px-2"
+                        >
+                          <List className="h-3 w-3 mr-1" />
+                          Detailed
+                        </Button>
+                        <Button
+                          onClick={() => setDisplayFormat('compact')}
+                          variant={displayFormat === 'compact' ? 'default' : 'ghost'}
+                          size="sm"
+                          className="h-7 px-2"
+                        >
+                          <Grid className="h-3 w-3 mr-1" />
+                          Compact
+                        </Button>
+                      </div>
+                      <Button
+                        onClick={() => generateReportMutation.mutate('profit-loss')}
+                        disabled={generateReportMutation.isPending}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Generate Report
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -757,7 +868,7 @@ export default function FinancialReports() {
                     }
 
                     const plData = profitLossStatement.data;
-                    return (
+                    return displayFormat === 'compact' ? renderCompactPLFormat(plData) : (
                       <div className="space-y-6">
                         <div>
                           <h3 className="text-lg font-semibold mb-3">Revenue</h3>
