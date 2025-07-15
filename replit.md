@@ -18,6 +18,7 @@ Preferred communication style: Simple, everyday language.
   - **Data Access Control**: Added tenant_id filtering to all journal entry queries to prevent cross-tenant data leakage
   - **Endpoint Security**: All financial report endpoints (trial balance, P&L, balance sheet, cash flow, audit trail) now validate user tenant assignment before processing requests
   - **Storage Layer Security**: Updated audit trail storage methods to include tenant filtering and prevent cross-tenant data access
+  - **Document Upload Security**: Fixed upload endpoint to require tenant assignment and validate user permissions before allowing file uploads
   - **Error Handling**: Proper 403 errors returned for unauthorized access attempts with detailed security violation logging
   - **Production Ready**: Complete data isolation now enforced with zero cross-tenant data visibility
   - **Comprehensive Testing**: Security test validates all endpoints properly block unauthorized access while allowing valid tenant users

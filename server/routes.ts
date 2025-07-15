@@ -556,7 +556,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
+      
+      // SECURITY: Get user's tenant_id first - prevent unauthorized uploads
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to upload document without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+
       const file = req.file;
       const fileName = `${nanoid()}_${file.originalname}`;
 
@@ -564,7 +572,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalname: file.originalname,
         mimetype: file.mimetype,
         size: file.size,
-        userId
+        userId,
+        tenantId: user.tenantId
       });
 
       // Simple extension validation only
@@ -592,6 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedBy: userId,
         status: 'uploaded',
         metadata: { size: file.size, mimeType: file.mimetype },
+        tenantId: user.tenantId,
       });
       console.log("Document created:", document.id);
 
@@ -615,6 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: 'document',
         entityId: document.id,
         userId,
+        tenantId: user.tenantId,
         details: {
           fileName: file.originalname,
           fileSize: file.size,
@@ -636,7 +647,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get documents
   app.get('/api/documents', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
+      
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access documents without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
       const documents = await storage.getDocuments(userId);
       res.json(documents);
     } catch (error) {
