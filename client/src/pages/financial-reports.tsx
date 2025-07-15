@@ -1167,9 +1167,73 @@ export default function FinancialReports() {
             {viewReportModal.statement && (
               <div className="bg-card border rounded-lg p-4">
                 <h3 className="font-semibold mb-4">Report Data</h3>
-                <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
-                  {JSON.stringify(viewReportModal.statement.data, null, 2)}
-                </pre>
+                {(() => {
+                  const data = viewReportModal.statement.data;
+                  
+                  // Special formatting for Form 26Q
+                  if (viewReportModal.statement.statementType === 'form_26q') {
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-muted p-3 rounded">
+                          <h4 className="font-medium mb-2">Summary</h4>
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>Total Deductions: <span className="font-semibold">{data.summary?.totalDeductions || 0}</span></div>
+                            <div>Total Deductees: <span className="font-semibold">{data.summary?.totalDeductees || 0}</span></div>
+                            <div>Total TDS: <span className="font-semibold">₹{data.summary?.totalTDS?.toLocaleString('en-IN') || 0}</span></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Deductor Details</h4>
+                          <div className="bg-muted p-3 rounded text-sm">
+                            <div>TAN: {data.deductorDetails?.tan}</div>
+                            <div>Name: {data.deductorDetails?.name}</div>
+                            <div>Address: {data.deductorDetails?.address}</div>
+                          </div>
+                        </div>
+                        
+                        {data.deductions && data.deductions.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">TDS Deductions</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                  <tr className="bg-muted">
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Deductee Name</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">PAN</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Section</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Total Amount</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">TDS Amount</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Challan</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {data.deductions.map((deduction, index) => (
+                                    <tr key={index}>
+                                      <td className="border border-gray-300 px-2 py-1">{deduction.deducteeName}</td>
+                                      <td className="border border-gray-300 px-2 py-1">{deduction.deducteePAN}</td>
+                                      <td className="border border-gray-300 px-2 py-1">{deduction.sectionCode}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{deduction.totalAmount?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{deduction.tdsAmount?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1">{deduction.challanNumber}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  
+                  // Default JSON display for other reports
+                  return (
+                    <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
+                      {JSON.stringify(data, null, 2)}
+                    </pre>
+                  );
+                })()}
               </div>
             )}
           </div>
