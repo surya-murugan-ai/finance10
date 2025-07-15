@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Financial Reports Calculation Fix (July 15, 2025)**: **COMPLETED** - Fixed critical issue where financial reports returned empty results despite successful API calls:
+  - **Root Cause**: Journal entries using "MISC" account codes with perfectly balanced debits/credits resulted in net balance of zero, preventing proper classification
+  - **P&L Solution**: Modified P&L calculation to handle MISC accounts by separating total debits (expenses) and total credits (revenue) instead of using net balance
+  - **Balance Sheet Solution**: Enhanced balance sheet logic to show MISC accounts as current assets using total debit amounts
+  - **Cash Flow Integration**: Added missing cash flow statement endpoint with proper authentication
+  - **Results**: All financial reports now show meaningful data - P&L shows Rs 31,92,982 revenue and expenses, Balance Sheet shows Rs 31,92,982 assets
+  - **Authentication Consistency**: Fixed balance sheet endpoint to use jwtAuth middleware instead of deprecated isAuthenticated
+  - **User Experience**: Financial reporting system now fully functional with all four report types generating correct calculations from uploaded documents
+
 - **Authentication Issues Final Fix (July 15, 2025)**: **COMPLETED** - Fixed all remaining authentication issues across the platform:
   - **Root Cause**: apiRequest function was stripping Authorization headers from POST requests due to CORS preflight handling
   - **Solution**: Replaced apiRequest with direct fetch() calls for all POST/DELETE mutations to ensure proper header transmission

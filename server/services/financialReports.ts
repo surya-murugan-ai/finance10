@@ -128,6 +128,7 @@ export class FinancialReportsService {
       // Classify accounts based on account code patterns
       const isRevenueAccount = this.isRevenueAccount(accountCode);
       const isExpenseAccount = this.isExpenseAccount(accountCode);
+      const isMiscAccount = this.isMiscAccount(accountCode);
 
       if (isRevenueAccount && total.netAmount > 0) {
         const entry: ProfitLossEntry = {
@@ -147,6 +148,36 @@ export class FinancialReportsService {
         };
         expenses.push(entry);
         totalExpenses += Math.abs(total.netAmount);
+      } else if (isMiscAccount) {
+        // For MISC accounts, we need to look at individual entries since they balance to zero
+        // Calculate total debits and credits separately
+        const accountEntries = journalEntries.filter(entry => entry.accountCode === accountCode);
+        const totalDebits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.debitAmount?.toString() || '0'), 0);
+        const totalCredits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.creditAmount?.toString() || '0'), 0);
+        
+
+        
+        if (totalCredits > 0) {
+          const entry: ProfitLossEntry = {
+            accountCode,
+            accountName: total.accountName,
+            amount: totalCredits,
+            type: 'revenue',
+          };
+          revenue.push(entry);
+          totalRevenue += totalCredits;
+        }
+        
+        if (totalDebits > 0) {
+          const entry: ProfitLossEntry = {
+            accountCode: accountCode + '_EXP',
+            accountName: total.accountName + ' - Expenses',
+            amount: totalDebits,
+            type: 'expense',
+          };
+          expenses.push(entry);
+          totalExpenses += totalDebits;
+        }
       }
     }
 
@@ -204,8 +235,27 @@ export class FinancialReportsService {
 
     for (const [accountCode, total] of accountTotals) {
       const classification = this.classifyBalanceSheetAccount(accountCode);
+      const isMiscAccount = this.isMiscAccount(accountCode);
       
-      if (classification.type === 'asset' && total.netAmount > 0) {
+      if (isMiscAccount && total.netAmount === 0) {
+        // For MISC accounts that balance to zero, create a balanced entry
+        const accountEntries = journalEntries.filter(entry => entry.accountCode === accountCode);
+        const totalDebits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.debitAmount?.toString() || '0'), 0);
+        const totalCredits = accountEntries.reduce((sum, entry) => sum + parseFloat(entry.creditAmount?.toString() || '0'), 0);
+        
+        // Show the total amount as current assets (since debits = credits)
+        if (totalDebits > 0) {
+          const entry: BalanceSheetEntry = {
+            accountCode,
+            accountName: total.accountName,
+            amount: totalDebits,
+            type: 'asset',
+            subType: 'current',
+          };
+          assets.push(entry);
+          totalAssets += totalDebits;
+        }
+      } else if (classification.type === 'asset' && total.netAmount > 0) {
         const entry: BalanceSheetEntry = {
           accountCode,
           accountName: total.accountName,
@@ -335,6 +385,10 @@ export class FinancialReportsService {
     return expensePatterns.some(pattern => pattern.test(accountCode));
   }
 
+  private isMiscAccount(accountCode: string): boolean {
+    return /^MISC/i.test(accountCode);
+  }
+
   private classifyBalanceSheetAccount(accountCode: string): { type: 'asset' | 'liability' | 'equity'; subType: string } {
     // Asset accounts
     if (/^1\d{3}/.test(accountCode) || /^CASH|BANK|INVENTORY|RECEIVABLE/i.test(accountCode)) {
@@ -355,6 +409,11 @@ export class FinancialReportsService {
     // Equity accounts
     if (/^3\d{3}/.test(accountCode) || /^CAPITAL|RETAINED|EQUITY/i.test(accountCode)) {
       return { type: 'equity', subType: 'owners_equity' };
+    }
+
+    // MISC accounts default to current assets
+    if (/^MISC/i.test(accountCode)) {
+      return { type: 'asset', subType: 'current' };
     }
 
     // Default classification

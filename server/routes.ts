@@ -1068,9 +1068,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate profit & loss statement
-  app.post('/api/reports/profit-loss', isAuthenticated, async (req: any, res) => {
+  app.post('/api/reports/profit-loss', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
       const { period } = req.body;
       
       let journalEntries = await storage.getJournalEntriesByPeriod(period);
@@ -1120,9 +1120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate balance sheet
-  app.post('/api/reports/balance-sheet', isAuthenticated, async (req: any, res) => {
+  app.post('/api/reports/balance-sheet', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
       const { period } = req.body;
       
       let journalEntries = await storage.getJournalEntriesByPeriod(period);
@@ -1168,6 +1168,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating balance sheet:", error);
       res.status(500).json({ message: "Failed to generate balance sheet" });
+    }
+  });
+
+  // Generate cash flow statement
+  app.post('/api/reports/cash-flow', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      const { period } = req.body;
+      
+      let journalEntries = await storage.getJournalEntriesByPeriod(period);
+      
+      // If no journal entries exist, create them from uploaded documents
+      if (journalEntries.length === 0) {
+        const documents = await storage.getDocuments(userId);
+        
+        for (const doc of documents) {
+          const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+          
+          for (const entry of defaultEntries) {
+            await storage.createJournalEntry({
+              journalId: entry.journalId,
+              date: entry.date,
+              accountCode: entry.accountCode,
+              accountName: entry.accountName,
+              debitAmount: entry.debitAmount,
+              creditAmount: entry.creditAmount,
+              narration: entry.narration,
+              entity: entry.entity,
+              documentId: doc.id,
+              createdBy: userId,
+            });
+          }
+        }
+        
+        // Fetch the newly created entries
+        journalEntries = await storage.getJournalEntriesByPeriod(period);
+      }
+      
+      const cashFlow = await financialReportsService.generateCashFlow(journalEntries);
+      
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'cash_flow',
+        period,
+        data: cashFlow,
+        generatedBy: userId,
+      });
+
+      res.json(cashFlow);
+    } catch (error) {
+      console.error("Error generating cash flow:", error);
+      res.status(500).json({ message: "Failed to generate cash flow statement" });
     }
   });
 
