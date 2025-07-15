@@ -393,8 +393,15 @@ export default function FinancialReports() {
       return { totalDebits: 0, totalCredits: 0, isBalanced: true };
     }
     
-    const totalDebits = journalEntries.reduce((sum, entry) => sum + entry.debitAmount, 0);
-    const totalCredits = journalEntries.reduce((sum, entry) => sum + entry.creditAmount, 0);
+    const totalDebits = journalEntries.reduce((sum, entry) => {
+      const debitAmount = typeof entry.debitAmount === 'string' ? parseFloat(entry.debitAmount) : entry.debitAmount;
+      return sum + (debitAmount || 0);
+    }, 0);
+    
+    const totalCredits = journalEntries.reduce((sum, entry) => {
+      const creditAmount = typeof entry.creditAmount === 'string' ? parseFloat(entry.creditAmount) : entry.creditAmount;
+      return sum + (creditAmount || 0);
+    }, 0);
     
     return {
       totalDebits,
@@ -783,18 +790,40 @@ export default function FinancialReports() {
                       </TableHeader>
                       <TableBody>
                         {journalEntries && journalEntries.length > 0 ? (
-                          journalEntries.map((entry) => (
-                            <TableRow key={entry.id}>
-                              <TableCell className="font-mono">{entry.accountCode}</TableCell>
-                              <TableCell>{entry.accountName}</TableCell>
-                              <TableCell className="text-right font-mono">
-                                {entry.debitAmount > 0 ? formatCurrency(entry.debitAmount) : '-'}
-                              </TableCell>
-                              <TableCell className="text-right font-mono">
-                                {entry.creditAmount > 0 ? formatCurrency(entry.creditAmount) : '-'}
-                              </TableCell>
-                            </TableRow>
-                          ))
+                          (() => {
+                            // Group entries by account code and calculate net balances
+                            const accountBalances = {};
+                            
+                            journalEntries.forEach(entry => {
+                              const debitAmount = typeof entry.debitAmount === 'string' ? parseFloat(entry.debitAmount) : entry.debitAmount;
+                              const creditAmount = typeof entry.creditAmount === 'string' ? parseFloat(entry.creditAmount) : entry.creditAmount;
+                              
+                              if (!accountBalances[entry.accountCode]) {
+                                accountBalances[entry.accountCode] = {
+                                  accountCode: entry.accountCode,
+                                  accountName: entry.accountName,
+                                  totalDebits: 0,
+                                  totalCredits: 0
+                                };
+                              }
+                              
+                              accountBalances[entry.accountCode].totalDebits += debitAmount || 0;
+                              accountBalances[entry.accountCode].totalCredits += creditAmount || 0;
+                            });
+                            
+                            return Object.values(accountBalances).map((account) => (
+                              <TableRow key={account.accountCode}>
+                                <TableCell className="font-mono">{account.accountCode}</TableCell>
+                                <TableCell>{account.accountName}</TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {account.totalDebits > 0 ? formatCurrency(account.totalDebits) : '-'}
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {account.totalCredits > 0 ? formatCurrency(account.totalCredits) : '-'}
+                                </TableCell>
+                              </TableRow>
+                            ));
+                          })()
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
