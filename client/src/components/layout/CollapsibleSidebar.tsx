@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface NavItem {
   name: string;
@@ -90,38 +91,40 @@ export default function CollapsibleSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        <div className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href;
-            
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
-                  isActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", isCollapsed ? "mx-auto" : "mr-3")} />
-                {!isCollapsed && <span>{item.name}</span>}
-                
-                {/* Tooltip for collapsed state */}
-                {isCollapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                    {item.name}
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <ScrollArea className="flex-1">
+        <nav className="p-2">
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href;
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors relative group",
+                    isActive
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", isCollapsed ? "mx-auto" : "mr-3")} />
+                  {!isCollapsed && <span>{item.name}</span>}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                      {item.name}
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      </ScrollArea>
 
       {/* User Info and Sign Out */}
       <div className="border-t border-gray-200 dark:border-gray-800 p-2">
