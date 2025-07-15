@@ -1302,6 +1302,67 @@ export default function FinancialReports() {
                     );
                   }
                   
+                  // Special formatting for GSTR-2A
+                  if (viewReportModal.statement.statementType === 'gstr_2a') {
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-muted p-3 rounded">
+                          <h4 className="font-medium mb-2">GSTIN: {data.gstin}</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>Total Inward Supplies: <span className="font-semibold">₹{data.totalInwardSupplies?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Total Tax Credit: <span className="font-semibold">₹{data.totalTaxCredit?.toLocaleString('en-IN') || 0}</span></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Summary</h4>
+                          <div className="bg-muted p-3 rounded text-sm space-y-1">
+                            <div>Total Invoices: <span className="font-semibold">{data.summary?.totalInvoices || 0}</span></div>
+                            <div>Total Taxable Value: <span className="font-semibold">₹{data.summary?.totalTaxableValue?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Total IGST: <span className="font-semibold">₹{data.summary?.totalIGST?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Total CGST: <span className="font-semibold">₹{data.summary?.totalCGST?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>Total SGST: <span className="font-semibold">₹{data.summary?.totalSGST?.toLocaleString('en-IN') || 0}</span></div>
+                            <div className="border-t pt-1">Total Tax: <span className="font-semibold">₹{data.summary?.totalTax?.toLocaleString('en-IN') || 0}</span></div>
+                          </div>
+                        </div>
+                        
+                        {data.invoices && data.invoices.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Supplier Invoice Details</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                  <tr className="bg-muted">
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Vendor</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">GSTIN</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Invoice No</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Taxable Value</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">CGST</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">SGST</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Total Tax</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {data.invoices.map((invoice, index) => (
+                                    <tr key={index}>
+                                      <td className="border border-gray-300 px-2 py-1">{invoice.tradeName}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-xs">{invoice.gstin}</td>
+                                      <td className="border border-gray-300 px-2 py-1">{invoice.invoiceNumber}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{invoice.taxableValue?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{invoice.cgst?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{invoice.sgst?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{invoice.totalTax?.toLocaleString('en-IN')}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  
                   // Default JSON display for other reports
                   return (
                     <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
