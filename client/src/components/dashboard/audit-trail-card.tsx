@@ -37,46 +37,7 @@ export default function AuditTrailCard({ auditTrail, isLoading }: AuditTrailCard
     );
   }
 
-  const mockAuditTrail = [
-    {
-      id: '1',
-      action: 'GSTValidator Agent',
-      entityType: 'agent_job',
-      entityId: 'job-1',
-      details: { description: 'Validated GST-2A reconciliation' },
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      user: { firstName: 'System', lastName: '' }
-    },
-    {
-      id: '2',
-      action: 'JournalBot',
-      entityType: 'agent_job',
-      entityId: 'job-2',
-      details: { description: 'Generated 156 journal entries' },
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      user: { firstName: 'System', lastName: '' }
-    },
-    {
-      id: '3',
-      action: 'User Action',
-      entityType: 'document',
-      entityId: 'doc-1',
-      details: { description: 'Uploaded trial_balance_q3.xlsx' },
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      user: { firstName: 'Priya', lastName: 'Sharma' }
-    },
-    {
-      id: '4',
-      action: 'ConsoAI',
-      entityType: 'agent_job',
-      entityId: 'job-3',
-      details: { description: 'Completed financial consolidation' },
-      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-      user: { firstName: 'System', lastName: '' }
-    }
-  ];
-
-  const trailToShow = auditTrail || mockAuditTrail;
+  const trailToShow = auditTrail || [];
 
   const getActionType = (action: string) => {
     if (action.includes('Agent') || action.includes('Bot') || action.includes('AI')) {
@@ -100,31 +61,40 @@ export default function AuditTrailCard({ auditTrail, isLoading }: AuditTrailCard
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {trailToShow.slice(0, 4).map((entry) => (
-            <div key={entry.id} className="audit-trail-entry">
-              <div className={`audit-trail-dot ${getActionType(entry.action)}`} />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">{entry.action}</p>
-                <p className="text-xs text-muted-foreground">
-                  {entry.details?.description || 'No description available'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })} • 
-                  {entry.entityType === 'agent_job' ? ` Job ID: ${entry.entityId.slice(-3)}` : 
-                   entry.entityType === 'document' ? ` File ID: ${entry.entityId.slice(-3)}` : 
-                   ` ID: ${entry.entityId.slice(-3)}`}
-                </p>
+          {trailToShow.length > 0 ? (
+            trailToShow.slice(0, 4).map((entry) => (
+              <div key={entry.id} className="audit-trail-entry">
+                <div className={`audit-trail-dot ${getActionType(entry.action)}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">{entry.action}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.details?.description || 'No description available'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })} • 
+                    {entry.entityType === 'agent_job' ? ` Job ID: ${entry.entityId.slice(-3)}` : 
+                     entry.entityType === 'document' ? ` File ID: ${entry.entityId.slice(-3)}` : 
+                     ` ID: ${entry.entityId.slice(-3)}`}
+                  </p>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">No audit trail activities yet.</p>
+              <p className="text-xs">Activities will appear here as you use the platform.</p>
             </div>
-          ))}
+          )}
         </div>
 
-        <div className="mt-6 pt-4 border-t">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Actions Today</span>
-            <span className="font-semibold text-foreground">47</span>
+        {trailToShow.length > 0 && (
+          <div className="mt-6 pt-4 border-t">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total Actions Today</span>
+              <span className="font-semibold text-foreground">{trailToShow.length}</span>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

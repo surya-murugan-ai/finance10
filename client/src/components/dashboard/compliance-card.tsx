@@ -17,14 +17,15 @@ export default function ComplianceCard() {
     retry: false,
   });
 
-  const complianceItems = [
-    { name: "GST Returns Filing", status: "compliant" },
-    { name: "TDS Compliance", status: "compliant" },
-    { name: "Companies Act 2013", status: "review_required" },
-    { name: "Schedule III Format", status: "compliant" },
-  ];
+  // Use actual compliance checks from API or show empty state
+  const complianceItems = checks && checks.length > 0 ? 
+    checks.map(check => ({
+      name: check.checkType,
+      status: check.status === 'compliant' ? 'compliant' : 'review_required'
+    })) : [];
 
   const getComplianceScore = () => {
+    if (complianceItems.length === 0) return 100; // Default to 100% when no checks exist
     const compliantCount = complianceItems.filter(item => item.status === 'compliant').length;
     return Math.round((compliantCount / complianceItems.length) * 100);
   };
@@ -76,21 +77,28 @@ export default function ComplianceCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {complianceItems.map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-4 h-4 rounded-full ${
-                  item.status === 'compliant' ? 'bg-secondary' : 'bg-accent'
-                }`} />
-                <span className="text-sm text-foreground">{item.name}</span>
+          {complianceItems.length > 0 ? (
+            complianceItems.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-4 h-4 rounded-full ${
+                    item.status === 'compliant' ? 'bg-secondary' : 'bg-accent'
+                  }`} />
+                  <span className="text-sm text-foreground">{item.name}</span>
+                </div>
+                <span className={`text-xs ${
+                  item.status === 'compliant' ? 'text-secondary' : 'text-accent'
+                }`}>
+                  {item.status === 'compliant' ? '✓ Compliant' : '⚠ Review Required'}
+                </span>
               </div>
-              <span className={`text-xs ${
-                item.status === 'compliant' ? 'text-secondary' : 'text-accent'
-              }`}>
-                {item.status === 'compliant' ? '✓ Compliant' : '⚠ Review Required'}
-              </span>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">No compliance checks available.</p>
+              <p className="text-xs">Upload documents to generate compliance reports.</p>
             </div>
-          ))}
+          )}
         </div>
 
         <div className="mt-6 pt-4 border-t">
