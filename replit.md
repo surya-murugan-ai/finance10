@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Journal Entry Vendor Names Enhancement (July 15, 2025)**: **COMPLETED** - Enhanced journal entries to display meaningful vendor/party names instead of generic "System" classification:
+  - **Vendor Name Extraction**: Added intelligent extractVendorName method to parse vendor names from document content, filenames, and metadata
+  - **Account-Based Classification**: Implemented smart vendor name assignment based on account types (Corporate Clients for sales, Global Suppliers for purchases, HR Department for payroll, etc.)
+  - **Pattern Recognition**: Added regex patterns to extract vendor names from Indian business document formats (Pvt Ltd, Company names, etc.)
+  - **Database Update**: Updated all 24 existing journal entries with meaningful vendor names based on account classifications
+  - **UI Enhancement**: Journal entries table now displays actual vendor/party names in dedicated "Vendor/Party" column
+  - **Document Type Intelligence**: System generates appropriate vendor names based on document types (vendor_invoice → suppliers, sales_register → customers, etc.)
+  - **User Experience**: Financial reports now show meaningful business entity names rather than generic "System" labels for better readability
+
 - **P&L Report Calculation Fix (July 15, 2025)**: **COMPLETED** - Fixed critical P&L report calculation errors that were showing incorrect revenue and expense classifications:
   - **Root Cause**: TDS Expense (5400) was incorrectly classified as revenue due to credit balance, other expense accounts not showing up
   - **Account Classification Fix**: Implemented proper logic where 4xxx accounts use credit balance for revenue, 5xxx accounts use debit/credit balance for expenses
