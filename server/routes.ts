@@ -2183,7 +2183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Agent Chat API endpoints
-  app.post('/api/agent-chat/start', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agent-chat/start', jwtAuth, async (req: any, res) => {
     try {
       const { message, documentId } = req.body;
       const userId = req.user.claims.sub;
@@ -2236,7 +2236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/agent-chat/stop', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agent-chat/stop', jwtAuth, async (req: any, res) => {
     try {
       // Stop the current workflow
       res.json({
@@ -2249,7 +2249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/agent-chat/message', isAuthenticated, async (req: any, res) => {
+  app.post('/api/agent-chat/message', jwtAuth, async (req: any, res) => {
     try {
       const { message } = req.body;
       const userId = req.user.claims.sub;
