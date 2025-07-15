@@ -14,6 +14,9 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400'); // 24 hours
   
+  // Log all requests for debugging
+  console.log(`${req.method} ${req.url} - Headers:`, Object.keys(req.headers));
+  
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;

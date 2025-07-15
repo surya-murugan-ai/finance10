@@ -28,12 +28,22 @@ export default function FinancialReportsSection() {
         throw new Error('No authentication token found');
       }
       
-      const response = await apiRequest('/api/reports/trial-balance', {
+      // Use direct fetch to avoid apiRequest Authorization header issues
+      const response = await fetch('/api/reports/trial-balance', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ period: currentYear }),
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     retry: 1,
     enabled: !!localStorage.getItem('access_token'),

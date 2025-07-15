@@ -134,13 +134,26 @@ export default function FinancialReports() {
 
   const generateJournalEntriesMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/reports/generate-journal-entries`, {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Use direct fetch to avoid apiRequest Authorization header issues
+      const response = await fetch('/api/reports/generate-journal-entries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
       const title = data.totalEntries > 0 ? "Journal Entries Generated" : "Journal Entries Already Exist";

@@ -47,6 +47,7 @@ export async function apiRequest(
     body: options.body,
     credentials: "include",
     mode: "cors",
+    cache: "no-cache",
     ...options
   });
 
