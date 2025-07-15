@@ -137,11 +137,9 @@ export class FinancialReportsService {
           totalRevenue += amount;
         }
       } else if (code.startsWith('5')) {
-        // Expense accounts (5xxx) - normal debit balance
-        // For expense accounts, we use totalDebits OR totalCredits depending on the journal structure
-        // If totalDebits > 0, use totalDebits (normal expense entry)
-        // If totalCredits > 0, use totalCredits (reverse entry like TDS)
-        const amount = balance.totalDebits > 0 ? balance.totalDebits : balance.totalCredits;
+        // Expense accounts (5xxx) - ALL are expenses regardless of debit/credit balance
+        // Use the higher of totalDebits or totalCredits to capture the actual expense amount
+        const amount = Math.max(balance.totalDebits, balance.totalCredits);
         if (amount > 0) {
           expenses.push({
             accountCode: code,
