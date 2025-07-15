@@ -4,7 +4,7 @@
     "passed": 15,
     "failed": 1,
     "success_rate": 93.75,
-    "timestamp": "2025-07-15T04:19:30.633875"
+    "timestamp": "2025-07-15T13:23:51.625804"
   },
   "categories": {
     "Authentication": {
@@ -74,7 +74,7 @@
       "success": true,
       "details": "JWT token generated",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:25.818462"
+      "timestamp": "2025-07-15T13:23:46.466363"
     },
     {
       "test": "User Authentication",
@@ -91,116 +91,157 @@
           "is_active": true
         }
       },
-      "timestamp": "2025-07-15T04:19:25.829373"
+      "timestamp": "2025-07-15T13:23:46.480697"
     },
     {
       "test": "No Token Rejection",
       "success": true,
       "details": "Status: 401",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:25.833186"
+      "timestamp": "2025-07-15T13:23:46.484958"
     },
     {
       "test": "Document Upload",
       "success": true,
-      "details": "Document uploaded: j9cROUFzmMBLktLjC9EeC_test_document.csv",
+      "details": "Document uploaded: EADTjFcN8svrmRQfN2Pho_test_document.csv",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.221905"
+      "timestamp": "2025-07-15T13:23:47.911938"
     },
     {
       "test": "Document Listing",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.299392"
+      "timestamp": "2025-07-15T13:23:48.009985"
     },
     {
       "test": "Trial Balance Generation",
       "success": true,
-      "details": "Debits: Rs 0, Credits: Rs 0",
+      "details": "Debits: Rs 3,85,647, Credits: Rs 3,85,647",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.373917"
+      "timestamp": "2025-07-15T13:23:48.176751"
     },
     {
       "test": "Financial Statements",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.522744"
+      "timestamp": "2025-07-15T13:23:48.252313"
     },
     {
       "test": "Compliance Checks",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.595516"
+      "timestamp": "2025-07-15T13:23:48.327104"
     },
     {
       "test": "Dashboard Stats",
       "success": true,
-      "details": "Documents: 9, Agents: 0",
+      "details": "Documents: 11, Agents: 0",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:26.941820"
+      "timestamp": "2025-07-15T13:23:48.702820"
     },
     {
       "test": "Audit Trail",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:27.080340"
+      "timestamp": "2025-07-15T13:23:48.847826"
     },
     {
       "test": "Workflow Listing",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:27.084404"
+      "timestamp": "2025-07-15T13:23:48.852400"
     },
     {
       "test": "Journal Entry Generation",
       "success": true,
-      "details": "Message: Generated 18 journal entries from 9 documents",
+      "details": "Message: Generated 2 journal entries from 1 documents",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:29.026992"
+      "timestamp": "2025-07-15T13:23:49.820748"
     },
     {
       "test": "404 Error Handling",
       "success": false,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:29.046877"
+      "timestamp": "2025-07-15T13:23:49.836103"
     },
     {
       "test": "Invalid JSON Handling",
       "success": true,
       "details": "Status: 400",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:29.070832"
+      "timestamp": "2025-07-15T13:23:49.861926"
     },
     {
       "test": "API Response Time",
       "success": true,
-      "details": "Response time: 0.01s",
+      "details": "Response time: 0.04s",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:29.079260"
+      "timestamp": "2025-07-15T13:23:49.898018"
     },
     {
       "test": "End-to-End Workflow",
       "success": true,
       "details": "Complete workflow executed successfully",
       "response_data": null,
-      "timestamp": "2025-07-15T04:19:30.632921"
+      "timestamp": "2025-07-15T13:23:51.624939"
     }
   ],
   "test_data": {
-    "document_id": "d1d97f34-b8ed-444c-af38-ca900b933b99",
+    "document_id": "eb086dd7-3f21-4555-8025-2e49eb83244b",
     "trial_balance": {
-      "entries": [],
-      "totalDebits": 0,
-      "totalCredits": 0,
+      "entries": [
+        {
+          "accountCode": "1200",
+          "accountName": "Accounts Receivable",
+          "debitBalance": 85611,
+          "creditBalance": 0,
+          "debitBalanceText": "Rs 85,611",
+          "creditBalanceText": "Rs 0"
+        },
+        {
+          "accountCode": "4100",
+          "accountName": "Sales Revenue",
+          "debitBalance": 0,
+          "creditBalance": 85611,
+          "debitBalanceText": "Rs 0",
+          "creditBalanceText": "Rs 85,611"
+        },
+        {
+          "accountCode": "MISC",
+          "accountName": "Miscellaneous",
+          "debitBalance": 0,
+          "creditBalance": 0,
+          "debitBalanceText": "Rs 0",
+          "creditBalanceText": "Rs 0"
+        },
+        {
+          "accountCode": "PAYABLE",
+          "accountName": "Accounts Payable",
+          "debitBalance": 0,
+          "creditBalance": 300036,
+          "debitBalanceText": "Rs 0",
+          "creditBalanceText": "Rs 3,00,036"
+        },
+        {
+          "accountCode": "PURCHASE",
+          "accountName": "Purchase Expense",
+          "debitBalance": 300036,
+          "creditBalance": 0,
+          "debitBalanceText": "Rs 3,00,036",
+          "creditBalanceText": "Rs 0"
+        }
+      ],
+      "totalDebits": 385647,
+      "totalCredits": 385647,
       "isBalanced": true,
-      "totalDebitsText": "Rs 0",
-      "totalCreditsText": "Rs 0"
+      "totalDebitsText": "Rs 3,85,647",
+      "totalCreditsText": "Rs 3,85,647"
     }
   }
 }
