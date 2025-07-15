@@ -1515,6 +1515,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate bank reconciliation report
+  app.post('/api/reports/bank-reconciliation', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { period } = req.body;
+
+      // Generate mock bank reconciliation data
+      const bankReconciliation = {
+        period,
+        generatedAt: new Date(),
+        generatedBy: userId,
+        bankStatement: {
+          openingBalance: 150000,
+          closingBalance: 275000,
+          totalDeposits: 320000,
+          totalWithdrawals: 195000,
+          bankCharges: 1200,
+          interest: 850
+        },
+        bookBalance: {
+          openingBalance: 148500,
+          closingBalance: 273750,
+          totalReceipts: 318500,
+          totalPayments: 193250
+        },
+        reconciliationItems: [
+          {
+            description: "Deposits in Transit",
+            amount: 25000,
+            type: "add_to_bank"
+          },
+          {
+            description: "Outstanding Checks",
+            amount: 18500,
+            type: "deduct_from_bank"
+          },
+          {
+            description: "Bank Charges",
+            amount: 1200,
+            type: "deduct_from_book"
+          },
+          {
+            description: "Interest Earned",
+            amount: 850,
+            type: "add_to_book"
+          }
+        ],
+        reconciledBalance: 273750,
+        isReconciled: true,
+        totalVariance: 0,
+        summary: {
+          totalItems: 4,
+          totalAdjustments: 45550,
+          reconciledOn: new Date(),
+          status: "Reconciled"
+        }
+      };
+
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'bank_reconciliation',
+        period,
+        data: bankReconciliation,
+        isValid: true,
+        generatedBy: userId,
+      });
+
+      res.json(bankReconciliation);
+    } catch (error) {
+      console.error("Error generating bank reconciliation:", error);
+      res.status(500).json({ message: "Failed to generate bank reconciliation" });
+    }
+  });
+
   // Get compliance checks
   app.get('/api/compliance-checks', isAuthenticated, async (req: any, res) => {
     try {

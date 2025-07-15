@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileText, Download, RefreshCw, TrendingUp, Calendar, BarChart3, Trash2, AlertCircle, Grid, List } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { FinancialStatement } from "@shared/schema";
@@ -21,6 +22,13 @@ export default function FinancialReports() {
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState("Q3_2025");
   const [displayFormat, setDisplayFormat] = useState<'detailed' | 'compact'>('detailed');
+  const [viewReportModal, setViewReportModal] = useState<{
+    isOpen: boolean;
+    statement: FinancialStatement | null;
+  }>({
+    isOpen: false,
+    statement: null,
+  });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -640,9 +648,9 @@ export default function FinancialReports() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      toast({
-                                        title: "Report View",
-                                        description: `Opening ${getStatementTitle(statement.statementType)} report`,
+                                      setViewReportModal({
+                                        isOpen: true,
+                                        statement: statement,
                                       });
                                     }}
                                   >
@@ -1127,6 +1135,46 @@ export default function FinancialReports() {
             </TabsContent>
           </Tabs>
       </div>
+
+      {/* Report View Modal */}
+      <Dialog open={viewReportModal.isOpen} onOpenChange={(open) => setViewReportModal({ isOpen: open, statement: null })}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {viewReportModal.statement ? getStatementTitle(viewReportModal.statement.statementType) : 'Report View'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {viewReportModal.statement && (
+              <div className="bg-muted p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Period:</span> {viewReportModal.statement.period}
+                  </div>
+                  <div>
+                    <span className="font-medium">Generated:</span> {new Date(viewReportModal.statement.generatedAt).toLocaleString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span> 
+                    <Badge variant={viewReportModal.statement.isValid ? "default" : "destructive"} className="ml-2">
+                      {viewReportModal.statement.isValid ? "Valid" : "Invalid"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {viewReportModal.statement && (
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="font-semibold mb-4">Report Data</h3>
+                <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
+                  {JSON.stringify(viewReportModal.statement.data, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }
