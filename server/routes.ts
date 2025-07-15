@@ -25,6 +25,8 @@ const jwtAuth = (req: any, res: any, next: any) => {
   try {
     const authHeader = req.headers.authorization;
     console.log('JWT Auth Debug:', { 
+      method: req.method,
+      url: req.url,
       hasAuth: !!authHeader, 
       authPreview: authHeader?.substring(0, 30) + '...',
       allHeaders: Object.keys(req.headers)
