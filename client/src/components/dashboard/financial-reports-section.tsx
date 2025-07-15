@@ -41,6 +41,7 @@ export default function FinancialReportsSection() {
     },
     retry: 1,
     enabled: !!localStorage.getItem('access_token'),
+    refetchOnWindowFocus: false,
   });
 
   const getReportTitle = (type: string) => {

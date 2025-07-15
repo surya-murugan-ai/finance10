@@ -30,6 +30,8 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
   
+  console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!token });
+  
   const res = await fetch(fullUrl, {
     method: options.method || 'GET',
     headers,
@@ -38,6 +40,8 @@ export async function apiRequest(
     ...options
   });
 
+  console.log('API Response:', { url, status: res.status, ok: res.ok });
+  
   await throwIfResNotOk(res);
   return await res.json();
 }

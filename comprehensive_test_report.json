@@ -1,103 +1,206 @@
 {
   "summary": {
-    "total_tests": 13,
-    "passed": 13,
-    "failed": 0,
-    "success_rate": 100.0,
-    "timestamp": "2025-07-14T13:54:12.725407"
+    "total_tests": 16,
+    "passed": 15,
+    "failed": 1,
+    "success_rate": 93.75,
+    "timestamp": "2025-07-15T04:19:30.633875"
   },
-  "test_results": [
+  "categories": {
+    "Authentication": {
+      "passed": 1,
+      "failed": 0
+    },
+    "User": {
+      "passed": 1,
+      "failed": 0
+    },
+    "No": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Document": {
+      "passed": 2,
+      "failed": 0
+    },
+    "Trial": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Financial": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Compliance": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Dashboard": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Audit": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Workflow": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Journal": {
+      "passed": 1,
+      "failed": 0
+    },
+    "404": {
+      "passed": 0,
+      "failed": 1
+    },
+    "Invalid": {
+      "passed": 1,
+      "failed": 0
+    },
+    "API": {
+      "passed": 1,
+      "failed": 0
+    },
+    "End-to-End": {
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "detailed_results": [
     {
-      "test_name": "Authentication",
-      "status": "PASSED",
-      "details": "User authenticated: testuser@example.com",
+      "test": "Authentication Setup",
+      "success": true,
+      "details": "JWT token generated",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:09.712399"
+      "timestamp": "2025-07-15T04:19:25.818462"
     },
     {
-      "test_name": "Document List",
-      "status": "PASSED",
-      "details": "Found 17 documents",
-      "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.050791"
+      "test": "User Authentication",
+      "success": true,
+      "details": "Status: 200",
+      "response_data": {
+        "success": true,
+        "user": {
+          "id": "9e36c4db-56c4-4175-9962-7d103db2c1cd",
+          "email": "testuser@example.com",
+          "first_name": "Test",
+          "last_name": "User",
+          "company_name": "Test Company Ltd",
+          "is_active": true
+        }
+      },
+      "timestamp": "2025-07-15T04:19:25.829373"
     },
     {
-      "test_name": "Document Deletion",
-      "status": "PASSED",
-      "details": "Successfully deleted document a6fc442c-acf3-442f-9cac-84176d2baff9",
+      "test": "No Token Rejection",
+      "success": true,
+      "details": "Status: 401",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.399732"
+      "timestamp": "2025-07-15T04:19:25.833186"
     },
     {
-      "test_name": "Journal Entries",
-      "status": "PASSED",
-      "details": "Found 234 entries. Debit: 26136682.00, Credit: 26136682.00, Balanced: True",
+      "test": "Document Upload",
+      "success": true,
+      "details": "Document uploaded: j9cROUFzmMBLktLjC9EeC_test_document.csv",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.545862"
+      "timestamp": "2025-07-15T04:19:26.221905"
     },
     {
-      "test_name": "Financial Statements",
-      "status": "PASSED",
-      "details": "Found 43 statements",
+      "test": "Document Listing",
+      "success": true,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.619794"
+      "timestamp": "2025-07-15T04:19:26.299392"
     },
     {
-      "test_name": "Trial Balance Generation",
-      "status": "PASSED",
-      "details": "Generated trial balance: 13647086.00 debits, 13647086.00 credits",
+      "test": "Trial Balance Generation",
+      "success": true,
+      "details": "Debits: Rs 0, Credits: Rs 0",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.760638"
+      "timestamp": "2025-07-15T04:19:26.373917"
     },
     {
-      "test_name": "Profit & Loss Generation",
-      "status": "PASSED",
-      "details": "Generated P&L: Revenue 835291.00, Expenses 9000.00, Net Profit 826291.00",
+      "test": "Financial Statements",
+      "success": true,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:10.906075"
+      "timestamp": "2025-07-15T04:19:26.522744"
     },
     {
-      "test_name": "Balance Sheet Generation",
-      "status": "PASSED",
-      "details": "Generated Balance Sheet: Assets 13647086.00, Liabilities 12811795.00",
+      "test": "Compliance Checks",
+      "success": true,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:11.048086"
+      "timestamp": "2025-07-15T04:19:26.595516"
     },
     {
-      "test_name": "Journal Generation",
-      "status": "PASSED",
-      "details": "Generated 0 entries, skipped 16 documents",
+      "test": "Dashboard Stats",
+      "success": true,
+      "details": "Documents: 9, Agents: 0",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:12.170859"
+      "timestamp": "2025-07-15T04:19:26.941820"
     },
     {
-      "test_name": "Dashboard Stats",
-      "status": "PASSED",
-      "details": "Docs: 16, Agents: 2, Issues: 0",
+      "test": "Audit Trail",
+      "success": true,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:12.509388"
+      "timestamp": "2025-07-15T04:19:27.080340"
     },
     {
-      "test_name": "Compliance Checks",
-      "status": "PASSED",
-      "details": "Found 0 compliance checks",
+      "test": "Workflow Listing",
+      "success": true,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:12.578795"
+      "timestamp": "2025-07-15T04:19:27.084404"
     },
     {
-      "test_name": "Audit Trail",
-      "status": "PASSED",
-      "details": "Found 50 audit entries",
+      "test": "Journal Entry Generation",
+      "success": true,
+      "details": "Message: Generated 18 journal entries from 9 documents",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:12.650772"
+      "timestamp": "2025-07-15T04:19:29.026992"
     },
     {
-      "test_name": "Extracted Data",
-      "status": "PASSED",
-      "details": "Found 16 extracted data records",
+      "test": "404 Error Handling",
+      "success": false,
+      "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-14T13:54:12.722935"
+      "timestamp": "2025-07-15T04:19:29.046877"
+    },
+    {
+      "test": "Invalid JSON Handling",
+      "success": true,
+      "details": "Status: 400",
+      "response_data": null,
+      "timestamp": "2025-07-15T04:19:29.070832"
+    },
+    {
+      "test": "API Response Time",
+      "success": true,
+      "details": "Response time: 0.01s",
+      "response_data": null,
+      "timestamp": "2025-07-15T04:19:29.079260"
+    },
+    {
+      "test": "End-to-End Workflow",
+      "success": true,
+      "details": "Complete workflow executed successfully",
+      "response_data": null,
+      "timestamp": "2025-07-15T04:19:30.632921"
     }
   ],
-  "failed_tests": []
+  "test_data": {
+    "document_id": "d1d97f34-b8ed-444c-af38-ca900b933b99",
+    "trial_balance": {
+      "entries": [],
+      "totalDebits": 0,
+      "totalCredits": 0,
+      "isBalanced": true,
+      "totalDebitsText": "Rs 0",
+      "totalCreditsText": "Rs 0"
+    }
+  }
 }

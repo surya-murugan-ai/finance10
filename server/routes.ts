@@ -345,10 +345,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const email = req.user.claims.email;
+      const userId = req.user.userId;
+      const email = req.user.email;
       
       const user = {
         id: userId,
@@ -504,9 +504,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced dashboard stats with user journey tracking
-  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/dashboard/stats", jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
       const stats = await storage.getDashboardStats(userId);
       
       // Add user journey progress
