@@ -24,6 +24,11 @@ function formatCurrency(amount: number): string {
 const jwtAuth = (req: any, res: any, next: any) => {
   try {
     const authHeader = req.headers.authorization;
+    console.log('JWT Auth Debug:', { 
+      hasAuth: !!authHeader, 
+      authPreview: authHeader?.substring(0, 30) + '...',
+      allHeaders: Object.keys(req.headers)
+    });
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.log('JWT Auth: No valid Authorization header');
       return res.status(401).json({ message: 'Unauthorized' });
