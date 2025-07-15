@@ -80,13 +80,19 @@ export default function DocumentUpload() {
           throw new Error(`Generation not implemented for ${docName}`);
       }
       
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ period: 'Q3_2025' }),
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -109,12 +115,64 @@ export default function DocumentUpload() {
     }
   };
 
-  const handleCalculate = (docId: string, docName: string) => {
+  const handleCalculate = async (docId: string, docName: string) => {
     toast({
       title: "Calculating Report",
       description: `Generating ${docName}... This may take a few moments.`,
     });
-    // TODO: Implement calculation logic
+    
+    try {
+      let endpoint = '';
+      switch (docId) {
+        case 'profit_loss_statement':
+          endpoint = '/api/reports/profit-loss';
+          break;
+        case 'balance_sheet':
+          endpoint = '/api/reports/balance-sheet';
+          break;
+        case 'cash_flow_statement':
+          endpoint = '/api/reports/cash-flow';
+          break;
+        case 'depreciation_schedule':
+          endpoint = '/api/reports/depreciation-schedule';
+          break;
+        default:
+          throw new Error(`Calculation not implemented for ${docName}`);
+      }
+      
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: 'Q3_2025' }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to calculate document');
+      }
+      
+      const data = await response.json();
+      
+      toast({
+        title: "Calculation Complete",
+        description: `${docName} has been calculated successfully. You can view it in the Financial Reports section.`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Calculation Failed",
+        description: `Failed to calculate ${docName}. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleView = (docId: string, docName: string) => {
@@ -142,12 +200,87 @@ export default function DocumentUpload() {
     // TODO: Implement delete logic
   };
 
-  const handleDownload = (docId: string, docName: string) => {
+  const handleDownload = async (docId: string, docName: string) => {
     toast({
       title: "Download Document",
       description: `Downloading ${docName}...`,
     });
-    // TODO: Implement download logic
+    
+    try {
+      let endpoint = '';
+      switch (docId) {
+        case 'gstr_2a':
+          endpoint = '/api/reports/gstr-2a';
+          break;
+        case 'gstr_3b':
+          endpoint = '/api/reports/gstr-3b';
+          break;
+        case 'form_26q':
+          endpoint = '/api/reports/form-26q';
+          break;
+        case 'depreciation_schedule':
+          endpoint = '/api/reports/depreciation-schedule';
+          break;
+        case 'trial_balance':
+          endpoint = '/api/reports/trial-balance';
+          break;
+        case 'profit_loss_statement':
+          endpoint = '/api/reports/profit-loss';
+          break;
+        case 'balance_sheet':
+          endpoint = '/api/reports/balance-sheet';
+          break;
+        case 'cash_flow_statement':
+          endpoint = '/api/reports/cash-flow';
+          break;
+        default:
+          throw new Error(`Download not implemented for ${docName}`);
+      }
+      
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: 'Q3_2025' }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download document');
+      }
+      
+      const data = await response.json();
+      
+      // Create and download file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download Complete",
+        description: `${docName} has been downloaded successfully.`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: `Failed to download ${docName}. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleHelp = (docId: string, docName: string) => {
@@ -860,9 +993,7 @@ export default function DocumentUpload() {
                                     variant="outline" 
                                     size="sm" 
                                     className="text-xs"
-                                    disabled={!requirement.derivedFrom?.every(source => 
-                                      documentRequirements.find(req => req.id === source)?.isUploaded
-                                    )}
+                                    disabled={false}
                                     onClick={() => handleGenerate(requirement.id, requirement.name)}
                                   >
                                     <Cog className="h-3 w-3 mr-1" />
