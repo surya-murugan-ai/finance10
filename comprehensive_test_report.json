@@ -1,10 +1,10 @@
 {
   "summary": {
     "total_tests": 16,
-    "passed": 15,
-    "failed": 1,
-    "success_rate": 93.75,
-    "timestamp": "2025-07-15T13:23:51.625804"
+    "passed": 16,
+    "failed": 0,
+    "success_rate": 100.0,
+    "timestamp": "2025-07-15T13:28:12.740340"
   },
   "categories": {
     "Authentication": {
@@ -52,8 +52,8 @@
       "failed": 0
     },
     "404": {
-      "passed": 0,
-      "failed": 1
+      "passed": 1,
+      "failed": 0
     },
     "Invalid": {
       "passed": 1,
@@ -74,7 +74,7 @@
       "success": true,
       "details": "JWT token generated",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:46.466363"
+      "timestamp": "2025-07-15T13:28:08.371893"
     },
     {
       "test": "User Authentication",
@@ -91,109 +91,109 @@
           "is_active": true
         }
       },
-      "timestamp": "2025-07-15T13:23:46.480697"
+      "timestamp": "2025-07-15T13:28:08.382248"
     },
     {
       "test": "No Token Rejection",
       "success": true,
       "details": "Status: 401",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:46.484958"
+      "timestamp": "2025-07-15T13:28:08.387149"
     },
     {
       "test": "Document Upload",
       "success": true,
-      "details": "Document uploaded: EADTjFcN8svrmRQfN2Pho_test_document.csv",
+      "details": "Document uploaded: ylLNjW5u73rr9_wLU0W8M_test_document.csv",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:47.911938"
+      "timestamp": "2025-07-15T13:28:08.753061"
     },
     {
       "test": "Document Listing",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.009985"
+      "timestamp": "2025-07-15T13:28:08.827646"
     },
     {
       "test": "Trial Balance Generation",
       "success": true,
       "details": "Debits: Rs 3,85,647, Credits: Rs 3,85,647",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.176751"
+      "timestamp": "2025-07-15T13:28:08.977881"
     },
     {
       "test": "Financial Statements",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.252313"
+      "timestamp": "2025-07-15T13:28:09.051739"
     },
     {
       "test": "Compliance Checks",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.327104"
+      "timestamp": "2025-07-15T13:28:09.124060"
     },
     {
       "test": "Dashboard Stats",
       "success": true,
-      "details": "Documents: 11, Agents: 0",
+      "details": "Documents: 15, Agents: 0",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.702820"
+      "timestamp": "2025-07-15T13:28:09.472122"
     },
     {
       "test": "Audit Trail",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.847826"
+      "timestamp": "2025-07-15T13:28:09.546637"
     },
     {
       "test": "Workflow Listing",
       "success": true,
       "details": "Status: 200",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:48.852400"
+      "timestamp": "2025-07-15T13:28:09.551699"
     },
     {
       "test": "Journal Entry Generation",
       "success": true,
       "details": "Message: Generated 2 journal entries from 1 documents",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:49.820748"
+      "timestamp": "2025-07-15T13:28:10.787401"
     },
     {
       "test": "404 Error Handling",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Status: 404",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:49.836103"
+      "timestamp": "2025-07-15T13:28:10.791967"
     },
     {
       "test": "Invalid JSON Handling",
       "success": true,
       "details": "Status: 400",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:49.861926"
+      "timestamp": "2025-07-15T13:28:10.796824"
     },
     {
       "test": "API Response Time",
       "success": true,
-      "details": "Response time: 0.04s",
+      "details": "Response time: 0.00s",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:49.898018"
+      "timestamp": "2025-07-15T13:28:10.800203"
     },
     {
       "test": "End-to-End Workflow",
       "success": true,
       "details": "Complete workflow executed successfully",
       "response_data": null,
-      "timestamp": "2025-07-15T13:23:51.624939"
+      "timestamp": "2025-07-15T13:28:12.739228"
     }
   ],
   "test_data": {
-    "document_id": "eb086dd7-3f21-4555-8025-2e49eb83244b",
+    "document_id": "dcead3c0-01de-4de1-b172-01b788e7185a",
     "trial_balance": {
       "entries": [
         {

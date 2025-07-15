@@ -2624,6 +2624,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 404 handler for API routes (must be after all other API routes)
+  app.use('/api/*', (req, res) => {
+    res.status(404).json({ 
+      message: 'API endpoint not found',
+      path: req.originalUrl,
+      method: req.method
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
