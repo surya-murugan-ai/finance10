@@ -1057,6 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statementType: 'trial_balance',
         period,
         data: formattedTrialBalance,
+        isValid: trialBalance.isBalanced,
         generatedBy: userId,
       });
 
@@ -1109,6 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statementType: 'profit_loss',
         period,
         data: profitLoss,
+        isValid: true, // P&L is always valid if generated successfully
         generatedBy: userId,
       });
 
@@ -1161,6 +1163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statementType: 'balance_sheet',
         period,
         data: balanceSheet,
+        isValid: true, // Balance sheet is always valid if generated successfully
         generatedBy: userId,
       });
 
@@ -1213,6 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statementType: 'cash_flow',
         period,
         data: cashFlow,
+        isValid: true, // Cash flow is always valid if generated successfully
         generatedBy: userId,
       });
 
