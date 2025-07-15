@@ -1227,6 +1227,81 @@ export default function FinancialReports() {
                     );
                   }
                   
+                  // Special formatting for GSTR-3B
+                  if (viewReportModal.statement.statementType === 'gstr_3b') {
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-muted p-3 rounded">
+                          <h4 className="font-medium mb-2">GSTIN: {data.gstin}</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-medium mb-2">Outward Supplies (Sales)</h4>
+                            <div className="bg-muted p-3 rounded text-sm space-y-1">
+                              <div>Taxable Value: <span className="font-semibold">₹{data.outwardSupplies?.totalTaxableValue?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>IGST: <span className="font-semibold">₹{data.outwardSupplies?.totalIGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>CGST: <span className="font-semibold">₹{data.outwardSupplies?.totalCGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>SGST: <span className="font-semibold">₹{data.outwardSupplies?.totalSGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div className="border-t pt-1">Total Tax: <span className="font-semibold">₹{data.outwardSupplies?.totalTax?.toLocaleString('en-IN') || 0}</span></div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium mb-2">Inward Supplies (Purchases)</h4>
+                            <div className="bg-muted p-3 rounded text-sm space-y-1">
+                              <div>Taxable Value: <span className="font-semibold">₹{data.inwardSupplies?.totalTaxableValue?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>IGST: <span className="font-semibold">₹{data.inwardSupplies?.totalIGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>CGST: <span className="font-semibold">₹{data.inwardSupplies?.totalCGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div>SGST: <span className="font-semibold">₹{data.inwardSupplies?.totalSGST?.toLocaleString('en-IN') || 0}</span></div>
+                              <div className="border-t pt-1">Total Tax: <span className="font-semibold">₹{data.inwardSupplies?.totalTax?.toLocaleString('en-IN') || 0}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {data.inwardSupplies?.itemDetails && data.inwardSupplies.itemDetails.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Purchase Item Details</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                  <tr className="bg-muted">
+                                    <th className="border border-gray-300 px-2 py-1 text-left">Item</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Taxable Value</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">CGST</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">SGST</th>
+                                    <th className="border border-gray-300 px-2 py-1 text-right">Total GST</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {data.inwardSupplies.itemDetails.map((item, index) => (
+                                    <tr key={index}>
+                                      <td className="border border-gray-300 px-2 py-1">{item.item}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{item.taxableValue?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{item.cgst?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{item.sgst?.toLocaleString('en-IN')}</td>
+                                      <td className="border border-gray-300 px-2 py-1 text-right">₹{item.totalGST?.toLocaleString('en-IN')}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Net Tax Liability</h4>
+                          <div className="bg-muted p-3 rounded text-sm space-y-1">
+                            <div>IGST: <span className="font-semibold">₹{data.netTaxLiability?.igst?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>CGST: <span className="font-semibold">₹{data.netTaxLiability?.cgst?.toLocaleString('en-IN') || 0}</span></div>
+                            <div>SGST: <span className="font-semibold">₹{data.netTaxLiability?.sgst?.toLocaleString('en-IN') || 0}</span></div>
+                            <div className="border-t pt-1">Total Tax Liability: <span className="font-semibold">₹{data.netTaxLiability?.totalTax?.toLocaleString('en-IN') || 0}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
                   // Default JSON display for other reports
                   return (
                     <pre className="bg-muted p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap">
