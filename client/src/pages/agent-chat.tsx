@@ -183,14 +183,22 @@ export default function AgentChat() {
       const token = localStorage.getItem('access_token');
       console.log('StartWorkflow - Token check:', { hasToken: !!token, tokenLength: token?.length });
       
-      const response = await apiRequest('/api/agent-chat/start', {
+      // Try direct fetch approach to ensure headers are sent
+      const response = await fetch('/api/agent-chat/start', {
         method: 'POST',
-        body: JSON.stringify(data),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
+        body: JSON.stringify(data),
+        credentials: 'include',
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
       setIsRunning(true);

@@ -32,7 +32,14 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
   
-  console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!token, tokenPreview: token?.substring(0, 20) + '...' });
+  console.log('API Request:', { 
+    url, 
+    method: options.method || 'GET', 
+    hasToken: !!token, 
+    tokenPreview: token?.substring(0, 20) + '...',
+    headersPreview: Object.keys(headers),
+    authHeader: headers["Authorization"]?.substring(0, 30) + '...'
+  });
   
   const res = await fetch(fullUrl, {
     method: options.method || 'GET',
