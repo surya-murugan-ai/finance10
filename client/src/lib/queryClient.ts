@@ -23,11 +23,13 @@ export async function apiRequest(
     ...(options.headers as Record<string, string> || {})
   };
   
-  if (!isFormData && options.body && options.method !== 'GET') {
-    headers["Content-Type"] = "application/json";
-  }
+  // Always add Authorization header if token exists
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  if (!isFormData && options.body && options.method !== 'GET') {
+    headers["Content-Type"] = "application/json";
   }
   
   console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!token, tokenPreview: token?.substring(0, 20) + '...' });
@@ -37,6 +39,7 @@ export async function apiRequest(
     headers,
     body: options.body,
     credentials: "include",
+    mode: "cors",
     ...options
   });
 
