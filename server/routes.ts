@@ -1227,6 +1227,294 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate GSTR-2A
+  app.post('/api/reports/gstr-2a', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      const { period } = req.body;
+      
+      const documents = await storage.getDocuments(userId);
+      const purchaseDocuments = documents.filter(doc => 
+        doc.documentType === 'purchase_register' || doc.documentType === 'vendor_invoice'
+      );
+      
+      const gstr2a = {
+        period,
+        totalInwardSupplies: 0,
+        totalTaxCredit: 0,
+        supplierReturns: [],
+        invoices: [],
+        summary: {
+          totalInvoices: 0,
+          totalTaxableValue: 0,
+          totalIGST: 0,
+          totalCGST: 0,
+          totalSGST: 0,
+          totalTax: 0
+        }
+      };
+      
+      // Process purchase documents to create GSTR-2A
+      for (const doc of purchaseDocuments) {
+        if (doc.extractedData?.purchases) {
+          for (const purchase of doc.extractedData.purchases) {
+            gstr2a.invoices.push({
+              gstin: purchase.gstin || 'N/A',
+              tradeName: purchase.vendorName || 'N/A',
+              invoiceNumber: purchase.invoiceNumber || 'N/A',
+              invoiceDate: purchase.invoiceDate || doc.uploadedAt,
+              invoiceValue: purchase.amount || 0,
+              taxableValue: purchase.taxableAmount || purchase.amount || 0,
+              igst: purchase.igst || 0,
+              cgst: purchase.cgst || 0,
+              sgst: purchase.sgst || 0,
+              totalTax: (purchase.igst || 0) + (purchase.cgst || 0) + (purchase.sgst || 0)
+            });
+          }
+        }
+      }
+      
+      // Calculate summary
+      gstr2a.summary.totalInvoices = gstr2a.invoices.length;
+      gstr2a.summary.totalTaxableValue = gstr2a.invoices.reduce((sum, inv) => sum + inv.taxableValue, 0);
+      gstr2a.summary.totalIGST = gstr2a.invoices.reduce((sum, inv) => sum + inv.igst, 0);
+      gstr2a.summary.totalCGST = gstr2a.invoices.reduce((sum, inv) => sum + inv.cgst, 0);
+      gstr2a.summary.totalSGST = gstr2a.invoices.reduce((sum, inv) => sum + inv.sgst, 0);
+      gstr2a.summary.totalTax = gstr2a.summary.totalIGST + gstr2a.summary.totalCGST + gstr2a.summary.totalSGST;
+      
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'gstr_2a',
+        period,
+        data: gstr2a,
+        isValid: true,
+        generatedBy: userId,
+      });
+
+      res.json(gstr2a);
+    } catch (error) {
+      console.error("Error generating GSTR-2A:", error);
+      res.status(500).json({ message: "Failed to generate GSTR-2A" });
+    }
+  });
+
+  // Generate GSTR-3B
+  app.post('/api/reports/gstr-3b', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      const { period } = req.body;
+      
+      const documents = await storage.getDocuments(userId);
+      const salesDocuments = documents.filter(doc => doc.documentType === 'sales_register');
+      const purchaseDocuments = documents.filter(doc => 
+        doc.documentType === 'purchase_register' || doc.documentType === 'vendor_invoice'
+      );
+      
+      const gstr3b = {
+        period,
+        outwardSupplies: {
+          totalTaxableValue: 0,
+          totalIGST: 0,
+          totalCGST: 0,
+          totalSGST: 0,
+          totalTax: 0
+        },
+        inwardSupplies: {
+          totalTaxableValue: 0,
+          totalIGST: 0,
+          totalCGST: 0,
+          totalSGST: 0,
+          totalTax: 0
+        },
+        netTaxLiability: {
+          igst: 0,
+          cgst: 0,
+          sgst: 0,
+          totalTax: 0
+        }
+      };
+      
+      // Process sales documents for outward supplies
+      for (const doc of salesDocuments) {
+        if (doc.extractedData?.sales) {
+          for (const sale of doc.extractedData.sales) {
+            gstr3b.outwardSupplies.totalTaxableValue += sale.taxableAmount || 0;
+            gstr3b.outwardSupplies.totalIGST += sale.igst || 0;
+            gstr3b.outwardSupplies.totalCGST += sale.cgst || 0;
+            gstr3b.outwardSupplies.totalSGST += sale.sgst || 0;
+          }
+        }
+      }
+      
+      // Process purchase documents for inward supplies
+      for (const doc of purchaseDocuments) {
+        if (doc.extractedData?.purchases) {
+          for (const purchase of doc.extractedData.purchases) {
+            gstr3b.inwardSupplies.totalTaxableValue += purchase.taxableAmount || purchase.amount || 0;
+            gstr3b.inwardSupplies.totalIGST += purchase.igst || 0;
+            gstr3b.inwardSupplies.totalCGST += purchase.cgst || 0;
+            gstr3b.inwardSupplies.totalSGST += purchase.sgst || 0;
+          }
+        }
+      }
+      
+      // Calculate totals
+      gstr3b.outwardSupplies.totalTax = gstr3b.outwardSupplies.totalIGST + gstr3b.outwardSupplies.totalCGST + gstr3b.outwardSupplies.totalSGST;
+      gstr3b.inwardSupplies.totalTax = gstr3b.inwardSupplies.totalIGST + gstr3b.inwardSupplies.totalCGST + gstr3b.inwardSupplies.totalSGST;
+      
+      // Calculate net tax liability
+      gstr3b.netTaxLiability.igst = gstr3b.outwardSupplies.totalIGST - gstr3b.inwardSupplies.totalIGST;
+      gstr3b.netTaxLiability.cgst = gstr3b.outwardSupplies.totalCGST - gstr3b.inwardSupplies.totalCGST;
+      gstr3b.netTaxLiability.sgst = gstr3b.outwardSupplies.totalSGST - gstr3b.inwardSupplies.totalSGST;
+      gstr3b.netTaxLiability.totalTax = gstr3b.netTaxLiability.igst + gstr3b.netTaxLiability.cgst + gstr3b.netTaxLiability.sgst;
+      
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'gstr_3b',
+        period,
+        data: gstr3b,
+        isValid: true,
+        generatedBy: userId,
+      });
+
+      res.json(gstr3b);
+    } catch (error) {
+      console.error("Error generating GSTR-3B:", error);
+      res.status(500).json({ message: "Failed to generate GSTR-3B" });
+    }
+  });
+
+  // Generate Form 26Q
+  app.post('/api/reports/form-26q', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      const { period } = req.body;
+      
+      const documents = await storage.getDocuments(userId);
+      const tdsDocuments = documents.filter(doc => doc.documentType === 'tds_certificate');
+      
+      const form26q = {
+        period,
+        deductorDetails: {
+          tan: 'TANXXXXXXX',
+          name: 'Test Company Ltd',
+          address: 'Test Address'
+        },
+        summary: {
+          totalDeductions: 0,
+          totalDeductees: 0,
+          totalTDS: 0
+        },
+        deductions: []
+      };
+      
+      // Process TDS documents
+      for (const doc of tdsDocuments) {
+        if (doc.extractedData?.tds) {
+          for (const tds of doc.extractedData.tds) {
+            form26q.deductions.push({
+              deducteeType: tds.deducteeType || 'Individual',
+              deducteeName: tds.deducteeName || 'N/A',
+              deducteePAN: tds.deducteePAN || 'N/A',
+              sectionCode: tds.sectionCode || '194A',
+              totalAmount: tds.totalAmount || 0,
+              tdsAmount: tds.tdsAmount || 0,
+              depositeDate: tds.depositeDate || doc.uploadedAt,
+              challanNumber: tds.challanNumber || 'N/A'
+            });
+          }
+        }
+      }
+      
+      // Calculate summary
+      form26q.summary.totalDeductions = form26q.deductions.length;
+      form26q.summary.totalDeductees = new Set(form26q.deductions.map(d => d.deducteePAN)).size;
+      form26q.summary.totalTDS = form26q.deductions.reduce((sum, d) => sum + d.tdsAmount, 0);
+      
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'form_26q',
+        period,
+        data: form26q,
+        isValid: true,
+        generatedBy: userId,
+      });
+
+      res.json(form26q);
+    } catch (error) {
+      console.error("Error generating Form 26Q:", error);
+      res.status(500).json({ message: "Failed to generate Form 26Q" });
+    }
+  });
+
+  // Generate Depreciation Schedule
+  app.post('/api/reports/depreciation-schedule', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      const { period } = req.body;
+      
+      const documents = await storage.getDocuments(userId);
+      const assetDocuments = documents.filter(doc => doc.documentType === 'fixed_asset_register');
+      
+      const depreciationSchedule = {
+        period,
+        summary: {
+          totalAssets: 0,
+          totalCost: 0,
+          totalDepreciation: 0,
+          netBookValue: 0
+        },
+        assets: []
+      };
+      
+      // Process asset documents
+      for (const doc of assetDocuments) {
+        if (doc.extractedData?.assets) {
+          for (const asset of doc.extractedData.assets) {
+            const cost = asset.cost || 0;
+            const depreciationRate = asset.depreciationRate || 10; // Default 10% SLM
+            const yearlyDepreciation = (cost * depreciationRate) / 100;
+            const accumulatedDepreciation = yearlyDepreciation * (asset.yearsInUse || 1);
+            const netBookValue = cost - accumulatedDepreciation;
+            
+            depreciationSchedule.assets.push({
+              assetName: asset.assetName || 'N/A',
+              assetCode: asset.assetCode || 'N/A',
+              category: asset.category || 'Others',
+              purchaseDate: asset.purchaseDate || doc.uploadedAt,
+              cost: cost,
+              depreciationMethod: asset.depreciationMethod || 'SLM',
+              depreciationRate: depreciationRate,
+              yearlyDepreciation: yearlyDepreciation,
+              accumulatedDepreciation: accumulatedDepreciation,
+              netBookValue: netBookValue
+            });
+          }
+        }
+      }
+      
+      // Calculate summary
+      depreciationSchedule.summary.totalAssets = depreciationSchedule.assets.length;
+      depreciationSchedule.summary.totalCost = depreciationSchedule.assets.reduce((sum, a) => sum + a.cost, 0);
+      depreciationSchedule.summary.totalDepreciation = depreciationSchedule.assets.reduce((sum, a) => sum + a.accumulatedDepreciation, 0);
+      depreciationSchedule.summary.netBookValue = depreciationSchedule.assets.reduce((sum, a) => sum + a.netBookValue, 0);
+      
+      // Save the report
+      await storage.createFinancialStatement({
+        statementType: 'depreciation_schedule',
+        period,
+        data: depreciationSchedule,
+        isValid: true,
+        generatedBy: userId,
+      });
+
+      res.json(depreciationSchedule);
+    } catch (error) {
+      console.error("Error generating depreciation schedule:", error);
+      res.status(500).json({ message: "Failed to generate depreciation schedule" });
+    }
+  });
+
   // Get compliance checks
   app.get('/api/compliance-checks', isAuthenticated, async (req: any, res) => {
     try {

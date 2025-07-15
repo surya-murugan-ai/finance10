@@ -49,12 +49,64 @@ export default function DocumentUpload() {
     });
   };
 
-  const handleGenerate = (docId: string, docName: string) => {
+  const handleGenerate = async (docId: string, docName: string) => {
     toast({
       title: "Generating Document",
       description: `Processing ${docName}... This may take a few moments.`,
     });
-    // TODO: Implement generation logic
+    
+    try {
+      let endpoint = '';
+      switch (docId) {
+        case 'gstr_2a':
+          endpoint = '/api/reports/gstr-2a';
+          break;
+        case 'gstr_3b':
+          endpoint = '/api/reports/gstr-3b';
+          break;
+        case 'form_26q':
+          endpoint = '/api/reports/form-26q';
+          break;
+        case 'depreciation_schedule':
+          endpoint = '/api/reports/depreciation-schedule';
+          break;
+        case 'journal_entries':
+          endpoint = '/api/journal-entries/generate';
+          break;
+        case 'bank_reconciliation':
+          endpoint = '/api/reports/bank-reconciliation';
+          break;
+        default:
+          throw new Error(`Generation not implemented for ${docName}`);
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ period: 'Q3_2025' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate document');
+      }
+      
+      const data = await response.json();
+      
+      toast({
+        title: "Document Generated",
+        description: `${docName} has been generated successfully. You can view it in the Financial Reports section.`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: `Failed to generate ${docName}. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCalculate = (docId: string, docName: string) => {

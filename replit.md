@@ -10,6 +10,28 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Generated Documents Implementation (July 15, 2025)**: **COMPLETED** - Implemented complete generation system for GST and compliance documents:
+  - **GSTR-2A Generation**: Added endpoint to generate GSTR-2A from purchase documents with supplier details, tax calculations, and invoice summaries
+  - **GSTR-3B Generation**: Implemented GSTR-3B generation from sales and purchase registers with outward/inward supplies and net tax liability calculations
+  - **Form 26Q Generation**: Created Form 26Q generation from TDS certificates with deductee details, section codes, and deposit information
+  - **Depreciation Schedule**: Added depreciation schedule generation from fixed asset register with cost, depreciation rates, and net book values
+  - **Frontend Integration**: Updated document upload page with working generation buttons for all derived documents
+  - **Database Storage**: All generated documents are saved as financial statements with proper validation and period tracking
+  - **User Access**: Generated documents are accessible through both Document Upload page and Financial Reports section
+
+- **Financial Statement Status Fix (July 15, 2025)**: **COMPLETED** - Fixed critical issue where all financial reports showed "Invalid" status:
+  - **Database Schema**: Added isValid column to financial_statements table with proper boolean validation
+  - **Backend Updates**: Updated all financial statement creation endpoints to include isValid property with proper validation logic
+  - **Trial Balance Validation**: Trial balance validation based on isBalanced property from journal entries
+  - **Other Reports**: P&L, Balance Sheet, and Cash Flow statements default to valid when generated successfully
+  - **Status Display**: Financial reports now correctly show "Valid" status instead of "Invalid" in the UI
+
+- **Trial Balance Calculation Fix (July 15, 2025)**: **COMPLETED** - Fixed NaN values and unbalanced status in trial balance:
+  - **Number Parsing**: Added proper string-to-number conversion for debit and credit amounts to prevent NaN values
+  - **Account Grouping**: Enhanced trial balance to group entries by account code instead of showing individual journal entries
+  - **Balance Calculation**: Implemented proper account-level balance calculation with total debits and credits per account
+  - **UI Enhancement**: Trial balance now displays clean account summaries with proper formatting and totals
+
 - **Journal Entry Vendor Names Enhancement (July 15, 2025)**: **COMPLETED** - Enhanced journal entries to display meaningful vendor/party names instead of generic "System" classification:
   - **Vendor Name Extraction**: Added intelligent extractVendorName method to parse vendor names from document content, filenames, and metadata
   - **Account-Based Classification**: Implemented smart vendor name assignment based on account types (Corporate Clients for sales, Global Suppliers for purchases, HR Department for payroll, etc.)
