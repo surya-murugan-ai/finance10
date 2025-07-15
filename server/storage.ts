@@ -75,8 +75,8 @@ export interface IStorage {
 
   // Audit trail operations
   createAuditTrail(trail: InsertAuditTrail): Promise<AuditTrail>;
-  getAuditTrail(entityId?: string): Promise<AuditTrail[]>;
-  getRecentAuditTrail(limit?: number): Promise<AuditTrail[]>;
+  getAuditTrail(tenantId: string, entityId?: string): Promise<AuditTrail[]>;
+  getRecentAuditTrail(tenantId: string, limit?: number): Promise<AuditTrail[]>;
 
   // Dashboard statistics
   getDashboardStats(userId: string): Promise<{
@@ -394,24 +394,29 @@ export class DatabaseStorage implements IStorage {
     return auditTrailEntry;
   }
 
-  async getAuditTrail(entityId?: string): Promise<AuditTrail[]> {
+  async getAuditTrail(tenantId: string, entityId?: string): Promise<AuditTrail[]> {
     if (entityId) {
       return await db
         .select()
         .from(auditTrail)
-        .where(eq(auditTrail.entityId, entityId))
+        .where(and(
+          eq(auditTrail.tenantId, tenantId),
+          eq(auditTrail.entityId, entityId)
+        ))
         .orderBy(desc(auditTrail.timestamp));
     }
     return await db
       .select()
       .from(auditTrail)
+      .where(eq(auditTrail.tenantId, tenantId))
       .orderBy(desc(auditTrail.timestamp));
   }
 
-  async getRecentAuditTrail(limit: number = 10): Promise<AuditTrail[]> {
+  async getRecentAuditTrail(tenantId: string, limit: number = 10): Promise<AuditTrail[]> {
     return await db
       .select()
       .from(auditTrail)
+      .where(eq(auditTrail.tenantId, tenantId))
       .orderBy(desc(auditTrail.timestamp))
       .limit(limit);
   }
@@ -552,8 +557,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCompanyProfile(userId: string): Promise<any> {
+    // Get user's tenant first
+    const user = await this.getUser(userId);
+    if (!user?.tenantId) {
+      return null;
+    }
+    
     // Get the latest company profile from audit trail
-    const auditEntries = await this.getAuditTrail(userId);
+    const auditEntries = await this.getAuditTrail(user.tenantId, userId);
     const profileEntry = auditEntries.find(entry => entry.action === "company_profile_created");
     
     if (!profileEntry) {
@@ -598,7 +609,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserFlowEntries(userId: string): Promise<any[]> {
-    const auditEntries = await this.getAuditTrail(userId);
+    // Get user's tenant first
+    const user = await this.getUser(userId);
+    if (!user?.tenantId) {
+      return [];
+    }
+    
+    const auditEntries = await this.getAuditTrail(user.tenantId, userId);
     return auditEntries
       .filter(entry => entry.action === "user_flow_tracked")
       .map(entry => JSON.parse(entry.details as string));
@@ -606,7 +623,13 @@ export class DatabaseStorage implements IStorage {
 
   // Close calendar operations
   async getCloseCalendar(userId: string): Promise<any> {
-    const auditEntries = await this.getAuditTrail(userId);
+    // Get user's tenant first
+    const user = await this.getUser(userId);
+    if (!user?.tenantId) {
+      return null;
+    }
+    
+    const auditEntries = await this.getAuditTrail(user.tenantId, userId);
     const calendarEntry = auditEntries.find(entry => entry.action === "calendar_created" || entry.action === "calendar_updated");
     
     if (!calendarEntry) {
@@ -630,7 +653,13 @@ export class DatabaseStorage implements IStorage {
 
   // User roles operations
   async getUserRoles(userId: string): Promise<any[]> {
-    const auditEntries = await this.getAuditTrail(userId);
+    // Get user's tenant first
+    const user = await this.getUser(userId);
+    if (!user?.tenantId) {
+      return [];
+    }
+    
+    const auditEntries = await this.getAuditTrail(user.tenantId, userId);
     return auditEntries
       .filter(entry => entry.action === "user_role_created")
       .map(entry => JSON.parse(entry.details as string));

@@ -2024,16 +2024,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get audit trail
-  app.get('/api/audit-trail', isAuthenticated, async (req: any, res) => {
+  app.get('/api/audit-trail', jwtAuth, async (req: any, res) => {
     try {
+      const userId = req.user.userId;
       const entityId = req.query.entityId as string;
       const limit = parseInt(req.query.limit as string) || 50;
       
+      // SECURITY: Get user's tenant_id first - prevent unauthorized access
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access audit trail without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
       let trail;
       if (entityId) {
-        trail = await storage.getAuditTrail(entityId);
+        trail = await storage.getAuditTrail(user.tenantId, entityId);
       } else {
-        trail = await storage.getRecentAuditTrail(limit);
+        trail = await storage.getRecentAuditTrail(user.tenantId, limit);
       }
       
       res.json(trail);
