@@ -463,7 +463,10 @@ export class LangGraphOrchestrator {
     const baseAmount = Math.floor(Math.random() * 500000) + 50000; // 50K - 550K
     const amount = extractedData?.extractedData?.totalAmount || baseAmount.toString();
     
-    switch (document.documentType) {
+    // If documentType is not set, infer from filename
+    const documentType = document.documentType || this.inferDocumentType(document.originalName || document.fileName);
+    
+    switch (documentType) {
       case 'vendor_invoice':
         return [
           {
@@ -565,7 +568,7 @@ export class LangGraphOrchestrator {
           {
             journalId: `JE${Date.now()}_1`,
             date,
-            accountCode: 'PURCHASE',
+            accountCode: '5300',
             accountName: 'Purchase Expense',
             debitAmount: amount,
             creditAmount: "0",
@@ -575,11 +578,59 @@ export class LangGraphOrchestrator {
           {
             journalId: `JE${Date.now()}_2`,
             date,
-            accountCode: 'PAYABLE',
+            accountCode: '2100',
             accountName: 'Accounts Payable',
             debitAmount: "0",
             creditAmount: amount,
             narration: `Purchase register - ${document.originalName}`,
+            entity: 'System',
+          }
+        ];
+
+      case 'fixed_assets':
+        return [
+          {
+            journalId: `JE${Date.now()}_1`,
+            date,
+            accountCode: '1500',
+            accountName: 'Fixed Assets',
+            debitAmount: amount,
+            creditAmount: "0",
+            narration: `Fixed assets - ${document.originalName}`,
+            entity: 'System',
+          },
+          {
+            journalId: `JE${Date.now()}_2`,
+            date,
+            accountCode: '1100',
+            accountName: 'Cash/Bank',
+            debitAmount: "0",
+            creditAmount: amount,
+            narration: `Fixed assets - ${document.originalName}`,
+            entity: 'System',
+          }
+        ];
+
+      case 'tds_certificate':
+        return [
+          {
+            journalId: `JE${Date.now()}_1`,
+            date,
+            accountCode: '1300',
+            accountName: 'TDS Receivable',
+            debitAmount: amount,
+            creditAmount: "0",
+            narration: `TDS certificate - ${document.originalName}`,
+            entity: 'System',
+          },
+          {
+            journalId: `JE${Date.now()}_2`,
+            date,
+            accountCode: '5400',
+            accountName: 'TDS Expense',
+            debitAmount: "0",
+            creditAmount: amount,
+            narration: `TDS certificate - ${document.originalName}`,
             entity: 'System',
           }
         ];
@@ -607,6 +658,37 @@ export class LangGraphOrchestrator {
             entity: 'System',
           }
         ];
+    }
+  }
+
+  private inferDocumentType(filename: string): string {
+    const name = filename.toLowerCase();
+    console.log(`Inferring document type for: ${filename} -> ${name}`);
+    
+    if (name.includes('sales') && name.includes('register')) {
+      console.log('Detected: sales_register');
+      return 'sales_register';
+    } else if (name.includes('purchase') && name.includes('register')) {
+      console.log('Detected: purchase_register');
+      return 'purchase_register';
+    } else if (name.includes('salary') && name.includes('register')) {
+      console.log('Detected: salary_register');
+      return 'salary_register';
+    } else if (name.includes('fixed') && name.includes('asset')) {
+      console.log('Detected: fixed_assets');
+      return 'fixed_assets';
+    } else if (name.includes('tds') && name.includes('certificate')) {
+      console.log('Detected: tds_certificate');
+      return 'tds_certificate';
+    } else if (name.includes('bank') && name.includes('statement')) {
+      console.log('Detected: bank_statement');
+      return 'bank_statement';
+    } else if (name.includes('vendor') && name.includes('invoice')) {
+      console.log('Detected: vendor_invoice');
+      return 'vendor_invoice';
+    } else {
+      console.log('Detected: unknown - falling back to default');
+      return 'unknown';
     }
   }
 
