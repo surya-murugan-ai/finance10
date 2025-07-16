@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { name: 'Data Source Config', href: '/data-source-config', icon: Database, description: 'Configure data sources' },
   { name: 'Onboarding', href: '/onboarding', icon: Users, description: 'User onboarding' },
   { name: 'Settings', href: '/settings', icon: Settings, description: 'Application settings' },
+  { name: 'Admin Panel', href: '/admin', icon: Shield, description: 'Admin panel' },
 ];
 
 export default function CollapsibleSidebar() {

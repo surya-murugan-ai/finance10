@@ -22,6 +22,7 @@ import MLAnomalyDetection from "@/pages/ml-anomaly-detection";
 import MCAFiling from "@/pages/mca-filing";
 import ComplianceTutorial from "@/pages/compliance-tutorial";
 import DataSourceConfig from "@/pages/data-source-config";
+import AdminPanel from "@/pages/admin";
 
 function Router() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
@@ -67,6 +68,7 @@ function Router() {
           <Route path="/data-source-config" component={DataSourceConfig} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/settings" component={Settings} />
+          <Route path="/admin" component={AdminPanel} />
         </>
       )}
       <Route component={NotFound} />

@@ -59,7 +59,8 @@ const jwtAuth = async (req: any, res: any, next: any) => {
         },
         userId: decoded.userId,
         email: decoded.email,
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        role: user.role || 'finance_exec'
       };
       console.log('JWT Auth: Success for user', decoded.userId, 'with tenant', user.tenantId);
       next();
@@ -71,6 +72,14 @@ const jwtAuth = async (req: any, res: any, next: any) => {
     console.log('JWT Auth: General error', error);
     return res.status(401).json({ message: 'Unauthorized' });
   }
+};
+
+// Admin middleware to check admin role
+const adminAuth = async (req: any, res: any, next: any) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
 };
 
 // Helper functions for dashboard stats
@@ -3660,6 +3669,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching data source statistics:", error);
       res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
+  // Admin Routes - System Management
+  app.get('/api/admin/users', jwtAuth, adminAuth, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  app.get('/api/admin/tenants', jwtAuth, adminAuth, async (req: any, res) => {
+    try {
+      const tenants = await storage.getAllTenants();
+      res.json(tenants);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+
+  app.get('/api/admin/stats', jwtAuth, adminAuth, async (req: any, res) => {
+    try {
+      const stats = await storage.getSystemStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+      res.status(500).json({ error: 'Failed to fetch system stats' });
+    }
+  });
+
+  app.patch('/api/admin/users/:id', jwtAuth, adminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedUser = await storage.updateUser(id, updates);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  app.patch('/api/admin/tenants/:id', jwtAuth, adminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedTenant = await storage.updateTenant(id, updates);
+      res.json(updatedTenant);
+    } catch (error) {
+      console.error('Error updating tenant:', error);
+      res.status(500).json({ error: 'Failed to update tenant' });
     }
   });
 

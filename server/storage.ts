@@ -49,6 +49,13 @@ export interface IStorage {
   // Tenant operations
   createTenant(tenant: any): Promise<Tenant>;
   getTenant(id: string): Promise<Tenant | undefined>;
+  getAllTenants(): Promise<Tenant[]>;
+  updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant>;
+  
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
+  getSystemStats(): Promise<any>;
 
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
@@ -183,6 +190,51 @@ export class DatabaseStorage implements IStorage {
   async getTenant(id: string): Promise<Tenant | undefined> {
     const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
     return tenant;
+  }
+
+  async getAllTenants(): Promise<Tenant[]> {
+    return await db.select().from(tenants).orderBy(desc(tenants.createdAt));
+  }
+
+  async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
+    const [tenant] = await db
+      .update(tenants)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tenants.id, id))
+      .returning();
+    return tenant;
+  }
+
+  // Admin operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getSystemStats(): Promise<any> {
+    const [totalUsers] = await db.select({ count: count() }).from(users);
+    const [totalTenants] = await db.select({ count: count() }).from(tenants);
+    const [totalDocuments] = await db.select({ count: count() }).from(documents);
+    const [totalJournalEntries] = await db.select({ count: count() }).from(journalEntries);
+    const [activeUsers] = await db.select({ count: count() }).from(users).where(eq(users.isActive, true));
+    
+    return {
+      totalUsers: totalUsers.count,
+      totalTenants: totalTenants.count,
+      totalDocuments: totalDocuments.count,
+      totalJournalEntries: totalJournalEntries.count,
+      activeUsers: activeUsers.count,
+      storageUsed: "0 MB", // TODO: Calculate actual storage usage
+      apiRequestsToday: 0 // TODO: Implement request tracking
+    };
   }
 
   // Document operations
