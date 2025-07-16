@@ -10,6 +10,7 @@ import { complianceCheckerService } from "./services/complianceChecker";
 import { financialReportsService } from "./services/financialReports";
 import { dataSourceService } from "./services/dataSourceService";
 import { contentBasedClassifier } from "./services/contentBasedClassifier";
+import { AnthropicService } from "./services/anthropic";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { writeFile } from "fs/promises";
@@ -3106,6 +3107,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching intercompany transactions:', error);
       res.status(500).json({ message: 'Failed to fetch intercompany transactions' });
+    }
+  });
+
+  // Natural language chat endpoint
+  app.post('/api/chat/query', jwtAuth, async (req, res) => {
+    try {
+      const { query } = req.body;
+      const { user } = req as any;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: 'Query is required' });
+      }
+      
+      // Gather context data for the AI
+      const [documents, journalEntries, financialStatements, complianceChecks] = await Promise.all([
+        storage.getDocuments(),
+        storage.getJournalEntries(),
+        storage.getFinancialStatements(),
+        storage.getComplianceChecks()
+      ]);
+      
+      // Filter by tenant
+      const userDocuments = documents.filter(doc => doc.tenantId === user.tenantId);
+      const userJournalEntries = journalEntries.filter(entry => entry.tenantId === user.tenantId);
+      const userFinancialReports = financialStatements.filter(report => report.tenantId === user.tenantId);
+      const userComplianceData = complianceChecks.filter(check => check.tenantId === user.tenantId);
+      
+      // Process query using Anthropic
+      const anthropicService = new AnthropicService();
+      const result = await anthropicService.processNaturalLanguageQuery(query, {
+        availableDocuments: userDocuments,
+        journalEntries: userJournalEntries,
+        financialReports: userFinancialReports,
+        complianceData: userComplianceData,
+        userTenant: user.tenantId
+      });
+      
+      // Log the chat interaction
+      await storage.createAuditTrail({
+        action: 'chat_query',
+        entityType: 'chat',
+        entityId: 'chat_session',
+        userId: user.userId,
+        tenantId: user.tenantId,
+        details: {
+          query: query,
+          confidence: result.confidence,
+          actionsCount: result.suggestedActions?.length || 0
+        }
+      });
+      
+      res.json({
+        query,
+        result,
+        timestamp: new Date().toISOString(),
+        success: true
+      });
+    } catch (error) {
+      console.error('Chat query error:', error);
+      res.status(500).json({ 
+        message: 'Failed to process chat query',
+        error: error.message 
+      });
     }
   });
 

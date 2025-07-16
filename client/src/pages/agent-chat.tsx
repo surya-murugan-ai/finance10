@@ -127,7 +127,7 @@ export default function AgentChat() {
     {
       id: '1',
       type: 'system',
-      content: 'Welcome to the QRT Closure Agent Chat! I can help you process financial documents and automate quarterly closures. Type "help" to see available commands.',
+      content: 'Welcome to the QRT Closure Agent Chat! I can answer questions about your financial data, generate reports, and help with platform actions. Ask me anything about your documents, compliance status, or financial insights.',
       timestamp: new Date()
     }
   ]);
@@ -271,6 +271,70 @@ export default function AgentChat() {
         agentName: data.agentName
       };
       setMessages(prev => [...prev, agentResponse]);
+    }
+  });
+
+  // New natural language chat mutation
+  const naturalLanguageChatMutation = useMutation({
+    mutationFn: async (query: string) => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/chat/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ query }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      const agentResponse: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'agent',
+        content: data.result.response,
+        timestamp: new Date(),
+        agentName: 'AI Assistant'
+      };
+      setMessages(prev => [...prev, agentResponse]);
+      
+      // Add suggested actions if available
+      if (data.result.suggestedActions && data.result.suggestedActions.length > 0) {
+        const actionsMessage: ChatMessage = {
+          id: Date.now().toString(),
+          type: 'system',
+          content: `💡 Suggested actions:\n${data.result.suggestedActions.map((action: string, index: number) => `${index + 1}. ${action}`).join('\n')}`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, actionsMessage]);
+      }
+      
+      // Show confidence level if low
+      if (data.result.confidence < 0.7) {
+        const confidenceMessage: ChatMessage = {
+          id: Date.now().toString(),
+          type: 'system',
+          content: `⚠️ I'm ${Math.round(data.result.confidence * 100)}% confident in this response. You may want to verify or provide more specific information.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, confidenceMessage]);
+      }
+    },
+    onError: (error) => {
+      console.error("Natural language chat error:", error);
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'system',
+        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   });
 
@@ -418,14 +482,8 @@ export default function AgentChat() {
 
     setMessages(prev => [...prev, userMessage]);
     
-    if (newMessage.toLowerCase().includes('start') || newMessage.toLowerCase().includes('process')) {
-      startWorkflowMutation.mutate({ 
-        message: newMessage, 
-        documentId: selectedDocument || undefined 
-      });
-    } else {
-      sendMessageMutation.mutate(newMessage);
-    }
+    // Use natural language chat for all messages
+    naturalLanguageChatMutation.mutate(newMessage);
 
     setNewMessage("");
   };
@@ -489,40 +547,73 @@ export default function AgentChat() {
             Quick Start
           </CardTitle>
           <CardDescription className="text-blue-600">
-            Get started with common commands or start an autonomous workflow
+            Ask natural language questions about your data or try these examples
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
-            <Select value={selectedDocument} onValueChange={setSelectedDocument}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select documents to process" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Documents</SelectItem>
-                {documents?.map((doc: any) => (
-                  <SelectItem key={doc.id} value={doc.id}>{doc.fileName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={() => startWorkflowMutation.mutate({ 
-                message: "Start processing documents", 
-                documentId: selectedDocument === "all" ? undefined : selectedDocument 
-              })}
-              disabled={isRunning}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Start Workflow
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setNewMessage("help")}
-            >
-              <Info className="w-4 h-4 mr-2" />
-              Help
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-2">Example Questions:</h4>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewMessage("How much sales revenue do I have this quarter?")}
+                  className="w-full text-left justify-start"
+                >
+                  How much sales revenue do I have this quarter?
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewMessage("What's my current TDS liability?")}
+                  className="w-full text-left justify-start"
+                >
+                  What's my current TDS liability?
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewMessage("Show me my top 5 expenses")}
+                  className="w-full text-left justify-start"
+                >
+                  Show me my top 5 expenses
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewMessage("Generate a compliance report")}
+                  className="w-full text-left justify-start"
+                >
+                  Generate a compliance report
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-2">Quick Actions:</h4>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => startWorkflowMutation.mutate({ 
+                    message: "Start processing documents", 
+                    documentId: selectedDocument === "all" ? undefined : selectedDocument 
+                  })}
+                  disabled={isRunning}
+                  className="bg-blue-600 hover:bg-blue-700 w-full"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Workflow
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setNewMessage("help")}
+                  className="w-full"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  Help
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -605,7 +696,7 @@ export default function AgentChat() {
             
             <div className="flex items-center space-x-2">
               <Input
-                placeholder="Type 'help' for commands or 'start' to begin processing..."
+                placeholder="Ask me anything about your financial data..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -613,7 +704,7 @@ export default function AgentChat() {
               />
               <Button 
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                disabled={!newMessage.trim() || naturalLanguageChatMutation.isPending}
               >
                 <Send className="w-4 h-4" />
               </Button>

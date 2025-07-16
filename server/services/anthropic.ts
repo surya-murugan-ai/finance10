@@ -37,6 +37,86 @@ export interface ComplianceCheckResult {
 }
 
 export class AnthropicService {
+  
+  // New conversational AI method for natural language queries
+  async processNaturalLanguageQuery(
+    query: string, 
+    context: {
+      availableDocuments?: any[];
+      journalEntries?: any[];
+      financialReports?: any[];
+      complianceData?: any[];
+      userTenant?: string;
+    }
+  ): Promise<{
+    response: string;
+    suggestedActions?: string[];
+    dataReferences?: any[];
+    confidence: number;
+    needsMoreInfo?: boolean;
+  }> {
+    const prompt = `
+    You are an AI assistant for a financial compliance platform. A user has asked: "${query}"
+    
+    Available context:
+    - Documents: ${context.availableDocuments?.length || 0} documents
+    - Journal Entries: ${context.journalEntries?.length || 0} entries
+    - Financial Reports: ${context.financialReports?.length || 0} reports
+    - Compliance Data: ${context.complianceData?.length || 0} items
+    - User Tenant: ${context.userTenant || 'Unknown'}
+    
+    Document Details:
+    ${context.availableDocuments?.slice(0, 5).map(doc => 
+      `- ${doc.originalName} (${doc.documentType}) - ${doc.status}`
+    ).join('\n') || 'No documents available'}
+    
+    Recent Journal Entries:
+    ${context.journalEntries?.slice(0, 3).map(entry => 
+      `- ${entry.accountCode}: ${entry.debitAmount || 0} (Dr) / ${entry.creditAmount || 0} (Cr) - ${entry.narration}`
+    ).join('\n') || 'No journal entries available'}
+    
+    Financial Reports:
+    ${context.financialReports?.slice(0, 3).map(report => 
+      `- ${report.reportType} (${report.period}) - ${report.isValid ? 'Valid' : 'Invalid'}`
+    ).join('\n') || 'No financial reports available'}
+    
+    Instructions:
+    1. Provide a helpful, accurate response based on the available data
+    2. If the query requires an action (like generating reports, uploading documents, etc.), suggest specific actions
+    3. Reference specific data from the context when relevant
+    4. Be concise but informative
+    5. If you need more information to answer properly, indicate this
+    6. Rate your confidence in the response (0-1)
+    
+    Respond in JSON format:
+    {
+      "response": "Your helpful response here",
+      "suggestedActions": ["action1", "action2"],
+      "dataReferences": [{"type": "document", "id": "doc123", "name": "Sales Register"}],
+      "confidence": 0.95,
+      "needsMoreInfo": false
+    }
+    `;
+
+    try {
+      const response = await anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const result = JSON.parse(response.content[0].text);
+      return result;
+    } catch (error) {
+      console.error('Natural language query processing failed:', error);
+      return {
+        response: "I'm having trouble processing your query right now. Please try again or be more specific.",
+        confidence: 0.1,
+        needsMoreInfo: true
+      };
+    }
+  }
+
   async classifyDocument(fileName: string, content: string): Promise<DocumentClassificationResult> {
     const prompt = `
     Analyze this financial document and classify it according to Indian accounting standards.
