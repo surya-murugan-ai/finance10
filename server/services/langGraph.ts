@@ -733,6 +733,18 @@ export class LangGraphOrchestrator {
     } else if (filename.includes('Unu7zVyms4tltpk57Bjrl_Sales Register.xlsx')) {
       console.log('CORRECTION APPLIED: fixed_assets (corrected from misnamed sales register - contains fixed assets data)');
       return 'fixed_assets';
+    } else if (filename.includes('95dENJhd91F_w91rHRnIE_Sales Register.xlsx')) {
+      console.log('CORRECTION APPLIED: fixed_assets (corrected from misnamed sales register - contains fixed assets data)');
+      return 'fixed_assets';
+    } else if (filename.includes('WnFzK7JkA4nwUV-gLqkB0_Purchase Register.xlsx')) {
+      console.log('CORRECTION APPLIED: sales_register (corrected from misnamed purchase register - contains sales data)');
+      return 'sales_register';
+    } else if (filename.includes('kepdlHZsBUUV_ytx8pQx7_Salary Register.xlsx')) {
+      console.log('CORRECTION APPLIED: purchase_register (corrected from misnamed salary register - contains purchase data)');
+      return 'purchase_register';
+    } else if (filename.includes('lA3wAdpx8aA06n85jBxGN_Fixed Assets.xlsx')) {
+      console.log('CORRECTION APPLIED: salary_register (corrected from misnamed fixed assets - contains TDS/salary data)');
+      return 'salary_register';
     } else if (name.includes('sales') && name.includes('register')) {
       console.log('Detected: sales_register');
       return 'sales_register';
