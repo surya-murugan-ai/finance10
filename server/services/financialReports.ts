@@ -208,6 +208,11 @@ export class FinancialReportsService {
       const classification = this.classifyBalanceSheetAccount(accountCode);
       const isMiscAccount = this.isMiscAccount(accountCode);
       
+      // Skip accounts that don't belong in balance sheet (revenue and expense accounts)
+      if (classification === null) {
+        continue;
+      }
+      
       if (isMiscAccount && total.netAmount === 0) {
         // For MISC accounts that balance to zero, create a balanced entry
         const accountEntries = journalEntries.filter(entry => entry.accountCode === accountCode);
@@ -360,7 +365,7 @@ export class FinancialReportsService {
     return /^MISC/i.test(accountCode);
   }
 
-  private classifyBalanceSheetAccount(accountCode: string): { type: 'asset' | 'liability' | 'equity'; subType: string } {
+  private classifyBalanceSheetAccount(accountCode: string): { type: 'asset' | 'liability' | 'equity'; subType: string } | null {
     // Asset accounts
     if (/^1\d{3}/.test(accountCode) || /^CASH|BANK|INVENTORY|RECEIVABLE/i.test(accountCode)) {
       if (/^1[0-1]\d{2}/.test(accountCode) || /^CASH|BANK/i.test(accountCode)) {
@@ -387,7 +392,12 @@ export class FinancialReportsService {
       return { type: 'asset', subType: 'current' };
     }
 
-    // Default classification
+    // Revenue accounts (4xxx) and Expense accounts (5xxx) do NOT belong in balance sheet
+    if (/^[45]\d{3}/.test(accountCode)) {
+      return null; // Exclude these from balance sheet
+    }
+
+    // Default classification for unknown accounts
     return { type: 'asset', subType: 'other' };
   }
 

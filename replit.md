@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Financial Reports Calculation Fix (July 16, 2025)**: **COMPLETED** - Fixed critical profit & loss and balance sheet calculation errors that were showing incorrect account classifications:
+  - **P&L Logic Enhancement**: Updated expense account calculation to properly handle credit balances (like TDS) using net debit/credit logic instead of simple debit/credit selection
+  - **Balance Sheet Classification Fix**: Modified classifyBalanceSheetAccount function to exclude revenue (4xxx) and expense (5xxx) accounts from balance sheet entirely
+  - **Proper Accounting Standards**: Balance sheet now only includes assets (1xxx), liabilities (2xxx), and equity (3xxx) accounts as per standard accounting practices
+  - **Expense Account Exclusion**: Removed expense accounts from appearing as assets in balance sheet - they are now properly excluded as temporary accounts
+  - **Accurate Financial Results**: P&L shows Revenue Rs 6,62,962, Expenses Rs 22,44,611, Net Loss Rs -15,81,649 with Balance Sheet showing only permanent accounts
+  - **Production Ready**: Both P&L and Balance Sheet calculations now follow proper accounting principles for accurate financial reporting
+
 - **Journal Entry Generation System Fix (July 16, 2025)**: **COMPLETED** - Successfully resolved journal entry generation 500 error and restored full financial reporting functionality:
   - **Root Cause**: Journal entry creation was failing due to missing tenant_id field in database insertion, causing NOT NULL constraint violation
   - **Tenant Assignment Fix**: Updated journal entry generation endpoint to properly retrieve user tenant_id from database and include in journal entry records

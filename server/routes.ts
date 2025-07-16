@@ -3567,19 +3567,28 @@ async function generateProfitLoss(journalEntries: any[]): Promise<any> {
         totalRevenue += amount;
       }
     } else if (code.startsWith('5')) {
-      // Expense accounts (5xxx) - normal debit balance
-      // For expense accounts, we use totalDebits OR totalCredits depending on the journal structure
-      // If totalDebits > 0, use totalDebits (normal expense entry)
-      // If totalCredits > 0, use totalCredits (reverse entry like TDS)
-      const amount = balance.totalDebits > 0 ? balance.totalDebits : balance.totalCredits;
-      if (amount > 0) {
+      // Expense accounts (5xxx) - can have debit or credit balances
+      // If totalDebits > totalCredits, it's a normal expense (debit balance)
+      // If totalCredits > totalDebits, it's a credit balance (like TDS receivable offsetting expense)
+      const netExpense = balance.totalDebits - balance.totalCredits;
+      if (netExpense > 0) {
+        // Normal expense (debit balance)
         expenses.push({
           accountCode: code,
           accountName: balance.accountName,
-          amount: amount,
+          amount: netExpense,
           type: 'expense'
         });
-        totalExpenses += amount;
+        totalExpenses += netExpense;
+      } else if (netExpense < 0) {
+        // Credit balance in expense account - this reduces total expenses
+        expenses.push({
+          accountCode: code,
+          accountName: balance.accountName + ' (Credit)',
+          amount: Math.abs(netExpense),
+          type: 'expense_credit'
+        });
+        totalExpenses -= Math.abs(netExpense); // Subtract from total expenses
       }
     }
   }
@@ -3598,31 +3607,94 @@ async function generateProfitLoss(journalEntries: any[]): Promise<any> {
 }
 
 async function generateBalanceSheet(journalEntries: any[]): Promise<any> {
-  const assets = journalEntries.filter(entry => 
-    entry.accountCode.startsWith('1') && parseFloat(entry.debitAmount) > 0
-  );
-  const liabilities = journalEntries.filter(entry => 
-    entry.accountCode.startsWith('2') && parseFloat(entry.creditAmount) > 0
-  );
+  // Group entries by account code first to calculate net balances
+  const accountBalances = new Map<string, {
+    accountName: string;
+    totalDebits: number;
+    totalCredits: number;
+    netBalance: number;
+  }>();
+
+  for (const entry of journalEntries) {
+    const code = entry.accountCode;
+    const current = accountBalances.get(code) || {
+      accountName: entry.accountName,
+      totalDebits: 0,
+      totalCredits: 0,
+      netBalance: 0
+    };
+    
+    current.totalDebits += parseFloat(entry.debitAmount || 0);
+    current.totalCredits += parseFloat(entry.creditAmount || 0);
+    current.netBalance = current.totalDebits - current.totalCredits;
+    
+    accountBalances.set(code, current);
+  }
   
-  const totalAssets = assets.reduce((sum, entry) => sum + parseFloat(entry.debitAmount), 0);
-  const totalLiabilities = liabilities.reduce((sum, entry) => sum + parseFloat(entry.creditAmount), 0);
+  const assets = [];
+  const liabilities = [];
+  const equity = [];
+  let totalAssets = 0;
+  let totalLiabilities = 0;
+  let totalEquity = 0;
+  
+  // Process each account based on account code ranges
+  for (const [code, balance] of accountBalances) {
+    if (code.startsWith('1')) {
+      // Asset accounts (1xxx) - normal debit balance
+      // For assets, we use net debit balance (totalDebits - totalCredits)
+      const amount = balance.netBalance;
+      if (amount > 0) {
+        assets.push({
+          accountCode: code,
+          accountName: balance.accountName,
+          amount: amount,
+          type: 'asset'
+        });
+        totalAssets += amount;
+      }
+    } else if (code.startsWith('2')) {
+      // Liability accounts (2xxx) - normal credit balance
+      // For liabilities, we use net credit balance (totalCredits - totalDebits)
+      const amount = -balance.netBalance; // Negative of net balance gives credit balance
+      if (amount > 0) {
+        liabilities.push({
+          accountCode: code,
+          accountName: balance.accountName,
+          amount: amount,
+          type: 'liability'
+        });
+        totalLiabilities += amount;
+      }
+    } else if (code.startsWith('3')) {
+      // Equity accounts (3xxx) - normal credit balance
+      const amount = -balance.netBalance; // Negative of net balance gives credit balance
+      if (amount > 0) {
+        equity.push({
+          accountCode: code,
+          accountName: balance.accountName,
+          amount: amount,
+          type: 'equity'
+        });
+        totalEquity += amount;
+      }
+    }
+    // Note: 4xxx (revenue) and 5xxx (expense) accounts are NOT included in balance sheet
+    // They are temporary accounts that get closed to retained earnings
+  }
+  
+  // Sort by account code
+  assets.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+  liabilities.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+  equity.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
   
   return {
-    assets: assets.map(entry => ({
-      accountCode: entry.accountCode,
-      accountName: entry.accountName,
-      amount: parseFloat(entry.debitAmount),
-      type: 'asset'
-    })),
-    liabilities: liabilities.map(entry => ({
-      accountCode: entry.accountCode,
-      accountName: entry.accountName,
-      amount: parseFloat(entry.creditAmount),
-      type: 'liability'
-    })),
+    assets,
+    liabilities,
+    equity,
     totalAssets,
     totalLiabilities,
-    totalEquity: totalAssets - totalLiabilities
+    totalEquity,
+    isBalanced: Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 0.01
   };
 }
