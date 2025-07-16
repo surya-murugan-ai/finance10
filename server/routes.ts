@@ -9,6 +9,7 @@ import { langGraphOrchestrator } from "./services/langGraph";
 import { complianceCheckerService } from "./services/complianceChecker";
 import { financialReportsService } from "./services/financialReports";
 import { dataSourceService } from "./services/dataSourceService";
+import { contentBasedClassifier } from "./services/contentBasedClassifier";
 import { insertDocumentSchema } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { writeFile } from "fs/promises";
@@ -590,8 +591,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await writeFile(filePath, file.buffer);
       console.log("File saved to:", filePath);
 
-      // Create document record
-      console.log("Creating document record");
+      // CONTENT-BASED CLASSIFICATION: Analyze actual file content to prevent misclassification
+      console.log("Performing content-based classification for:", file.originalname);
+      const contentAnalysis = await contentBasedClassifier.analyzeDocumentContent(filePath, file.originalname);
+      
+      console.log("Content analysis result:", {
+        documentType: contentAnalysis.documentType,
+        confidence: contentAnalysis.confidence,
+        reasoning: contentAnalysis.reasoning,
+        potentialMisclassification: contentAnalysis.potentialMisclassification
+      });
+
+      // Log warning for potential misclassification
+      if (contentAnalysis.potentialMisclassification) {
+        console.warn(`POTENTIAL MISCLASSIFICATION DETECTED: ${file.originalname}`);
+        console.warn(`Classification reason: ${contentAnalysis.reasoning}`);
+        console.warn(`Confidence: ${Math.round(contentAnalysis.confidence * 100)}%`);
+      }
+
+      // Create document record with content-based classification
+      console.log("Creating document record with content-based classification");
       const document = await storage.createDocument({
         fileName,
         originalName: file.originalname,
@@ -599,11 +618,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileSize: file.size,
         filePath: filePath,
         uploadedBy: userId,
-        status: 'uploaded',
-        metadata: { size: file.size, mimeType: file.mimetype },
+        status: 'classified', // Mark as classified since we've analyzed the content
+        documentType: contentAnalysis.documentType as any,
+        metadata: { 
+          size: file.size, 
+          mimeType: file.mimetype,
+          contentAnalysis: contentAnalysis,
+          classificationMethod: 'content_based_upload'
+        },
         tenantId: user.tenantId,
       });
-      console.log("Document created:", document.id);
+      console.log("Document created with content-based classification:", document.id);
 
       // Start LangGraph workflow (temporarily disabled for debugging)
       let workflowId = null;
@@ -636,11 +661,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         document,
         workflowId: workflowId || 'none',
-        message: "Document uploaded and saved successfully",
+        message: "Document uploaded and classified successfully",
+        contentAnalysis: {
+          documentType: contentAnalysis.documentType,
+          confidence: contentAnalysis.confidence,
+          reasoning: contentAnalysis.reasoning,
+          potentialMisclassification: contentAnalysis.potentialMisclassification,
+          classificationMethod: 'content_based_upload'
+        },
       });
     } catch (error) {
       console.error("Error uploading document:", error);
       res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  // Validate document classification endpoint
+  app.post('/api/documents/:id/validate-classification', jwtAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.userId;
+      
+      // Get user's tenant for security
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      // Get document
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      
+      // Re-analyze document content
+      const contentAnalysis = await contentBasedClassifier.analyzeDocumentContent(
+        document.filePath, 
+        document.originalName
+      );
+      
+      // Validate against current classification
+      const validation = await contentBasedClassifier.validateClassification(
+        document.filePath,
+        document.originalName,
+        document.documentType || 'unknown'
+      );
+      
+      res.json({
+        document: {
+          id: document.id,
+          filename: document.originalName,
+          currentType: document.documentType,
+        },
+        contentAnalysis,
+        validation,
+        recommendation: validation.isValid ? 'Classification is correct' : `Consider changing to ${validation.suggestedType}`,
+      });
+    } catch (error) {
+      console.error("Error validating document classification:", error);
+      res.status(500).json({ message: "Failed to validate classification" });
     }
   });
 

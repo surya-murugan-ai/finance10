@@ -3,6 +3,7 @@ import { anthropicService } from './anthropic';
 import { fileProcessorService } from './fileProcessor';
 import { complianceCheckerService } from './complianceChecker';
 import { financialReportsService } from './financialReports';
+import { contentBasedClassifier } from './contentBasedClassifier';
 import type { Document, AgentJob } from '@shared/schema';
 
 export type AgentStatus = 'idle' | 'running' | 'completed' | 'failed' | 'paused';
@@ -263,22 +264,51 @@ export class LangGraphOrchestrator {
 
   private async executeClassifierBot(workflow: WorkflowState, node: LangGraphNode): Promise<void> {
     const document = workflow.globalState.document;
-    const content = await fileProcessorService.extractTextContent(document.filePath);
     
-    const classification = await anthropicService.classifyDocument(
-      document.originalName,
-      content
+    console.log(`ClassifierBot: Processing document ${document.filename} with content-based analysis`);
+
+    // Use content-based classification instead of simple filename/content analysis
+    const contentAnalysis = await contentBasedClassifier.analyzeDocumentContent(
+      document.filePath, 
+      document.filename
     );
+    
+    console.log(`ClassifierBot: Content analysis result:`, {
+      documentType: contentAnalysis.documentType,
+      confidence: contentAnalysis.confidence,
+      reasoning: contentAnalysis.reasoning,
+      potentialMisclassification: contentAnalysis.potentialMisclassification
+    });
+
+    // Log warning for potential misclassification
+    if (contentAnalysis.potentialMisclassification) {
+      console.warn(`ClassifierBot: Potential misclassification detected for ${document.filename}`);
+      console.warn(`ClassifierBot: Reason: ${contentAnalysis.reasoning}`);
+    }
+
+    // Create classification result compatible with existing workflow
+    const classification = {
+      documentType: contentAnalysis.documentType,
+      confidence: contentAnalysis.confidence,
+      reasoning: contentAnalysis.reasoning,
+      keyIndicators: contentAnalysis.keyIndicators,
+      contentSummary: contentAnalysis.contentSummary,
+      potentialMisclassification: contentAnalysis.potentialMisclassification,
+      filenameBasedType: this.inferDocumentType(document.filename), // Keep for comparison
+      classificationMethod: 'content_based_analysis'
+    };
 
     // Update document with classification
     await storage.updateDocument(document.id, {
-      documentType: classification.documentType as any,
+      documentType: contentAnalysis.documentType as any,
       status: 'classified',
       metadata: { classification },
     });
 
     node.output = classification;
     workflow.globalState.classification = classification;
+    
+    console.log(`ClassifierBot: Document classified as ${contentAnalysis.documentType} with ${Math.round(contentAnalysis.confidence * 100)}% confidence`);
   }
 
   private async executeDataExtractor(workflow: WorkflowState, node: LangGraphNode): Promise<void> {
