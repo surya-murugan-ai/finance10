@@ -24,7 +24,7 @@ function formatCurrency(amount: number): string {
 }
 
 // JWT middleware for API endpoints
-const jwtAuth = (req: any, res: any, next: any) => {
+const jwtAuth = async (req: any, res: any, next: any) => {
   try {
     const authHeader = req.headers.authorization;
     console.log('JWT Auth Debug:', { 
@@ -43,14 +43,24 @@ const jwtAuth = (req: any, res: any, next: any) => {
     
     try {
       const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+      
+      // Look up user from database to get tenant_id
+      const user = await storage.getUser(decoded.userId);
+      console.log('JWT Auth: User lookup result:', user);
+      if (!user) {
+        console.log('JWT Auth: User not found in database');
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
       req.user = {
         claims: {
           sub: decoded.userId
         },
         userId: decoded.userId,
-        email: decoded.email
+        email: decoded.email,
+        tenantId: user.tenantId
       };
-      console.log('JWT Auth: Success for user', decoded.userId);
+      console.log('JWT Auth: Success for user', decoded.userId, 'with tenant', user.tenantId);
       next();
     } catch (decodeError) {
       console.log('JWT Auth: Token decode error', decodeError);
@@ -3144,19 +3154,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userTenant: user.tenantId
       });
       
-      // Log the chat interaction
-      await storage.createAuditTrail({
-        action: 'chat_query',
-        entityType: 'chat',
-        entityId: 'chat_session',
-        userId: user.userId,
-        tenantId: user.tenantId,
-        details: {
-          query: query,
-          confidence: result.confidence,
-          actionsCount: result.suggestedActions?.length || 0
-        }
-      });
+      // Log the chat interaction (only if user has tenant_id)
+      if (user.tenantId) {
+        await storage.createAuditTrail({
+          action: 'chat_query',
+          entityType: 'chat',
+          entityId: 'chat_session',
+          userId: user.userId,
+          tenantId: user.tenantId,
+          details: {
+            query: query,
+            confidence: result.confidence,
+            actionsCount: result.suggestedActions?.length || 0
+          }
+        });
+      }
       
       res.json({
         query,

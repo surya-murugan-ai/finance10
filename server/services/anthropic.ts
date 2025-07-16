@@ -105,7 +105,14 @@ export class AnthropicService {
         messages: [{ role: 'user', content: prompt }],
       });
 
-      const result = JSON.parse(response.content[0].text);
+      let responseText = response.content[0].text;
+      
+      // Remove markdown code blocks if present
+      if (responseText.includes('```json')) {
+        responseText = responseText.replace(/```json\n?/g, '').replace(/```/g, '');
+      }
+      
+      const result = JSON.parse(responseText);
       return result;
     } catch (error) {
       console.error('Natural language query processing failed:', error);
