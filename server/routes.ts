@@ -1559,6 +1559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: gstr2a,
         isValid: true,
         generatedBy: userId,
+        tenantId: req.user.tenantId,
       });
 
       res.json(gstr2a);
@@ -1751,6 +1752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: gstr3b,
         isValid: true,
         generatedBy: userId,
+        tenantId: req.user.tenantId,
       });
 
       res.json(gstr3b);
@@ -1911,6 +1913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: form26q,
         isValid: true,
         generatedBy: userId,
+        tenantId: req.user.tenantId,
       });
 
       res.json(form26q);
@@ -1979,6 +1982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: depreciationSchedule,
         isValid: true,
         generatedBy: userId,
+        tenantId: req.user.tenantId,
       });
 
       res.json(depreciationSchedule);
@@ -2085,6 +2089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: bankReconciliation,
         isValid: true,
         generatedBy: userId,
+        tenantId: req.user.tenantId,
       });
 
       res.json(bankReconciliation);
