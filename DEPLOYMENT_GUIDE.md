@@ -6,9 +6,24 @@
 
 ## 📋 Deployment Solutions
 
-### Solution 1: Use Deployment Script (Recommended)
+### Solution 1: Use Deployment Fix Script (Recommended)
 
-The deployment script (`deploy.sh`) handles build optimization and fallback:
+The deployment fix script addresses the specific pre-transform errors:
+
+```bash
+chmod +x fix-deployment.js
+node fix-deployment.js
+```
+
+This script:
+- Cleans all Vite cache and build artifacts
+- Fixes main.tsx import path issues
+- Runs optimized build with timeout handling
+- Provides detailed error diagnosis
+
+### Solution 2: Use Enhanced Deployment Script
+
+The deployment script (`deploy.sh`) handles build optimization with cache clearing:
 
 ```bash
 chmod +x deploy.sh
@@ -16,10 +31,10 @@ chmod +x deploy.sh
 ```
 
 This script:
-- Builds the application with production optimizations
+- Clears npm cache and Vite cache
+- Reinstalls dependencies cleanly
+- Builds with timeout protection
 - Falls back to development mode if build fails
-- Provides detailed build statistics
-- Automatically starts the appropriate server
 
 ### Solution 2: Pre-build Before Deployment
 
@@ -65,6 +80,17 @@ Server Assets:
 ```
 
 ## 🔍 Troubleshooting
+
+### Issue: Vite Pre-transform Errors (Current Issue)
+
+**Symptoms**: 
+- `[vite] Pre-transform error: Failed to load url /src/main.tsx?v=XuMZ8TgtxDVjdCChuq8a`
+- `command finished with error [npm run start]: exit status 1`
+- Multiple hash value failures
+
+**Cause**: Vite cache corruption and dependency resolution issues in deployment environment
+
+**Solution**: Use the deployment fix script (`fix-deployment.js`) to clean cache and fix imports
 
 ### Issue: Build Timeout in Deployment
 
