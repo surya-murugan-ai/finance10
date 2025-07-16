@@ -5,6 +5,8 @@ export interface TrialBalanceEntry {
   accountName: string;
   debitBalance: number;
   creditBalance: number;
+  entity?: string;
+  narration?: string;
 }
 
 export interface ProfitLossEntry {
@@ -35,49 +37,63 @@ export class FinancialReportsService {
     totalCredits: number;
     isBalanced: boolean;
   }> {
-    const accountBalances = new Map<string, {
+    // Group entries by entity/vendor/customer name for detailed subsidiary ledger
+    const entityBalances = new Map<string, {
+      accountCode: string;
       accountName: string;
+      entity: string;
       debitTotal: number;
       creditTotal: number;
+      narration: string;
     }>();
 
-    // Aggregate journal entries by account
+    // Process each journal entry to create detailed subsidiary accounts
     for (const entry of journalEntries) {
-      const key = entry.accountCode;
-      const current = accountBalances.get(key) || {
+      // Create a unique key combining account code and entity for detailed breakdown
+      const entityKey = `${entry.accountCode}-${entry.entity}`;
+      
+      const current = entityBalances.get(entityKey) || {
+        accountCode: entry.accountCode,
         accountName: entry.accountName,
+        entity: entry.entity || 'Unknown',
         debitTotal: 0,
         creditTotal: 0,
+        narration: entry.narration || '',
       };
 
       current.debitTotal += parseFloat(entry.debitAmount?.toString() || '0');
       current.creditTotal += parseFloat(entry.creditAmount?.toString() || '0');
 
-      accountBalances.set(key, current);
+      entityBalances.set(entityKey, current);
     }
 
-    // Convert to trial balance format
+    // Convert to trial balance format with detailed breakdown
     const entries: TrialBalanceEntry[] = [];
     let totalDebits = 0;
     let totalCredits = 0;
 
-    for (const [accountCode, balance] of accountBalances) {
+    for (const [, balance] of entityBalances) {
       const netDebit = Math.max(0, balance.debitTotal - balance.creditTotal);
       const netCredit = Math.max(0, balance.creditTotal - balance.debitTotal);
 
-      entries.push({
-        accountCode,
-        accountName: balance.accountName,
-        debitBalance: netDebit,
-        creditBalance: netCredit,
-      });
+      // Only include entries with non-zero balances
+      if (netDebit > 0 || netCredit > 0) {
+        entries.push({
+          accountCode: balance.accountCode,
+          accountName: balance.entity, // Use entity name as account name for detailed view
+          debitBalance: netDebit,
+          creditBalance: netCredit,
+          entity: balance.entity,
+          narration: balance.narration,
+        });
 
-      totalDebits += netDebit;
-      totalCredits += netCredit;
+        totalDebits += netDebit;
+        totalCredits += netCredit;
+      }
     }
 
-    // Sort by account code
-    entries.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+    // Sort by entity name for better readability
+    entries.sort((a, b) => (a.entity || '').localeCompare(b.entity || ''));
 
     return {
       entries,
