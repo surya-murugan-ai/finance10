@@ -39,11 +39,10 @@ def create_demo_user():
         # Create a demo user with tenant assignment
         demo_user_id = "demo_user_" + str(uuid.uuid4())[:8]
         cursor.execute("""
-            INSERT INTO users (id, email, first_name, last_name, company_name, is_active, tenant_id, tenant_role, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO users (id, email, first_name, last_name, company_name, is_active, tenant_id, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s::uuid, %s, %s)
             ON CONFLICT (email) DO UPDATE SET
                 tenant_id = EXCLUDED.tenant_id,
-                tenant_role = EXCLUDED.tenant_role,
                 updated_at = EXCLUDED.updated_at
         """, (
             demo_user_id,
@@ -53,7 +52,6 @@ def create_demo_user():
             "Demo Company Ltd",
             True,
             tenant_id,
-            "admin",
             datetime.now(),
             datetime.now()
         ))
