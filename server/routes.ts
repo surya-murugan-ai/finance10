@@ -978,9 +978,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate journal entries from uploaded documents
-  app.post('/api/reports/generate-journal-entries', isAuthenticated, async (req: any, res) => {
+  app.post('/api/reports/generate-journal-entries', jwtAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.userId;
+      
+      // Get user information including tenant_id
+      const user = await storage.getUser(userId);
+      if (!user || !user.tenantId) {
+        return res.status(403).json({ message: 'Access denied: User not assigned to any tenant' });
+      }
+      
       const documents = await storage.getDocuments(userId);
       
       let totalEntries = 0;
@@ -1014,6 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entity: entry.entity,
             documentId: doc.id,
             createdBy: userId,
+            tenantId: user.tenantId,
           });
           totalEntries++;
         }
