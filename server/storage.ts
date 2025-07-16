@@ -1,5 +1,6 @@
 import {
   users,
+  tenants,
   documents,
   agentJobs,
   journalEntries,
@@ -12,6 +13,8 @@ import {
   dataSources,
   type User,
   type UpsertUser,
+  type Tenant,
+  type InsertTenant,
   type Document,
   type InsertDocument,
   type AgentJob,
@@ -41,6 +44,11 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createUser(user: any): Promise<User>;
+  
+  // Tenant operations
+  createTenant(tenant: any): Promise<Tenant>;
+  getTenant(id: string): Promise<Tenant | undefined>;
 
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
@@ -153,6 +161,28 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async createUser(userData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
+    return user;
+  }
+
+  // Tenant operations
+  async createTenant(tenantData: any): Promise<Tenant> {
+    const [tenant] = await db
+      .insert(tenants)
+      .values(tenantData)
+      .returning();
+    return tenant;
+  }
+
+  async getTenant(id: string): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+    return tenant;
   }
 
   // Document operations

@@ -16,6 +16,7 @@ import { nanoid } from "nanoid";
 import { writeFile } from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
+import bcrypt from "bcrypt";
 
 // Helper function to format currency numbers as text
 function formatCurrency(amount: number): string {
@@ -347,28 +348,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // For demo purposes, create a new user (in production, save to database)
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        console.log('Registration failed - user already exists:', email);
+        return res.status(409).json({ 
+          success: false, 
+          message: 'User already exists with this email' 
+        });
+      }
+      
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
+      
+      // Create tenant for the user
+      const tenant = await storage.createTenant({
+        companyName: company_name || `${first_name} ${last_name}'s Company`,
+        email: email,
+        subscriptionPlan: 'starter',
+        isActive: true
+      });
+      
+      // Create user with tenant assignment
       const newUserId = nanoid();
-      const user = {
+      const user = await storage.createUser({
         id: newUserId,
         email,
-        first_name,
-        last_name,
-        company_name: company_name || null,
+        passwordHash,
+        firstName: first_name,
+        lastName: last_name,
+        tenantId: tenant.id,
+        tenantRole: 'admin',
         phone: phone || null,
-        is_active: true
-      };
+        isActive: true
+      });
       
-      // Create a simple token (in production, use proper JWT)
+      // Create a JWT token
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
       
-      console.log('Registration successful for user:', email);
+      console.log('Registration successful for user:', email, 'with tenant:', tenant.id);
       
       res.json({
         success: true,
         message: 'Account created successfully',
         access_token: token,
-        user: user
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tenantId: user.tenantId,
+          role: user.role
+        }
       });
     } catch (error) {
       console.error('Registration error:', error);
