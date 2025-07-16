@@ -342,18 +342,21 @@ export class DatabaseStorage implements IStorage {
     return statement;
   }
 
-  async getFinancialStatements(period?: string): Promise<FinancialStatement[]> {
-    if (period) {
-      return await db
-        .select()
-        .from(financialStatements)
-        .where(eq(financialStatements.period, period))
-        .orderBy(desc(financialStatements.generatedAt));
+  async getFinancialStatements(period?: string, tenantId?: string): Promise<FinancialStatement[]> {
+    let query = db.select().from(financialStatements);
+    
+    if (period && tenantId) {
+      query = query.where(and(
+        eq(financialStatements.period, period),
+        eq(financialStatements.tenantId, tenantId)
+      ));
+    } else if (period) {
+      query = query.where(eq(financialStatements.period, period));
+    } else if (tenantId) {
+      query = query.where(eq(financialStatements.tenantId, tenantId));
     }
-    return await db
-      .select()
-      .from(financialStatements)
-      .orderBy(desc(financialStatements.generatedAt));
+    
+    return await query.orderBy(desc(financialStatements.generatedAt));
   }
 
   async deleteFinancialStatement(id: string): Promise<void> {

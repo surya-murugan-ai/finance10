@@ -791,18 +791,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get journal entries
-  app.get('/api/journal-entries', isAuthenticated, async (req: any, res) => {
+  app.get('/api/journal-entries', jwtAuth, async (req: any, res) => {
     try {
+      const userId = req.user.userId;
       const documentId = req.query.documentId as string;
       const period = req.query.period as string;
       
+      // SECURITY: Get user's tenant_id for data isolation
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access journal entries without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
       let entries;
       if (documentId) {
-        entries = await storage.getJournalEntries(documentId);
+        entries = await storage.getJournalEntries(documentId, user.tenantId);
       } else if (period) {
-        entries = await storage.getJournalEntriesByPeriod(period);
+        entries = await storage.getJournalEntriesByPeriod(period, user.tenantId);
       } else {
-        entries = await storage.getJournalEntries();
+        entries = await storage.getJournalEntries(undefined, user.tenantId);
       }
       
       res.json(entries);
@@ -837,21 +845,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get financial statements
-  app.get('/api/financial-statements', isAuthenticated, async (req: any, res) => {
+  app.get('/api/financial-statements', jwtAuth, async (req: any, res) => {
     try {
+      const userId = req.user.userId;
       const type = req.query.type as string;
       const period = req.query.period as string;
+      
+      // SECURITY: Get user's tenant_id for data isolation
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to access financial statements without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
       
       let statements;
       if (type && period) {
         statements = await storage.getFinancialStatement(type, period);
       } else {
-        statements = await storage.getFinancialStatements(period);
+        statements = await storage.getFinancialStatements(period, user.tenantId);
       }
       
       // If no statements exist, generate them from journal entries
       if (!statements || statements.length === 0) {
-        const journalEntries = await storage.getJournalEntries();
+        const journalEntries = await storage.getJournalEntries(undefined, user.tenantId);
         
         if (journalEntries.length > 0) {
           // Generate trial balance
@@ -860,7 +876,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'trial_balance',
             period: period || 'Q3_2025',
             data: trialBalance,
-            generatedAt: new Date()
+            generatedAt: new Date(),
+            tenantId: user.tenantId
           });
           
           // Generate profit & loss
@@ -869,7 +886,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'profit_loss',
             period: period || 'Q3_2025',
             data: profitLoss,
-            generatedAt: new Date()
+            generatedAt: new Date(),
+            tenantId: user.tenantId
           });
           
           // Generate balance sheet
@@ -878,7 +896,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             statementType: 'balance_sheet',
             period: period || 'Q3_2025',
             data: balanceSheet,
-            generatedAt: new Date()
+            generatedAt: new Date(),
+            tenantId: user.tenantId
           });
           
           statements = [trialBalanceStatement, profitLossStatement, balanceSheetStatement];
