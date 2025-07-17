@@ -1,14 +1,14 @@
 {
-  "test_timestamp": "2025-07-17T16:53:43.523324",
+  "test_timestamp": "2025-07-17T17:00:55.751218",
   "uploaded_documents": [
     {
       "document": {
-        "id": "8fe3e8d0-d687-4ec8-b9f1-2abf087e282b",
-        "fileName": "aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
+        "id": "5b8bcd50-290e-487a-a7f7-022921303b87",
+        "fileName": "oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
         "originalName": "sales_register.xlsx",
         "mimeType": "text/plain",
         "fileSize": 18524,
-        "filePath": "/home/runner/workspace/uploads/aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
+        "filePath": "/home/runner/workspace/uploads/oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
         "documentType": "sales_register",
         "status": "classified",
         "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
@@ -30,8 +30,8 @@
         },
         "extractedData": null,
         "validationErrors": null,
-        "createdAt": "2025-07-17T16:53:40.236Z",
-        "updatedAt": "2025-07-17T16:53:40.236Z"
+        "createdAt": "2025-07-17T17:00:51.391Z",
+        "updatedAt": "2025-07-17T17:00:51.391Z"
       },
       "workflowId": "none",
       "message": "Document uploaded and classified successfully",
@@ -45,12 +45,12 @@
     },
     {
       "document": {
-        "id": "2977591a-5c71-4fd0-bbe9-086a00dc3a4b",
-        "fileName": "dAMQdvMm16kCcum4Ny0xs_bank_statement.xlsx",
+        "id": "44dcb527-526f-4de5-bd0d-a2e1f9402f44",
+        "fileName": "yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
         "originalName": "bank_statement.xlsx",
         "mimeType": "text/plain",
         "fileSize": 177176,
-        "filePath": "/home/runner/workspace/uploads/dAMQdvMm16kCcum4Ny0xs_bank_statement.xlsx",
+        "filePath": "/home/runner/workspace/uploads/yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
         "documentType": "bank_statement",
         "status": "classified",
         "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
@@ -72,8 +72,8 @@
         },
         "extractedData": null,
         "validationErrors": null,
-        "createdAt": "2025-07-17T16:53:41.034Z",
-        "updatedAt": "2025-07-17T16:53:41.034Z"
+        "createdAt": "2025-07-17T17:00:52.089Z",
+        "updatedAt": "2025-07-17T17:00:52.089Z"
       },
       "workflowId": "none",
       "message": "Document uploaded and classified successfully",
@@ -87,12 +87,12 @@
     },
     {
       "document": {
-        "id": "a9a95770-4ea4-4b91-9e1a-75bca939d4c4",
-        "fileName": "nZBABoySoGireiUlmF1x1_purchase_register.xlsx",
+        "id": "265d4696-bc28-4274-9272-4f24486e2b5d",
+        "fileName": "-vAZXLn2IPPmHS7rRzc4u_purchase_register.xlsx",
         "originalName": "purchase_register.xlsx",
         "mimeType": "text/plain",
         "fileSize": 10682,
-        "filePath": "/home/runner/workspace/uploads/nZBABoySoGireiUlmF1x1_purchase_register.xlsx",
+        "filePath": "/home/runner/workspace/uploads/-vAZXLn2IPPmHS7rRzc4u_purchase_register.xlsx",
         "documentType": "purchase_register",
         "status": "classified",
         "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
@@ -114,8 +114,8 @@
         },
         "extractedData": null,
         "validationErrors": null,
-        "createdAt": "2025-07-17T16:53:41.329Z",
-        "updatedAt": "2025-07-17T16:53:41.329Z"
+        "createdAt": "2025-07-17T17:00:52.369Z",
+        "updatedAt": "2025-07-17T17:00:52.369Z"
       },
       "workflowId": "none",
       "message": "Document uploaded and classified successfully",
@@ -129,6 +129,192 @@
     }
   ],
   "documents": [
+    {
+      "id": "265d4696-bc28-4274-9272-4f24486e2b5d",
+      "fileName": "-vAZXLn2IPPmHS7rRzc4u_purchase_register.xlsx",
+      "originalName": "purchase_register.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 10682,
+      "filePath": "/home/runner/workspace/uploads/-vAZXLn2IPPmHS7rRzc4u_purchase_register.xlsx",
+      "documentType": "purchase_register",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 10682,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "purchase_register",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T17:00:52.369Z",
+      "updatedAt": "2025-07-17T17:00:52.369Z"
+    },
+    {
+      "id": "44dcb527-526f-4de5-bd0d-a2e1f9402f44",
+      "fileName": "yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
+      "originalName": "bank_statement.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 177176,
+      "filePath": "/home/runner/workspace/uploads/yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
+      "documentType": "bank_statement",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 177176,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "bank_statement",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T17:00:52.089Z",
+      "updatedAt": "2025-07-17T17:00:52.089Z"
+    },
+    {
+      "id": "5b8bcd50-290e-487a-a7f7-022921303b87",
+      "fileName": "oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+      "originalName": "sales_register.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 18524,
+      "filePath": "/home/runner/workspace/uploads/oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+      "documentType": "sales_register",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 18524,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "sales_register",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T17:00:51.391Z",
+      "updatedAt": "2025-07-17T17:00:51.391Z"
+    },
+    {
+      "id": "6a480aa2-a35a-4b26-ba8f-f37bad9e62ef",
+      "fileName": "BpQQ5ywX1FIPpIfUPUHg5_purchase_register.xlsx",
+      "originalName": "purchase_register.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 10682,
+      "filePath": "/home/runner/workspace/uploads/BpQQ5ywX1FIPpIfUPUHg5_purchase_register.xlsx",
+      "documentType": "purchase_register",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 10682,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "purchase_register",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T16:59:08.348Z",
+      "updatedAt": "2025-07-17T16:59:08.348Z"
+    },
+    {
+      "id": "0b1a3907-d6f2-4580-9578-2718971c9072",
+      "fileName": "wx626RTdnxyncGOeJrkgC_bank_statement.xlsx",
+      "originalName": "bank_statement.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 177176,
+      "filePath": "/home/runner/workspace/uploads/wx626RTdnxyncGOeJrkgC_bank_statement.xlsx",
+      "documentType": "bank_statement",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 177176,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "bank_statement",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T16:59:08.058Z",
+      "updatedAt": "2025-07-17T16:59:08.058Z"
+    },
+    {
+      "id": "9ac44b2e-61c9-4489-ab8e-9a6def24737c",
+      "fileName": "l5LwUnYkpM56S3ySFuNpU_sales_register.xlsx",
+      "originalName": "sales_register.xlsx",
+      "mimeType": "text/plain",
+      "fileSize": 18524,
+      "filePath": "/home/runner/workspace/uploads/l5LwUnYkpM56S3ySFuNpU_sales_register.xlsx",
+      "documentType": "sales_register",
+      "status": "classified",
+      "uploadedBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "metadata": {
+        "size": 18524,
+        "mimeType": "text/plain",
+        "contentAnalysis": {
+          "reasoning": "Both AI and pattern analysis failed, using filename fallback",
+          "confidence": 0.3,
+          "documentType": "sales_register",
+          "keyIndicators": [
+            "filename_fallback"
+          ],
+          "contentSummary": "Classification uncertain",
+          "potentialMisclassification": true
+        },
+        "classificationMethod": "content_based_upload"
+      },
+      "extractedData": null,
+      "validationErrors": null,
+      "createdAt": "2025-07-17T16:59:07.333Z",
+      "updatedAt": "2025-07-17T16:59:07.333Z"
+    },
     {
       "id": "a9a95770-4ea4-4b91-9e1a-75bca939d4c4",
       "fileName": "nZBABoySoGireiUlmF1x1_purchase_register.xlsx",
@@ -225,164 +411,424 @@
   ],
   "journal_entries": [
     {
-      "id": "cd6fee98-27e8-4d76-b72b-8f7048e937a0",
-      "journalId": "JE1752771222326_1",
-      "date": "2025-04-17T16:53:42.326Z",
+      "id": "c1ce1b7d-840f-4fb5-b489-065c5b698839",
+      "journalId": "JE1752771654541_1",
+      "date": "2025-04-17T17:00:54.541Z",
       "accountCode": "1200",
       "accountName": "Accounts Receivable",
-      "debitAmount": "150837.00",
+      "debitAmount": "2223075.00",
       "creditAmount": "0.00",
       "narration": "Sales register - aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
-      "entity": "Business Partners",
+      "entity": "Corporate Clients",
       "documentId": "8fe3e8d0-d687-4ec8-b9f1-2abf087e282b",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:42.361Z"
+      "createdAt": "2025-07-17T17:00:54.576Z"
     },
     {
-      "id": "96807c69-54a8-4200-b72c-5b9076de7828",
-      "journalId": "JE1752771222326_2",
-      "date": "2025-04-17T16:53:42.326Z",
+      "id": "94f2924d-b5ec-47e1-9d54-c82d10361e47",
+      "journalId": "JE1752771654541_2",
+      "date": "2025-04-17T17:00:54.541Z",
       "accountCode": "4100",
       "accountName": "Sales Revenue",
       "debitAmount": "0.00",
-      "creditAmount": "150837.00",
+      "creditAmount": "2223075.00",
       "narration": "Sales register - aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
-      "entity": "Business Partners",
+      "entity": "Corporate Clients",
       "documentId": "8fe3e8d0-d687-4ec8-b9f1-2abf087e282b",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:42.433Z"
+      "createdAt": "2025-07-17T17:00:54.643Z"
     },
     {
-      "id": "37f721ba-85a0-4f06-b03b-2da1509566f5",
-      "journalId": "JE1752771222121_1",
-      "date": "2025-04-17T16:53:42.121Z",
+      "id": "6e3ef8bb-9135-4c5c-b980-dd64674ee5ff",
+      "journalId": "JE1752771654339_1",
+      "date": "2025-04-17T17:00:54.338Z",
       "accountCode": "1100",
       "accountName": "Bank Account",
-      "debitAmount": "210431.00",
+      "debitAmount": "520667.00",
       "creditAmount": "0.00",
       "narration": "Bank statement - dAMQdvMm16kCcum4Ny0xs_bank_statement.xlsx",
-      "entity": "Finance Bank",
+      "entity": "Credit Union",
       "documentId": "2977591a-5c71-4fd0-bbe9-086a00dc3a4b",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:42.158Z"
+      "createdAt": "2025-07-17T17:00:54.374Z"
     },
     {
-      "id": "0034d175-5865-480a-b6d4-26a837ec62a7",
-      "journalId": "JE1752771222121_2",
-      "date": "2025-04-17T16:53:42.121Z",
+      "id": "5347d8f1-1b6c-4c7f-9f43-120f5f46ed90",
+      "journalId": "JE1752771654339_2",
+      "date": "2025-04-17T17:00:54.338Z",
       "accountCode": "4200",
       "accountName": "Miscellaneous Income",
       "debitAmount": "0.00",
-      "creditAmount": "210431.00",
+      "creditAmount": "520667.00",
       "narration": "Bank statement - bank_statement.xlsx",
-      "entity": "Finance Bank",
+      "entity": "Credit Union",
       "documentId": "2977591a-5c71-4fd0-bbe9-086a00dc3a4b",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:42.225Z"
+      "createdAt": "2025-07-17T17:00:54.442Z"
     },
     {
-      "id": "95ed6db8-cc10-4d3d-85e2-b1fc9dc93d94",
-      "journalId": "JE1752771221917_1",
-      "date": "2025-04-17T16:53:41.916Z",
+      "id": "364540d3-53a0-4a96-b3ff-6ed41090101d",
+      "journalId": "JE1752771654139_2",
+      "date": "2025-04-17T17:00:54.139Z",
+      "accountCode": "2100",
+      "accountName": "Accounts Payable",
+      "debitAmount": "0.00",
+      "creditAmount": "1164294.00",
+      "narration": "Purchase register - purchase_register.xlsx",
+      "entity": "Procurement Ltd",
+      "documentId": "a9a95770-4ea4-4b91-9e1a-75bca939d4c4",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:54.241Z"
+    },
+    {
+      "id": "96f08b35-a1a1-4624-9ba4-10ce9835631b",
+      "journalId": "JE1752771654139_1",
+      "date": "2025-04-17T17:00:54.139Z",
       "accountCode": "5300",
       "accountName": "Purchase Expense",
-      "debitAmount": "411242.00",
+      "debitAmount": "1164294.00",
       "creditAmount": "0.00",
       "narration": "Purchase register - purchase_register.xlsx",
       "entity": "Procurement Ltd",
       "documentId": "a9a95770-4ea4-4b91-9e1a-75bca939d4c4",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:41.953Z"
+      "createdAt": "2025-07-17T17:00:54.175Z"
     },
     {
-      "id": "2e9dfb1b-b0ee-4e7f-aba1-39e2ea25dcfe",
-      "journalId": "JE1752771221917_2",
-      "date": "2025-04-17T16:53:41.916Z",
+      "id": "4666fb45-c0d5-4092-99f2-76574fbdc3e6",
+      "journalId": "JE1752771653940_1",
+      "date": "2025-04-17T17:00:53.940Z",
+      "accountCode": "1200",
+      "accountName": "Accounts Receivable",
+      "debitAmount": "2223075.00",
+      "creditAmount": "0.00",
+      "narration": "Sales register - l5LwUnYkpM56S3ySFuNpU_sales_register.xlsx",
+      "entity": "Corporate Clients",
+      "documentId": "9ac44b2e-61c9-4489-ab8e-9a6def24737c",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.975Z"
+    },
+    {
+      "id": "6f88fa93-cee3-42a6-9260-eb6620c8f5fb",
+      "journalId": "JE1752771653940_2",
+      "date": "2025-04-17T17:00:53.940Z",
+      "accountCode": "4100",
+      "accountName": "Sales Revenue",
+      "debitAmount": "0.00",
+      "creditAmount": "2223075.00",
+      "narration": "Sales register - l5LwUnYkpM56S3ySFuNpU_sales_register.xlsx",
+      "entity": "Corporate Clients",
+      "documentId": "9ac44b2e-61c9-4489-ab8e-9a6def24737c",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:54.042Z"
+    },
+    {
+      "id": "164a668b-741d-4414-8317-2f6fda10deb3",
+      "journalId": "JE1752771653740_2",
+      "date": "2025-04-17T17:00:53.740Z",
+      "accountCode": "4200",
+      "accountName": "Miscellaneous Income",
+      "debitAmount": "0.00",
+      "creditAmount": "520667.00",
+      "narration": "Bank statement - bank_statement.xlsx",
+      "entity": "Commercial Bank",
+      "documentId": "0b1a3907-d6f2-4580-9578-2718971c9072",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.842Z"
+    },
+    {
+      "id": "5936458e-d108-4bb1-a174-7380776fefa6",
+      "journalId": "JE1752771653740_1",
+      "date": "2025-04-17T17:00:53.740Z",
+      "accountCode": "1100",
+      "accountName": "Bank Account",
+      "debitAmount": "520667.00",
+      "creditAmount": "0.00",
+      "narration": "Bank statement - wx626RTdnxyncGOeJrkgC_bank_statement.xlsx",
+      "entity": "Commercial Bank",
+      "documentId": "0b1a3907-d6f2-4580-9578-2718971c9072",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.776Z"
+    },
+    {
+      "id": "e916230a-2d5e-4b84-8aa6-1034b4f7c445",
+      "journalId": "JE1752771653543_2",
+      "date": "2025-04-17T17:00:53.542Z",
       "accountCode": "2100",
       "accountName": "Accounts Payable",
       "debitAmount": "0.00",
-      "creditAmount": "411242.00",
+      "creditAmount": "1164294.00",
       "narration": "Purchase register - purchase_register.xlsx",
-      "entity": "Procurement Ltd",
-      "documentId": "a9a95770-4ea4-4b91-9e1a-75bca939d4c4",
+      "entity": "Supply Chain Co",
+      "documentId": "6a480aa2-a35a-4b26-ba8f-f37bad9e62ef",
       "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
       "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
-      "createdAt": "2025-07-17T16:53:42.021Z"
+      "createdAt": "2025-07-17T17:00:53.643Z"
+    },
+    {
+      "id": "194bd24a-77a2-44e5-a8c3-1c38afece731",
+      "journalId": "JE1752771653543_1",
+      "date": "2025-04-17T17:00:53.542Z",
+      "accountCode": "5300",
+      "accountName": "Purchase Expense",
+      "debitAmount": "1164294.00",
+      "creditAmount": "0.00",
+      "narration": "Purchase register - purchase_register.xlsx",
+      "entity": "Supply Chain Co",
+      "documentId": "6a480aa2-a35a-4b26-ba8f-f37bad9e62ef",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.577Z"
+    },
+    {
+      "id": "df8ccbab-7c8a-47e8-a63d-4a32c893f3a5",
+      "journalId": "JE1752771653342_2",
+      "date": "2025-04-17T17:00:53.341Z",
+      "accountCode": "4100",
+      "accountName": "Sales Revenue",
+      "debitAmount": "0.00",
+      "creditAmount": "2223075.00",
+      "narration": "Sales register - oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+      "entity": "Retail Plus",
+      "documentId": "5b8bcd50-290e-487a-a7f7-022921303b87",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.446Z"
+    },
+    {
+      "id": "4cdac9da-f222-4e97-a242-0a24a0672e54",
+      "journalId": "JE1752771653342_1",
+      "date": "2025-04-17T17:00:53.341Z",
+      "accountCode": "1200",
+      "accountName": "Accounts Receivable",
+      "debitAmount": "2223075.00",
+      "creditAmount": "0.00",
+      "narration": "Sales register - oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+      "entity": "Retail Plus",
+      "documentId": "5b8bcd50-290e-487a-a7f7-022921303b87",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.377Z"
+    },
+    {
+      "id": "88ea612d-0908-4a3b-b167-58fe203bae09",
+      "journalId": "JE1752771653143_1",
+      "date": "2025-04-17T17:00:53.142Z",
+      "accountCode": "1100",
+      "accountName": "Bank Account",
+      "debitAmount": "520667.00",
+      "creditAmount": "0.00",
+      "narration": "Bank statement - yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
+      "entity": "Finance Bank",
+      "documentId": "44dcb527-526f-4de5-bd0d-a2e1f9402f44",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.178Z"
+    },
+    {
+      "id": "d53eebb1-ed29-4195-aa61-0765fa0fe05c",
+      "journalId": "JE1752771653143_2",
+      "date": "2025-04-17T17:00:53.142Z",
+      "accountCode": "4200",
+      "accountName": "Miscellaneous Income",
+      "debitAmount": "0.00",
+      "creditAmount": "520667.00",
+      "narration": "Bank statement - bank_statement.xlsx",
+      "entity": "Finance Bank",
+      "documentId": "44dcb527-526f-4de5-bd0d-a2e1f9402f44",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.244Z"
+    },
+    {
+      "id": "7c8aecb1-f039-48d5-a0aa-2768590483ca",
+      "journalId": "JE1752771652944_2",
+      "date": "2025-04-17T17:00:52.943Z",
+      "accountCode": "2100",
+      "accountName": "Accounts Payable",
+      "debitAmount": "0.00",
+      "creditAmount": "1164294.00",
+      "narration": "Purchase register - purchase_register.xlsx",
+      "entity": "Supply Chain Co",
+      "documentId": "265d4696-bc28-4274-9272-4f24486e2b5d",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:53.046Z"
+    },
+    {
+      "id": "f12598d5-a5e0-4ab7-abfb-31e8f4860d3b",
+      "journalId": "JE1752771652944_1",
+      "date": "2025-04-17T17:00:52.943Z",
+      "accountCode": "5300",
+      "accountName": "Purchase Expense",
+      "debitAmount": "1164294.00",
+      "creditAmount": "0.00",
+      "narration": "Purchase register - purchase_register.xlsx",
+      "entity": "Supply Chain Co",
+      "documentId": "265d4696-bc28-4274-9272-4f24486e2b5d",
+      "tenantId": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+      "createdBy": "f3QU73Wv_fTgKZ7e71Uto",
+      "createdAt": "2025-07-17T17:00:52.979Z"
     }
   ],
   "trial_balance": {
     "entries": [
       {
-        "accountCode": "1200",
-        "accountName": "Business Partners",
-        "debitBalance": 150837,
+        "accountCode": "4200",
+        "accountName": "Commercial Bank",
+        "debitBalance": 0,
+        "creditBalance": 520667,
+        "entity": "Commercial Bank",
+        "narration": "Bank statement - bank_statement.xlsx",
+        "debitBalanceText": "Rs 0",
+        "creditBalanceText": "Rs 5,20,667"
+      },
+      {
+        "accountCode": "1100",
+        "accountName": "Commercial Bank",
+        "debitBalance": 520667,
         "creditBalance": 0,
-        "entity": "Business Partners",
+        "entity": "Commercial Bank",
+        "narration": "Bank statement - wx626RTdnxyncGOeJrkgC_bank_statement.xlsx",
+        "debitBalanceText": "Rs 5,20,667",
+        "creditBalanceText": "Rs 0"
+      },
+      {
+        "accountCode": "1200",
+        "accountName": "Corporate Clients",
+        "debitBalance": 4446150,
+        "creditBalance": 0,
+        "entity": "Corporate Clients",
         "narration": "Sales register - aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
-        "debitBalanceText": "Rs 1,50,837",
+        "debitBalanceText": "Rs 44,46,150",
         "creditBalanceText": "Rs 0"
       },
       {
         "accountCode": "4100",
-        "accountName": "Business Partners",
+        "accountName": "Corporate Clients",
         "debitBalance": 0,
-        "creditBalance": 150837,
-        "entity": "Business Partners",
+        "creditBalance": 4446150,
+        "entity": "Corporate Clients",
         "narration": "Sales register - aqCF6Mc7QRdPGNm3ahCC4_sales_register.xlsx",
         "debitBalanceText": "Rs 0",
-        "creditBalanceText": "Rs 1,50,837"
+        "creditBalanceText": "Rs 44,46,150"
+      },
+      {
+        "accountCode": "1100",
+        "accountName": "Credit Union",
+        "debitBalance": 520667,
+        "creditBalance": 0,
+        "entity": "Credit Union",
+        "narration": "Bank statement - dAMQdvMm16kCcum4Ny0xs_bank_statement.xlsx",
+        "debitBalanceText": "Rs 5,20,667",
+        "creditBalanceText": "Rs 0"
+      },
+      {
+        "accountCode": "4200",
+        "accountName": "Credit Union",
+        "debitBalance": 0,
+        "creditBalance": 520667,
+        "entity": "Credit Union",
+        "narration": "Bank statement - bank_statement.xlsx",
+        "debitBalanceText": "Rs 0",
+        "creditBalanceText": "Rs 5,20,667"
       },
       {
         "accountCode": "1100",
         "accountName": "Finance Bank",
-        "debitBalance": 210431,
+        "debitBalance": 520667,
         "creditBalance": 0,
         "entity": "Finance Bank",
-        "narration": "Bank statement - dAMQdvMm16kCcum4Ny0xs_bank_statement.xlsx",
-        "debitBalanceText": "Rs 2,10,431",
+        "narration": "Bank statement - yBDiU8D_BtPlfZp3HQ2P5_bank_statement.xlsx",
+        "debitBalanceText": "Rs 5,20,667",
         "creditBalanceText": "Rs 0"
       },
       {
         "accountCode": "4200",
         "accountName": "Finance Bank",
         "debitBalance": 0,
-        "creditBalance": 210431,
+        "creditBalance": 520667,
         "entity": "Finance Bank",
         "narration": "Bank statement - bank_statement.xlsx",
         "debitBalanceText": "Rs 0",
-        "creditBalanceText": "Rs 2,10,431"
-      },
-      {
-        "accountCode": "5300",
-        "accountName": "Procurement Ltd",
-        "debitBalance": 411242,
-        "creditBalance": 0,
-        "entity": "Procurement Ltd",
-        "narration": "Purchase register - purchase_register.xlsx",
-        "debitBalanceText": "Rs 4,11,242",
-        "creditBalanceText": "Rs 0"
+        "creditBalanceText": "Rs 5,20,667"
       },
       {
         "accountCode": "2100",
         "accountName": "Procurement Ltd",
         "debitBalance": 0,
-        "creditBalance": 411242,
+        "creditBalance": 1164294,
         "entity": "Procurement Ltd",
         "narration": "Purchase register - purchase_register.xlsx",
         "debitBalanceText": "Rs 0",
-        "creditBalanceText": "Rs 4,11,242"
+        "creditBalanceText": "Rs 11,64,294"
+      },
+      {
+        "accountCode": "5300",
+        "accountName": "Procurement Ltd",
+        "debitBalance": 1164294,
+        "creditBalance": 0,
+        "entity": "Procurement Ltd",
+        "narration": "Purchase register - purchase_register.xlsx",
+        "debitBalanceText": "Rs 11,64,294",
+        "creditBalanceText": "Rs 0"
+      },
+      {
+        "accountCode": "4100",
+        "accountName": "Retail Plus",
+        "debitBalance": 0,
+        "creditBalance": 2223075,
+        "entity": "Retail Plus",
+        "narration": "Sales register - oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+        "debitBalanceText": "Rs 0",
+        "creditBalanceText": "Rs 22,23,075"
+      },
+      {
+        "accountCode": "1200",
+        "accountName": "Retail Plus",
+        "debitBalance": 2223075,
+        "creditBalance": 0,
+        "entity": "Retail Plus",
+        "narration": "Sales register - oxTz7Ch3f0qc-8Oc241tf_sales_register.xlsx",
+        "debitBalanceText": "Rs 22,23,075",
+        "creditBalanceText": "Rs 0"
+      },
+      {
+        "accountCode": "2100",
+        "accountName": "Supply Chain Co",
+        "debitBalance": 0,
+        "creditBalance": 2328588,
+        "entity": "Supply Chain Co",
+        "narration": "Purchase register - purchase_register.xlsx",
+        "debitBalanceText": "Rs 0",
+        "creditBalanceText": "Rs 23,28,588"
+      },
+      {
+        "accountCode": "5300",
+        "accountName": "Supply Chain Co",
+        "debitBalance": 2328588,
+        "creditBalance": 0,
+        "entity": "Supply Chain Co",
+        "narration": "Purchase register - purchase_register.xlsx",
+        "debitBalanceText": "Rs 23,28,588",
+        "creditBalanceText": "Rs 0"
       }
     ],
-    "totalDebits": 772510,
-    "totalCredits": 772510,
+    "totalDebits": 11724108,
+    "totalCredits": 11724108,
     "isBalanced": true,
-    "totalDebitsText": "Rs 7,72,510",
-    "totalCreditsText": "Rs 7,72,510"
+    "totalDebitsText": "Rs 1,17,24,108",
+    "totalCreditsText": "Rs 1,17,24,108"
   },
   "financial_reports": {
     "profit-loss": {
@@ -390,13 +836,13 @@
         {
           "accountCode": "4100",
           "accountName": "Sales Revenue",
-          "amount": 150837,
+          "amount": 6669225,
           "type": "revenue"
         },
         {
           "accountCode": "4200",
           "accountName": "Miscellaneous Income",
-          "amount": 210431,
+          "amount": 1562001,
           "type": "revenue"
         }
       ],
@@ -404,27 +850,27 @@
         {
           "accountCode": "5300",
           "accountName": "Purchase Expense",
-          "amount": 411242,
+          "amount": 3492882,
           "type": "expense"
         }
       ],
-      "totalRevenue": 361268,
-      "totalExpenses": 411242,
-      "netProfit": -49974
+      "totalRevenue": 8231226,
+      "totalExpenses": 3492882,
+      "netProfit": 4738344
     },
     "balance-sheet": {
       "assets": [
         {
           "accountCode": "1100",
           "accountName": "Bank Account",
-          "amount": 210431,
+          "amount": 1562001,
           "type": "asset",
           "subType": "current"
         },
         {
           "accountCode": "1200",
           "accountName": "Accounts Receivable",
-          "amount": 150837,
+          "amount": 6669225,
           "type": "asset",
           "subType": "fixed"
         }
@@ -433,14 +879,14 @@
         {
           "accountCode": "2100",
           "accountName": "Accounts Payable",
-          "amount": 411242,
+          "amount": 3492882,
           "type": "liability",
           "subType": "current"
         }
       ],
       "equity": [],
-      "totalAssets": 361268,
-      "totalLiabilities": 411242,
+      "totalAssets": 8231226,
+      "totalLiabilities": 3492882,
       "totalEquity": 0,
       "isBalanced": false
     }
