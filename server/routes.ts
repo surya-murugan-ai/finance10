@@ -851,6 +851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: 'bulk_generate',
         action: 'create',
         userId,
+        tenantId: user.tenantId,
         details: { created, skipped, totalDocuments: documents.length }
       });
       
