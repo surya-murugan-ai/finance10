@@ -1072,9 +1072,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Processing document ${doc.fileName} - no existing journal entries found`);
         
         // Generate sample journal entries based on document type
-        const defaultEntries = langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
+        const defaultEntries = await langGraphOrchestrator.generateDefaultJournalEntries(doc, doc.extractedData);
         
         for (const entry of defaultEntries) {
+          console.log('Creating journal entry with data:', {
+            journalId: entry.journalId,
+            debitAmount: entry.debitAmount,
+            creditAmount: entry.creditAmount,
+            debitAmountType: typeof entry.debitAmount,
+            creditAmountType: typeof entry.creditAmount
+          });
+          
           await storage.createJournalEntry({
             journalId: entry.journalId,
             date: entry.date,
