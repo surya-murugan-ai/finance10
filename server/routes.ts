@@ -800,6 +800,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate journal entries from uploaded documents
+  app.post('/api/journal-entries/generate', jwtAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      // SECURITY: Get user's tenant_id for data isolation
+      const user = await storage.getUser(userId);
+      if (!user?.tenantId) {
+        console.error(`Security violation: User ${userId} attempted to generate journal entries without tenant assignment`);
+        return res.status(403).json({ message: "Access denied: User not assigned to any tenant" });
+      }
+      
+      // Get all uploaded documents for this tenant
+      const documents = await storage.getDocuments(userId);
+      
+      let created = 0;
+      let skipped = 0;
+      
+      for (const document of documents) {
+        // Check if journal entries already exist for this document
+        const existingEntries = await storage.getJournalEntries(document.id, user.tenantId);
+        
+        if (existingEntries.length > 0) {
+          skipped++;
+          continue;
+        }
+        
+        // Generate journal entries for this document
+        try {
+          const journalEntries = await langGraphOrchestrator.generateJournalEntries(document, user.tenantId);
+          
+          for (const entry of journalEntries) {
+            await storage.createJournalEntry({
+              ...entry,
+              documentId: document.id,
+              tenantId: user.tenantId
+            });
+            created++;
+          }
+        } catch (error) {
+          console.error(`Error generating journal entries for document ${document.id}:`, error);
+          // Continue with other documents
+        }
+      }
+      
+      // Create audit trail
+      await storage.createAuditTrail({
+        entityType: 'journal_entry',
+        entityId: 'bulk_generate',
+        action: 'create',
+        userId,
+        details: { created, skipped, totalDocuments: documents.length }
+      });
+      
+      res.json({ 
+        message: "Journal entries generated successfully",
+        created,
+        skipped,
+        totalDocuments: documents.length
+      });
+    } catch (error) {
+      console.error("Error generating journal entries:", error);
+      res.status(500).json({ message: "Failed to generate journal entries" });
+    }
+  });
+
   // Delete journal entry
   app.delete('/api/journal-entries/:id', isAuthenticated, async (req: any, res) => {
     try {
