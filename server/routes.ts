@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { localAuth, localLogin, localRegister, getCurrentUser } from "./localAuth";
 import { fileProcessorService } from "./services/fileProcessor";
 import { langGraphOrchestrator } from "./services/langGraph";
 import { complianceCheckerService } from "./services/complianceChecker";
@@ -272,173 +273,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
-  // Auth middleware
-  await setupAuth(app);
-  
-  // Simple authentication endpoints for testing
-  app.post('/api/auth/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      console.log('Login attempt with email:', email, 'password:', password);
-      
-      // For demo purposes, accept the test user credentials or any registered user
-      if (email === 'testuser@example.com' && password === 'TestPassword123!') {
-        const user = {
-          id: '9e36c4db-56c4-4175-9962-7d103db2c1cd',
-          email: 'testuser@example.com',
-          first_name: 'Test',
-          last_name: 'User',
-          company_name: 'Test Company Ltd',
-          is_active: true
-        };
-        
-        // Create a simple token (in production, use proper JWT)
-        const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
-        
-        console.log('Login successful for:', email);
-        
-        res.json({
-          success: true,
-          access_token: token,
-          user: user
-        });
-      } else {
-        // Check if user exists in database
-        const user = await storage.getUserByEmail(email);
-        
-        if (!user) {
-          console.log('Login failed - user not found:', email);
-          return res.status(401).json({ success: false, message: 'Invalid credentials' });
-        }
-        
-        // For demo purposes, accept any password for existing users
-        // In production, validate password hash
-        if (password) {
-          const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
-          
-          console.log('Login successful for existing user:', email);
-          
-          res.json({
-            success: true,
-            access_token: token,
-            user: {
-              id: user.id,
-              email: user.email,
-              first_name: user.firstName,
-              last_name: user.lastName,
-              company_name: user.companyName || 'Default Company',
-              is_active: user.isActive
-            }
-          });
-        } else {
-          console.log('Login failed - no password provided');
-          res.status(401).json({ success: false, message: 'Invalid credentials' });
-        }
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  });
-
-  app.post('/api/auth/register', async (req, res) => {
-    console.log('Registration endpoint called with body:', req.body);
+  // Auth middleware - use local auth in development or if LOCAL_AUTH_MODE is enabled
+  if (process.env.LOCAL_AUTH_MODE === 'true' || process.env.NODE_ENV === 'development') {
+    console.log('Using local authentication mode');
     
-    try {
-      const { email, password, first_name, last_name, company_name, phone } = req.body;
-      
-      // Basic validation
-      if (!email || !password || !first_name || !last_name) {
-        console.log('Registration validation failed - missing required fields');
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Email, password, first name, and last name are required' 
-        });
-      }
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        console.log('Registration failed - user already exists:', email);
-        return res.status(409).json({ 
-          success: false, 
-          message: 'User already exists with this email' 
-        });
-      }
-      
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
-      
-      // Create tenant for the user
-      const tenant = await storage.createTenant({
-        companyName: company_name || `${first_name} ${last_name}'s Company`,
-        email: email,
-        subscriptionPlan: 'starter',
-        isActive: true
-      });
-      
-      // Create user with tenant assignment
-      const newUserId = nanoid();
-      const user = await storage.createUser({
-        id: newUserId,
-        email,
-        passwordHash,
-        firstName: first_name,
-        lastName: last_name,
-        tenantId: tenant.id,
-        tenantRole: 'admin',
-        phone: phone || null,
-        isActive: true
-      });
-      
-      // Create a JWT token
-      const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
-      
-      console.log('Registration successful for user:', email, 'with tenant:', tenant.id);
-      
-      res.json({
-        success: true,
-        message: 'Account created successfully',
-        access_token: token,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          tenantId: user.tenantId,
-          role: user.role
-        }
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  });
+    // Local authentication endpoints
+    app.post('/api/auth/login', localLogin);
+    app.post('/api/auth/register', localRegister);
+    app.get('/api/auth/user', localAuth, getCurrentUser);
+    
+    // Skip Replit auth setup in local mode
+  } else {
+    console.log('Using Replit authentication mode');
+    await setupAuth(app);
+  }
   
-  app.get('/api/auth/user', jwtAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.userId;
-      const email = req.user.email;
-      
-      const user = {
-        id: userId,
-        email: email,
-        first_name: 'Test',
-        last_name: 'User',
-        company_name: 'Test Company Ltd',
-        is_active: true
-      };
-      
-      res.json({ success: true, user: user });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  });
-  
-  app.post('/api/auth/logout', async (req, res) => {
-    res.json({ success: true, message: 'Logged out successfully' });
-  });
+  // Remove duplicate login/register endpoints - now handled by localAuth system
 
   // Remove duplicate route - already defined above
 
