@@ -121,11 +121,41 @@ export default function DataTables() {
                 <TableBody>
                   {item.data.slice(0, 15).map((row: any, idx: number) => {
                     if (typeof row === 'object' && row !== null) {
-                      return Object.entries(row).map(([key, value], entryIdx) => (
+                      // Show key business fields first
+                      const mainFields = ['company', 'transactionDate', 'amount', 'formattedAmount', 'voucherNumber'];
+                      const displayFields = [];
+                      
+                      // Add main fields first
+                      mainFields.forEach(field => {
+                        if (row[field] !== undefined) {
+                          displayFields.push([field, row[field]]);
+                        }
+                      });
+                      
+                      // Add other fields
+                      Object.entries(row).forEach(([key, value]) => {
+                        if (!mainFields.includes(key) && value !== undefined && value !== null && value !== '') {
+                          displayFields.push([key, value]);
+                        }
+                      });
+                      
+                      return displayFields.slice(0, 5).map(([key, value], entryIdx) => (
                         <TableRow key={`${idx}-${entryIdx}`}>
                           <TableCell className="font-medium">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-blue-600">{key}</TableCell>
-                          <TableCell className="font-mono text-sm">{String(value)}</TableCell>
+                          <TableCell className="font-semibold text-blue-600">
+                            {key === 'company' ? 'Company' :
+                             key === 'transactionDate' ? 'Date' :
+                             key === 'formattedAmount' ? 'Amount' :
+                             key === 'voucherNumber' ? 'Voucher' :
+                             key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {key === 'formattedAmount' ? (
+                              <span className="font-semibold text-green-600">{String(value)}</span>
+                            ) : (
+                              String(value)
+                            )}
+                          </TableCell>
                         </TableRow>
                       ));
                     } else {

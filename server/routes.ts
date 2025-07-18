@@ -191,35 +191,71 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               defval: '' 
             });
             
-            // Process the data to extract meaningful information
-            const headers = rawData[0] as string[];
-            const rows = rawData.slice(1);
+            // Find the header row (usually row 4 based on the structure)
+            let headerRowIndex = -1;
+            for (let i = 0; i < rawData.length; i++) {
+              const row = rawData[i] as any[];
+              if (row && row.length > 0 && row[0] && row[0].toString().toLowerCase().includes('date')) {
+                headerRowIndex = i;
+                break;
+              }
+            }
             
-            for (let i = 0; i < Math.min(rows.length, 50); i++) {
-              const row = rows[i] as any[];
-              if (row.some(cell => cell && cell.toString().trim())) {
-                const entry: any = {};
-                headers.forEach((header, index) => {
-                  if (header && row[index]) {
-                    entry[header] = row[index];
+            if (headerRowIndex >= 0) {
+              const headers = rawData[headerRowIndex] as string[];
+              const dataRows = rawData.slice(headerRowIndex + 1);
+              
+              // Process each data row
+              for (let i = 0; i < dataRows.length; i++) {
+                const row = dataRows[i] as any[];
+                if (row && row.length > 0 && row[0] && row[0].toString().trim()) {
+                  const entry: any = {};
+                  
+                  // Map headers to values
+                  headers.forEach((header, index) => {
+                    if (header && row[index]) {
+                      entry[header] = row[index];
+                    }
+                  });
+                  
+                  // Extract company name from 'Particulars' column
+                  if (entry['Particulars']) {
+                    entry.company = entry['Particulars'];
                   }
-                });
-                
-                // Extract amount if present
-                for (const key in entry) {
-                  const value = entry[key];
-                  if (typeof value === 'string' && (
-                    value.includes('₹') || 
-                    value.includes('Rs') || 
-                    /^\d+(\.\d+)?\s*(Dr|Cr)?\s*$/.test(value)
-                  )) {
-                    entry.amount = parseFloat(value.replace(/[₹Rs,\s]/g, '').replace(/Dr|Cr/g, ''));
-                    if (value.includes('Dr')) entry.type = 'debit';
-                    if (value.includes('Cr')) entry.type = 'credit';
+                  
+                  // Extract amount from 'Value' column
+                  if (entry['Value']) {
+                    const valueStr = entry['Value'].toString();
+                    const amount = parseFloat(valueStr.replace(/[₹Rs,\s]/g, ''));
+                    if (!isNaN(amount)) {
+                      entry.amount = amount;
+                      entry.formattedAmount = `₹${amount.toLocaleString()}`;
+                    }
+                  }
+                  
+                  // Extract date
+                  if (entry['Date']) {
+                    entry.transactionDate = entry['Date'];
+                  }
+                  
+                  // Extract voucher info
+                  if (entry['Voucher No.']) {
+                    entry.voucherNumber = entry['Voucher No.'];
+                  }
+                  
+                  // Skip Grand Total rows
+                  if (entry.company && !entry.company.toString().toLowerCase().includes('grand total')) {
+                    data.push(entry);
                   }
                 }
-                
-                data.push(entry);
+              }
+            } else {
+              // Fallback: process all rows if header not found
+              for (let i = 0; i < Math.min(rawData.length, 50); i++) {
+                const row = rawData[i] as any[];
+                if (row && row.length > 0 && row[0]) {
+                  data.push({ content: row[0].toString(), row: i + 1 });
+                }
               }
             }
           } else if (doc.mimeType?.includes('csv') || doc.originalName?.endsWith('.csv')) {
