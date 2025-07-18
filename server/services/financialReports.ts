@@ -69,39 +69,32 @@ export class FinancialReportsService {
 
     console.log(`Debug: Created ${entityBalances.size} entity balances from ${journalEntries.length} journal entries`);
 
-    // SCALING FACTOR: Apply precise scaling to match target amount of ₹145,787,998.21
-    const TARGET_AMOUNT = 145787998.21;
-    const CURRENT_TOTAL = 1082248544.74;
-    const SCALING_FACTOR = TARGET_AMOUNT / CURRENT_TOTAL;
-    
-    console.log(`Debug: Applying scaling factor ${SCALING_FACTOR} to match target amount`);
+    // Use authentic raw data amounts without scaling factor
+    console.log(`Debug: Using authentic raw data amounts for Trial Balance calculation`);
     
     // Convert to trial balance format with detailed breakdown
     const entries: TrialBalanceEntry[] = [];
     let totalDebits = 0;
     let totalCredits = 0;
 
-    // Add detailed entity breakdown for each account with scaling applied
+    // Add detailed entity breakdown for each account with authentic amounts
     for (const [, balance] of entityBalances) {
       const netDebit = Math.max(0, balance.debitTotal - balance.creditTotal);
       const netCredit = Math.max(0, balance.creditTotal - balance.debitTotal);
 
       if (netDebit > 0 || netCredit > 0) {
-        // Apply scaling factor to match target amount
-        const scaledDebit = netDebit * SCALING_FACTOR;
-        const scaledCredit = netCredit * SCALING_FACTOR;
-        
+        // Use authentic raw data amounts
         entries.push({
           accountCode: balance.accountCode,
           accountName: `${balance.accountName} - ${balance.entity}`,
-          debitBalance: scaledDebit,
-          creditBalance: scaledCredit,
+          debitBalance: netDebit,
+          creditBalance: netCredit,
           entity: balance.entity,
           narration: balance.narration,
         });
 
-        totalDebits += scaledDebit;
-        totalCredits += scaledCredit;
+        totalDebits += netDebit;
+        totalCredits += netCredit;
       }
     }
 
@@ -155,16 +148,15 @@ export class FinancialReportsService {
     let totalRevenue = 0;
     let totalExpenses = 0;
 
-    // Apply scaling factor to match target amount
-    const SCALING_FACTOR = 0.1347084261915309;
-    console.log(`Debug: Applying scaling factor ${SCALING_FACTOR} to P&L amounts`);
+    // Use authentic raw data amounts without scaling factor
+    console.log(`Debug: Using authentic raw data amounts for P&L calculation`);
 
     // Process each account based on account code ranges
     for (const [code, balance] of accountBalances) {
       if (code.startsWith('4')) {
         // Revenue accounts (4xxx) - normal credit balance
         // Revenue = credit balance, so we use totalCredits for revenue accounts
-        const amount = balance.totalCredits * SCALING_FACTOR;
+        const amount = balance.totalCredits;
         if (amount > 0) {
           revenue.push({
             accountCode: code,
@@ -177,7 +169,7 @@ export class FinancialReportsService {
       } else if (code.startsWith('5')) {
         // Expense accounts (5xxx) - ALL are expenses regardless of debit/credit balance
         // Use the higher of totalDebits or totalCredits to capture the actual expense amount
-        const amount = Math.max(balance.totalDebits, balance.totalCredits) * SCALING_FACTOR;
+        const amount = Math.max(balance.totalDebits, balance.totalCredits);
         if (amount > 0) {
           expenses.push({
             accountCode: code,
@@ -216,9 +208,8 @@ export class FinancialReportsService {
     const liabilities: BalanceSheetEntry[] = [];
     const equity: BalanceSheetEntry[] = [];
 
-    // Apply scaling factor to match target amount
-    const SCALING_FACTOR = 0.1347084261915309;
-    console.log(`Debug: Applying scaling factor ${SCALING_FACTOR} to Balance Sheet amounts`);
+    // Use authentic raw data amounts without scaling factor
+    console.log(`Debug: Using authentic raw data amounts for Balance Sheet calculation`);
 
     // Group entries by account
     const accountTotals = new Map<string, {
@@ -263,50 +254,46 @@ export class FinancialReportsService {
         
         // Show the total amount as current assets (since debits = credits)
         if (totalDebits > 0) {
-          const scaledAmount = totalDebits * SCALING_FACTOR;
           const entry: BalanceSheetEntry = {
             accountCode,
             accountName: total.accountName,
-            amount: scaledAmount,
+            amount: totalDebits,
             type: 'asset',
             subType: 'current',
           };
           assets.push(entry);
-          totalAssets += scaledAmount;
+          totalAssets += totalDebits;
         }
       } else if (classification.type === 'asset' && total.netAmount > 0) {
-        const scaledAmount = total.netAmount * SCALING_FACTOR;
         const entry: BalanceSheetEntry = {
           accountCode,
           accountName: total.accountName,
-          amount: scaledAmount,
+          amount: total.netAmount,
           type: 'asset',
           subType: classification.subType,
         };
         assets.push(entry);
-        totalAssets += scaledAmount;
+        totalAssets += total.netAmount;
       } else if (classification.type === 'liability' && total.netAmount < 0) {
-        const scaledAmount = Math.abs(total.netAmount) * SCALING_FACTOR;
         const entry: BalanceSheetEntry = {
           accountCode,
           accountName: total.accountName,
-          amount: scaledAmount,
+          amount: Math.abs(total.netAmount),
           type: 'liability',
           subType: classification.subType,
         };
         liabilities.push(entry);
-        totalLiabilities += scaledAmount;
+        totalLiabilities += Math.abs(total.netAmount);
       } else if (classification.type === 'equity' && total.netAmount < 0) {
-        const scaledAmount = Math.abs(total.netAmount) * SCALING_FACTOR;
         const entry: BalanceSheetEntry = {
           accountCode,
           accountName: total.accountName,
-          amount: scaledAmount,
+          amount: Math.abs(total.netAmount),
           type: 'equity',
           subType: classification.subType,
         };
         equity.push(entry);
-        totalEquity += scaledAmount;
+        totalEquity += Math.abs(total.netAmount);
       }
     }
 
@@ -336,9 +323,8 @@ export class FinancialReportsService {
     const investing: CashFlowEntry[] = [];
     const financing: CashFlowEntry[] = [];
 
-    // Apply scaling factor to match target amount
-    const SCALING_FACTOR = 0.1347084261915309;
-    console.log(`Debug: Applying scaling factor ${SCALING_FACTOR} to Cash Flow amounts`);
+    // Use authentic raw data amounts without scaling factor
+    console.log(`Debug: Using authentic raw data amounts for Cash Flow calculation`);
 
     // Filter cash-related entries
     const cashEntries = journalEntries.filter(entry => 
@@ -348,7 +334,7 @@ export class FinancialReportsService {
     for (const entry of cashEntries) {
       const debit = parseFloat(entry.debitAmount?.toString() || '0');
       const credit = parseFloat(entry.creditAmount?.toString() || '0');
-      const netCashFlow = (debit - credit) * SCALING_FACTOR;
+      const netCashFlow = (debit - credit);
 
       if (netCashFlow !== 0) {
         const classification = this.classifyCashFlowActivity(entry.accountCode, entry.narration);
