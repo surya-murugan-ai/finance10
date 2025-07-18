@@ -863,8 +863,8 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Trial Balance - {selectedPeriod}</CardTitle>
-                    <Badge variant={trialBalance.isBalanced ? "default" : "destructive"}>
-                      {trialBalance.isBalanced ? "Balanced" : "Unbalanced"}
+                    <Badge variant={trialBalanceLoading ? "outline" : (trialBalance.isBalanced ? "default" : "destructive")}>
+                      {trialBalanceLoading ? "Loading..." : (trialBalance.isBalanced ? "Balanced" : "Unbalanced")}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -903,10 +903,10 @@ export default function FinancialReports() {
                         <TableRow className="border-t-2 font-semibold">
                           <TableCell colSpan={2}>Total</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(trialBalance.totalDebits)}
+                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalance.totalDebits)}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(trialBalance.totalCredits)}
+                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalance.totalCredits)}
                           </TableCell>
                         </TableRow>
                       </TableBody>
