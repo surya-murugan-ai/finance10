@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Plus } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function FinancialReports() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -151,8 +152,34 @@ export default function FinancialReports() {
             </div>
             <div className="flex items-center space-x-4">
               <Button
-                onClick={() => window.location.reload()}
+                onClick={async () => {
+                  try {
+                    await apiRequest('/api/journal-entries/generate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ period: selectedPeriod })
+                    });
+                    await Promise.all([
+                      queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] }),
+                      queryClient.invalidateQueries({ queryKey: ['/api/reports/trial-balance'] }),
+                      queryClient.invalidateQueries({ queryKey: ['/api/reports/profit-loss'] }),
+                      queryClient.invalidateQueries({ queryKey: ['/api/reports/balance-sheet'] }),
+                      queryClient.invalidateQueries({ queryKey: ['/api/reports/cash-flow'] })
+                    ]);
+                    window.location.reload();
+                  } catch (error) {
+                    console.error('Error generating journal entries:', error);
+                  }
+                }}
                 variant="default"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Generate Journal Entries
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
                 size="sm"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
