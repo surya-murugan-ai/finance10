@@ -413,24 +413,65 @@ export async function registerRoutes(app: express.Express): Promise<any> {
             console.log(`Document ${doc.originalName} already processed (${existingTransactions.length} transactions exist)`);
           }
 
+          // Get the standardized transactions for this document to display in data tables
+          const standardizedTransactions = await storage.getStandardizedTransactionsByDocument(doc.id);
+          
           extractedData.push({
             documentId: doc.id,
             filename: doc.originalName,
             documentType: doc.documentType,
-            extractedRows: data.length,
-            data: data
+            extractedRows: standardizedTransactions.length,
+            data: standardizedTransactions.map(t => ({
+              id: t.id,
+              company: t.company,
+              particulars: t.particulars,
+              transactionDate: t.transactionDate,
+              voucherNumber: t.voucherNumber,
+              voucherType: t.voucherType,
+              debitAmount: t.debitAmount,
+              creditAmount: t.creditAmount,
+              netAmount: t.netAmount,
+              category: t.category,
+              aiConfidence: t.aiConfidence
+            }))
           });
 
         } catch (fileError) {
           console.error(`Error processing file ${doc.originalName}:`, fileError);
-          extractedData.push({
-            documentId: doc.id,
-            filename: doc.originalName,
-            documentType: doc.documentType,
-            extractedRows: 0,
-            data: [],
-            error: 'Failed to process file'
-          });
+          
+          // Still try to get existing standardized transactions even if file processing failed
+          try {
+            const standardizedTransactions = await storage.getStandardizedTransactionsByDocument(doc.id);
+            extractedData.push({
+              documentId: doc.id,
+              filename: doc.originalName,
+              documentType: doc.documentType,
+              extractedRows: standardizedTransactions.length,
+              data: standardizedTransactions.map(t => ({
+                id: t.id,
+                company: t.company,
+                particulars: t.particulars,
+                transactionDate: t.transactionDate,
+                voucherNumber: t.voucherNumber,
+                voucherType: t.voucherType,
+                debitAmount: t.debitAmount,
+                creditAmount: t.creditAmount,
+                netAmount: t.netAmount,
+                category: t.category,
+                aiConfidence: t.aiConfidence
+              })),
+              error: 'File processing failed, showing existing data'
+            });
+          } catch (dbError) {
+            extractedData.push({
+              documentId: doc.id,
+              filename: doc.originalName,
+              documentType: doc.documentType,
+              extractedRows: 0,
+              data: [],
+              error: 'Failed to process file and retrieve existing data'
+            });
+          }
         }
       }
 
