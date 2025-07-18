@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import * as xlsx from 'xlsx';
-import { localAuth } from './localAuth';
+import { localAuth, getCurrentUser } from './localAuth';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -111,6 +111,9 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // Get current user endpoint
+  app.get('/api/auth/user', jwtAuth, getCurrentUser);
 
   // Document upload endpoint
   app.post('/api/documents/upload', jwtAuth, upload.single('file'), async (req: Request, res: Response) => {
