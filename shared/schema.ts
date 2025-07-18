@@ -312,6 +312,7 @@ export const tenantsRelations = relations(tenants, ({ many }) => ({
   auditTrail: many(auditTrail),
   reconciliationReports: many(reconciliationReports),
   dataSources: many(dataSources),
+  standardizedTransactions: many(standardizedTransactions),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -340,6 +341,7 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   agentJobs: many(agentJobs),
   journalEntries: many(journalEntries),
   complianceChecks: many(complianceChecks),
+  standardizedTransactions: many(standardizedTransactions),
 }));
 
 export const agentJobsRelations = relations(agentJobs, ({ one }) => ({
@@ -418,7 +420,71 @@ export const reconciliationReportsRelations = relations(reconciliationReports, (
   }),
 }));
 
+// Standardized transaction category enum
+export const transactionCategoryEnum = pgEnum("transaction_category", [
+  "sales",
+  "purchase", 
+  "payment",
+  "receipt",
+  "journal",
+  "other"
+]);
+
+// Standardized Transactions table - AI-extracted data in fixed format
+export const standardizedTransactions = pgTable("standardized_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  documentId: uuid("document_id").notNull().references(() => documents.id),
+  
+  // Standardized transaction fields
+  transactionDate: timestamp("transaction_date").notNull(),
+  company: varchar("company").notNull(),
+  particulars: text("particulars"),
+  voucherType: varchar("voucher_type"),
+  voucherNumber: varchar("voucher_number"),
+  
+  // Standardized amounts
+  debitAmount: decimal("debit_amount", { precision: 15, scale: 2 }).default("0.00"),
+  creditAmount: decimal("credit_amount", { precision: 15, scale: 2 }).default("0.00"),
+  netAmount: decimal("net_amount", { precision: 15, scale: 2 }).default("0.00"),
+  taxAmount: decimal("tax_amount", { precision: 15, scale: 2 }),
+  
+  // Classification
+  category: transactionCategoryEnum("category").notNull(),
+  
+  // AI Analysis metadata
+  aiConfidence: integer("ai_confidence"), // 0-100 confidence score
+  originalRowData: jsonb("original_row_data"), // Raw data from Excel
+  columnMapping: jsonb("column_mapping"), // AI-determined column mappings
+  
+  // Processing metadata
+  isProcessed: boolean("is_processed").default(false),
+  processedAt: timestamp("processed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Standardized transactions relations
+export const standardizedTransactionsRelations = relations(standardizedTransactions, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [standardizedTransactions.tenantId],
+    references: [tenants.id],
+  }),
+  document: one(documents, {
+    fields: [standardizedTransactions.documentId],
+    references: [documents.id],
+  }),
+}));
+
 // Insert schemas
+// Insert schemas
+export const insertStandardizedTransactionSchema = createInsertSchema(standardizedTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDocumentSchema = createInsertSchema(documents).omit({
   id: true,
   createdAt: true,

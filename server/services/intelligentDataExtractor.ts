@@ -1,0 +1,351 @@
+import { AnthropicClient } from './anthropicClient';
+import { storage } from '../storage';
+import xlsx from 'xlsx';
+import { z } from 'zod';
+import { insertStandardizedTransactionSchema } from '@shared/schema';
+
+export interface ExcelAnalysis {
+  documentType: string;
+  confidence: number;
+  structure: {
+    headerRow: number;
+    dataStartRow: number;
+    totalRows: number;
+    totalColumns: number;
+    columnHeaders: string[];
+  };
+  columnMapping: {
+    [key: string]: string | null;
+  };
+  companyName: string;
+  period: string;
+  summary: string;
+}
+
+export interface StandardizedTransaction {
+  transactionDate: Date;
+  company: string;
+  particulars: string;
+  voucherType: string;
+  voucherNumber: string;
+  debitAmount: number;
+  creditAmount: number;
+  netAmount: number;
+  taxAmount?: number;
+  category: 'sales' | 'purchase' | 'payment' | 'receipt' | 'journal' | 'other';
+  aiConfidence: number;
+  originalRowData: any;
+  columnMapping: any;
+}
+
+export class IntelligentDataExtractor {
+  private anthropicClient: AnthropicClient;
+
+  constructor() {
+    this.anthropicClient = new AnthropicClient();
+  }
+
+  async extractFromExcel(filePath: string, documentId: string, tenantId: string): Promise<{
+    analysis: ExcelAnalysis;
+    transactions: StandardizedTransaction[];
+    totalProcessed: number;
+  }> {
+    try {
+      // Read Excel file
+      const workbook = xlsx.readFile(filePath);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+
+      // Extract first 10 rows for AI analysis
+      const sampleRows = jsonData.slice(0, 10);
+      
+      // Use AI to analyze Excel structure and classify document
+      const analysis = await this.analyzeExcelStructure(sampleRows, jsonData.length);
+      
+      // Extract all data rows based on AI analysis
+      const dataRows = jsonData.slice(analysis.structure.dataStartRow);
+      
+      // Transform rows into standardized transactions
+      const transactions = await this.transformToStandardizedTransactions(
+        dataRows,
+        analysis,
+        tenantId,
+        documentId
+      );
+
+      // Filter out invalid transactions
+      const validTransactions = transactions.filter(t => 
+        t.transactionDate && 
+        t.company && 
+        (t.debitAmount > 0 || t.creditAmount > 0)
+      );
+
+      // Store standardized transactions in database
+      if (validTransactions.length > 0) {
+        await storage.bulkCreateStandardizedTransactions(
+          validTransactions.map(t => ({
+            tenantId,
+            documentId,
+            transactionDate: t.transactionDate,
+            company: t.company,
+            particulars: t.particulars,
+            voucherType: t.voucherType,
+            voucherNumber: t.voucherNumber,
+            debitAmount: t.debitAmount.toString(),
+            creditAmount: t.creditAmount.toString(),
+            netAmount: t.netAmount.toString(),
+            taxAmount: t.taxAmount?.toString(),
+            category: t.category,
+            aiConfidence: t.aiConfidence,
+            originalRowData: t.originalRowData,
+            columnMapping: t.columnMapping
+          }))
+        );
+      }
+
+      return {
+        analysis,
+        transactions: validTransactions,
+        totalProcessed: validTransactions.length
+      };
+
+    } catch (error) {
+      console.error('Error in intelligent data extraction:', error);
+      throw new Error(`Failed to extract data: ${error.message}`);
+    }
+  }
+
+  private async analyzeExcelStructure(sampleRows: any[], totalRows: number): Promise<ExcelAnalysis> {
+    const prompt = `
+Analyze this Excel data and provide a structured analysis:
+
+Sample Data (first 10 rows):
+${JSON.stringify(sampleRows, null, 2)}
+
+Total Rows: ${totalRows}
+
+Please analyze and return a JSON response with:
+1. Document type classification (sales_register, purchase_register, bank_statement, trial_balance, etc.)
+2. Confidence score (0-100)
+3. Structure analysis (header row, data start row, column headers)
+4. Column mapping to standard fields (date, company, particulars, amount, debit, credit, etc.)
+5. Company name extraction
+6. Time period identification
+7. Summary description
+
+Return only valid JSON in this format:
+{
+  "documentType": "sales_register",
+  "confidence": 85,
+  "structure": {
+    "headerRow": 3,
+    "dataStartRow": 4,
+    "totalRows": ${totalRows},
+    "totalColumns": 8,
+    "columnHeaders": ["Date", "Company", "Particulars", "Amount"]
+  },
+  "columnMapping": {
+    "date": "Date",
+    "company": "Company",
+    "particulars": "Particulars",
+    "amount": "Amount",
+    "debit": "Debit",
+    "credit": "Credit"
+  },
+  "companyName": "Company Name",
+  "period": "Q1 2025",
+  "summary": "Sales register containing transaction data"
+}
+`;
+
+    const response = await this.anthropicClient.analyzeContent(prompt);
+    
+    try {
+      return JSON.parse(response);
+    } catch (error) {
+      // Fallback analysis if AI fails
+      return this.createFallbackAnalysis(sampleRows, totalRows);
+    }
+  }
+
+  private createFallbackAnalysis(sampleRows: any[], totalRows: number): ExcelAnalysis {
+    // Simple fallback logic to detect headers and structure
+    let headerRow = 0;
+    let dataStartRow = 1;
+    
+    // Try to find the header row (usually contains text like "Date", "Amount", etc.)
+    for (let i = 0; i < Math.min(5, sampleRows.length); i++) {
+      const row = sampleRows[i];
+      if (row && row.some((cell: any) => 
+        typeof cell === 'string' && 
+        /date|amount|company|particulars|debit|credit/i.test(cell)
+      )) {
+        headerRow = i;
+        dataStartRow = i + 1;
+        break;
+      }
+    }
+
+    const headers = sampleRows[headerRow] || [];
+    
+    return {
+      documentType: 'other',
+      confidence: 50,
+      structure: {
+        headerRow,
+        dataStartRow,
+        totalRows,
+        totalColumns: headers.length,
+        columnHeaders: headers.map((h: any) => String(h || ''))
+      },
+      columnMapping: {
+        date: this.findColumn(headers, /date/i),
+        company: this.findColumn(headers, /company|party|name/i),
+        particulars: this.findColumn(headers, /particulars|description|narration/i),
+        amount: this.findColumn(headers, /amount|value|total/i),
+        debit: this.findColumn(headers, /debit|dr/i),
+        credit: this.findColumn(headers, /credit|cr/i)
+      },
+      companyName: 'Unknown Company',
+      period: 'Unknown Period',
+      summary: 'Document with structured data detected'
+    };
+  }
+
+  private findColumn(headers: any[], pattern: RegExp): string | null {
+    const header = headers.find((h: any) => pattern.test(String(h || '')));
+    return header ? String(header) : null;
+  }
+
+  private async transformToStandardizedTransactions(
+    dataRows: any[],
+    analysis: ExcelAnalysis,
+    tenantId: string,
+    documentId: string
+  ): Promise<StandardizedTransaction[]> {
+    const transactions: StandardizedTransaction[] = [];
+
+    for (const row of dataRows) {
+      if (!row || row.length === 0) continue;
+
+      try {
+        const transaction = this.mapRowToTransaction(row, analysis);
+        if (transaction) {
+          transactions.push(transaction);
+        }
+      } catch (error) {
+        console.warn('Failed to process row:', row, error);
+      }
+    }
+
+    return transactions;
+  }
+
+  private mapRowToTransaction(row: any[], analysis: ExcelAnalysis): StandardizedTransaction | null {
+    const mapping = analysis.columnMapping;
+    const headers = analysis.structure.columnHeaders;
+
+    // Helper function to get value by column name
+    const getValue = (columnName: string | null): any => {
+      if (!columnName) return null;
+      const index = headers.indexOf(columnName);
+      return index >= 0 ? row[index] : null;
+    };
+
+    // Extract date
+    const dateValue = getValue(mapping.date);
+    let transactionDate: Date;
+    
+    if (dateValue) {
+      transactionDate = new Date(dateValue);
+      if (isNaN(transactionDate.getTime())) {
+        // Try parsing different date formats
+        const dateStr = String(dateValue);
+        transactionDate = new Date(dateStr);
+        if (isNaN(transactionDate.getTime())) {
+          return null; // Skip invalid dates
+        }
+      }
+    } else {
+      return null; // Skip rows without dates
+    }
+
+    // Extract amounts
+    const debitValue = getValue(mapping.debit);
+    const creditValue = getValue(mapping.credit);
+    const amountValue = getValue(mapping.amount);
+
+    let debitAmount = 0;
+    let creditAmount = 0;
+    let netAmount = 0;
+
+    // Parse amounts
+    if (debitValue) {
+      debitAmount = this.parseAmount(debitValue);
+    }
+    if (creditValue) {
+      creditAmount = this.parseAmount(creditValue);
+    }
+    if (amountValue) {
+      netAmount = this.parseAmount(amountValue);
+      if (debitAmount === 0 && creditAmount === 0) {
+        // If no separate debit/credit columns, use amount as debit
+        debitAmount = netAmount;
+      }
+    }
+
+    // Skip rows with no amounts
+    if (debitAmount === 0 && creditAmount === 0 && netAmount === 0) {
+      return null;
+    }
+
+    // Calculate net amount if not provided
+    if (netAmount === 0) {
+      netAmount = debitAmount - creditAmount;
+    }
+
+    // Determine category based on document type
+    const category = this.determineCategory(analysis.documentType, debitAmount, creditAmount);
+
+    return {
+      transactionDate,
+      company: getValue(mapping.company) || analysis.companyName || 'Unknown Company',
+      particulars: getValue(mapping.particulars) || 'Transaction',
+      voucherType: analysis.documentType,
+      voucherNumber: getValue(mapping.voucherNumber) || '',
+      debitAmount,
+      creditAmount,
+      netAmount,
+      taxAmount: getValue(mapping.tax) ? this.parseAmount(getValue(mapping.tax)) : undefined,
+      category,
+      aiConfidence: analysis.confidence,
+      originalRowData: row,
+      columnMapping: mapping
+    };
+  }
+
+  private parseAmount(value: any): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      // Remove currency symbols and commas
+      const cleaned = value.replace(/[₹$,\s]/g, '');
+      const number = parseFloat(cleaned);
+      return isNaN(number) ? 0 : number;
+    }
+    return 0;
+  }
+
+  private determineCategory(documentType: string, debitAmount: number, creditAmount: number): 'sales' | 'purchase' | 'payment' | 'receipt' | 'journal' | 'other' {
+    if (documentType.includes('sales')) return 'sales';
+    if (documentType.includes('purchase')) return 'purchase';
+    if (documentType.includes('payment')) return 'payment';
+    if (documentType.includes('receipt')) return 'receipt';
+    if (documentType.includes('journal')) return 'journal';
+    
+    // Determine by amount pattern
+    if (debitAmount > 0 && creditAmount === 0) return 'payment';
+    if (creditAmount > 0 && debitAmount === 0) return 'receipt';
+    
+    return 'other';
+  }
+}

@@ -10,6 +10,8 @@ import { localAuth, getCurrentUser } from './localAuth';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { FinancialReportsService } from './services/financialReports';
+import { IntelligentDataExtractor } from './services/intelligentDataExtractor';
+import { AnthropicClient } from './services/anthropicClient';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
@@ -115,6 +117,57 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   // Get current user endpoint
   app.get('/api/auth/user', jwtAuth, getCurrentUser);
+
+  // Intelligent data extraction endpoint
+  app.post('/api/documents/extract-intelligent', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const { documentId } = req.body;
+      if (!documentId) {
+        return res.status(400).json({ error: 'Document ID is required' });
+      }
+
+      // Get document from database
+      const document = await storage.getDocument(documentId);
+      if (!document || document.tenant_id !== user.tenant_id) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(document.filePath)) {
+        return res.status(404).json({ error: 'File not found on disk' });
+      }
+
+      // Initialize intelligent data extractor
+      const extractor = new IntelligentDataExtractor();
+
+      // Extract data using AI
+      const extractionResult = await extractor.extractFromExcel(document.filePath, document.originalName);
+
+      // Return the standardized data
+      res.json({
+        success: true,
+        documentId,
+        analysis: {
+          documentType: extractionResult.analysis.documentType,
+          confidence: extractionResult.analysis.confidence,
+          companyName: extractionResult.analysis.companyName,
+          reportPeriod: extractionResult.analysis.reportPeriod,
+          totalRows: extractionResult.analysis.totalRows,
+          columnMapping: extractionResult.analysis.columnMapping
+        },
+        transactions: extractionResult.transactions,
+        summary: extractionResult.summary
+      });
+    } catch (error) {
+      console.error('Intelligent extraction error:', error);
+      res.status(500).json({ error: 'Failed to extract data intelligently' });
+    }
+  });
 
   // Document upload endpoint
   app.post('/api/documents/upload', jwtAuth, upload.single('file'), async (req: Request, res: Response) => {
@@ -349,6 +402,99 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error fetching documents:', error);
       res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+  });
+
+  // AI-powered intelligent data extraction endpoint
+  app.post('/api/extract-intelligent', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { documentId } = req.body;
+      const user = (req as any).user;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: 'Document ID is required' });
+      }
+
+      // Get the document from storage
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Verify user has access to this document
+      if (document.tenantId !== user.tenant_id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Initialize intelligent data extractor
+      const extractor = new IntelligentDataExtractor();
+      
+      // Extract data from the document
+      const result = await extractor.extractFromExcel(
+        document.filePath,
+        documentId,
+        user.tenant_id
+      );
+
+      res.json({
+        success: true,
+        analysis: result.analysis,
+        transactions: result.transactions,
+        totalProcessed: result.totalProcessed,
+        message: `Successfully processed ${result.totalProcessed} transactions using AI-powered extraction`
+      });
+
+    } catch (error) {
+      console.error('Intelligent extraction error:', error);
+      res.status(500).json({ 
+        error: 'Failed to extract data',
+        details: error.message 
+      });
+    }
+  });
+
+  // Get standardized transactions for a document
+  app.get('/api/standardized-transactions/:documentId', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { documentId } = req.params;
+      const user = (req as any).user;
+
+      // Get the document and verify access
+      const document = await storage.getDocument(documentId);
+      if (!document || document.tenantId !== user.tenant_id) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Get standardized transactions
+      const transactions = await storage.getStandardizedTransactions(documentId);
+
+      res.json({
+        success: true,
+        transactions,
+        count: transactions.length
+      });
+
+    } catch (error) {
+      console.error('Error fetching standardized transactions:', error);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    }
+  });
+
+  // Get all standardized transactions for a tenant
+  app.get('/api/standardized-transactions', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const transactions = await storage.getStandardizedTransactionsByTenant(user.tenant_id);
+
+      res.json({
+        success: true,
+        transactions,
+        count: transactions.length
+      });
+
+    } catch (error) {
+      console.error('Error fetching standardized transactions:', error);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
     }
   });
 

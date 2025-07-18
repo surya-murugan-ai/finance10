@@ -11,6 +11,7 @@ import {
   reconciliationMatches,
   intercompanyTransactions,
   dataSources,
+  standardizedTransactions,
   type User,
   type UpsertUser,
   type Tenant,
@@ -35,7 +36,9 @@ import {
   type InsertIntercompanyTransaction,
   type DataSource,
   type InsertDataSource,
+  insertStandardizedTransactionSchema,
 } from "@shared/schema";
+import { z } from "zod";
 import { db } from "./db";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 
@@ -140,6 +143,14 @@ export interface IStorage {
   // Close calendar operations
   getCloseCalendar(userId: string): Promise<any>;
   updateCloseCalendar(userId: string, calendar: any): Promise<any>;
+
+  // Standardized transaction operations
+  createStandardizedTransaction(transaction: z.infer<typeof insertStandardizedTransactionSchema>): Promise<any>;
+  getStandardizedTransactions(documentId: string): Promise<any[]>;
+  getStandardizedTransactionsByTenant(tenantId: string): Promise<any[]>;
+  bulkCreateStandardizedTransactions(transactions: z.infer<typeof insertStandardizedTransactionSchema>[]): Promise<any[]>;
+  updateStandardizedTransaction(id: string, updates: Partial<any>): Promise<any>;
+  deleteStandardizedTransactionsByDocument(documentId: string): Promise<void>;
 
   // User roles operations
   getUserRoles(userId: string): Promise<any[]>;
@@ -898,6 +909,36 @@ export class DatabaseStorage implements IStorage {
       { value: 'sqlserver', name: 'SQL Server', default_port: 1433 },
       { value: 'mongodb', name: 'MongoDB', default_port: 27017 }
     ];
+  }
+
+  // Standardized transaction operations
+  async createStandardizedTransaction(transaction: z.infer<typeof insertStandardizedTransactionSchema>): Promise<any> {
+    const [result] = await db.insert(standardizedTransactions).values(transaction).returning();
+    return result;
+  }
+
+  async getStandardizedTransactions(documentId: string): Promise<any[]> {
+    const results = await db.select().from(standardizedTransactions).where(eq(standardizedTransactions.documentId, documentId));
+    return results;
+  }
+
+  async getStandardizedTransactionsByTenant(tenantId: string): Promise<any[]> {
+    const results = await db.select().from(standardizedTransactions).where(eq(standardizedTransactions.tenantId, tenantId));
+    return results;
+  }
+
+  async bulkCreateStandardizedTransactions(transactions: z.infer<typeof insertStandardizedTransactionSchema>[]): Promise<any[]> {
+    const results = await db.insert(standardizedTransactions).values(transactions).returning();
+    return results;
+  }
+
+  async updateStandardizedTransaction(id: string, updates: Partial<any>): Promise<any> {
+    const [result] = await db.update(standardizedTransactions).set(updates).where(eq(standardizedTransactions.id, id)).returning();
+    return result;
+  }
+
+  async deleteStandardizedTransactionsByDocument(documentId: string): Promise<void> {
+    await db.delete(standardizedTransactions).where(eq(standardizedTransactions.documentId, documentId));
   }
 }
 

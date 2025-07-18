@@ -6,7 +6,7 @@ interface PageLayoutProps {
   title?: string;
 }
 
-export default function PageLayout({ children, title }: PageLayoutProps) {
+export function PageLayout({ children, title }: PageLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <CollapsibleSidebar />
@@ -30,3 +30,5 @@ export default function PageLayout({ children, title }: PageLayoutProps) {
     </div>
   );
 }
+
+export default PageLayout;

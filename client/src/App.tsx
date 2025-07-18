@@ -23,6 +23,7 @@ import MCAFiling from "@/pages/mca-filing";
 import ComplianceTutorial from "@/pages/compliance-tutorial";
 import DataSourceConfig from "@/pages/data-source-config";
 import AdminPanel from "@/pages/admin";
+import IntelligentExtractionTest from "@/pages/intelligent-extraction-test";
 
 function Router() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
@@ -69,6 +70,7 @@ function Router() {
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/settings" component={Settings} />
           <Route path="/admin" component={AdminPanel} />
+          <Route path="/intelligent-extraction-test" component={IntelligentExtractionTest} />
         </>
       )}
       <Route component={NotFound} />
