@@ -5,7 +5,7 @@ import { createServer } from 'http';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import * as xlsx from 'xlsx';
+import XLSX from 'xlsx';
 import { localAuth, getCurrentUser } from './localAuth';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -169,7 +169,7 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
       for (const doc of documents) {
         try {
-          const filePath = path.join(process.cwd(), doc.filePath);
+          const filePath = doc.filePath;
           
           if (!fs.existsSync(filePath)) {
             console.warn(`File not found: ${filePath}`);
@@ -180,12 +180,12 @@ export async function registerRoutes(app: express.Express): Promise<any> {
           
           if (doc.mimeType?.includes('excel') || doc.originalName?.endsWith('.xlsx')) {
             // Read Excel file
-            const workbook = xlsx.readFile(filePath);
+            const workbook = XLSX.readFile(filePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
             // Convert to JSON with raw values
-            const rawData = xlsx.utils.sheet_to_json(worksheet, { 
+            const rawData = XLSX.utils.sheet_to_json(worksheet, { 
               header: 1, 
               raw: false, 
               defval: '' 

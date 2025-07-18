@@ -48,14 +48,15 @@ export default function DataTables() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: extractedData, isLoading: dataLoading, error } = useQuery<ExtractedData[]>({
+  const { data: apiResponse, isLoading: dataLoading, error } = useQuery<{message: string, totalDocuments: number, extractedData: ExtractedData[]}>({
     queryKey: [`/api/extracted-data?period=${selectedPeriod}&docType=${selectedDocType}`],
   });
 
-  console.log('Data Tables Query:', { extractedData, isLoading, error });
-  console.log('Extracted data length:', extractedData?.length || 0);
+  console.log('Data Tables Query:', { extractedData: apiResponse, isLoading, error });
+  console.log('Extracted data length:', apiResponse?.extractedData?.length || 0);
   console.log('Selected period:', selectedPeriod, 'Selected doc type:', selectedDocType);
 
+  const extractedData = apiResponse?.extractedData || [];
   const filteredData = extractedData?.filter(item => {
     const matchesSearch = searchTerm === "" || 
       item.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
