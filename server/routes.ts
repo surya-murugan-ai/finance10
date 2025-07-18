@@ -357,6 +357,35 @@ export async function registerRoutes(app: express.Express): Promise<any> {
             }
           }
 
+          // Store extracted data in standardized_transactions table
+          try {
+            for (const entry of data) {
+              if (entry.amount && entry.company) {
+                const amount = parseFloat(entry.amount.toString().replace(/[₹,]/g, '')) || 0;
+                const isCredit = entry.debitCredit === 'Cr' || entry.debitCredit === 'Credit';
+                
+                await storage.createStandardizedTransaction({
+                  tenantId: user.tenant_id,
+                  documentId: doc.id,
+                  transactionDate: entry.transactionDate ? new Date(entry.transactionDate) : new Date(),
+                  company: entry.company,
+                  particulars: entry.particulars || '',
+                  voucherNumber: entry.voucher || '',
+                  voucherType: entry.voucherType || '',
+                  debitAmount: isCredit ? "0.00" : amount.toString(),
+                  creditAmount: isCredit ? amount.toString() : "0.00",
+                  netAmount: amount.toString(),
+                  category: 'other',
+                  aiConfidence: 85,
+                  originalRowData: entry,
+                  columnMapping: null
+                });
+              }
+            }
+          } catch (dbError) {
+            console.error('Error storing standardized transactions:', dbError);
+          }
+
           extractedData.push({
             documentId: doc.id,
             filename: doc.originalName,
