@@ -34,12 +34,12 @@ export default function AgentWorkflows() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: workflows, isLoading: workflowsLoading } = useQuery<WorkflowState[]>({
+  const { data: workflows, isLoading: workflowsLoading, error: workflowsError } = useQuery<WorkflowState[]>({
     queryKey: ["/api/workflows"],
     retry: false,
   });
 
-  const { data: agentJobs, isLoading: jobsLoading } = useQuery({
+  const { data: agentJobs, isLoading: jobsLoading, error: jobsError } = useQuery({
     queryKey: ["/api/agent-jobs"],
     retry: false,
   });
@@ -78,23 +78,8 @@ export default function AgentWorkflows() {
     }
   };
 
-  const mockWorkflows: WorkflowState[] = [
-    {
-      documentId: "doc-123",
-      currentNode: "gst_validator",
-      completed: false,
-      nodes: {
-        classifier: { id: "classifier", name: "ClassifierBot", type: "agent", status: "completed", dependencies: [] },
-        extractor: { id: "extractor", name: "DataExtractor", type: "agent", status: "completed", dependencies: ["classifier"] },
-        gst_validator: { id: "gst_validator", name: "GSTValidator", type: "agent", status: "running", dependencies: ["extractor"] },
-        journal_bot: { id: "journal_bot", name: "JournalBot", type: "agent", status: "idle", dependencies: ["gst_validator"] },
-        conso_ai: { id: "conso_ai", name: "ConsoAI", type: "agent", status: "idle", dependencies: ["journal_bot"] },
-        audit_agent: { id: "audit_agent", name: "AuditAgent", type: "agent", status: "idle", dependencies: ["conso_ai"] },
-      }
-    }
-  ];
-
-  const workflowsToShow = workflows || mockWorkflows;
+  // Only show workflows from API if available, otherwise show empty state
+  const workflowsToShow = workflows || [];
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -182,9 +167,9 @@ export default function AgentWorkflows() {
             <TabsContent value="agents" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { name: "ClassifierBot", status: "running", lastRun: "2 minutes ago" },
+                  { name: "ClassifierBot", status: "idle", lastRun: "2 minutes ago" },
                   { name: "DataExtractor", status: "idle", lastRun: "5 minutes ago" },
-                  { name: "GSTValidator", status: "running", lastRun: "1 minute ago" },
+                  { name: "GSTValidator", status: "idle", lastRun: "1 minute ago" },
                   { name: "JournalBot", status: "idle", lastRun: "10 minutes ago" },
                   { name: "ConsoAI", status: "idle", lastRun: "15 minutes ago" },
                   { name: "AuditAgent", status: "idle", lastRun: "20 minutes ago" },

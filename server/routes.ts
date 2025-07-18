@@ -897,6 +897,38 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Agent jobs endpoint - returns empty array since we don't have active agent jobs
+  app.get('/api/agent-jobs', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+      
+      // Return empty array since we don't have active agent jobs running
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching agent jobs:', error);
+      res.status(500).json({ error: 'Failed to fetch agent jobs' });
+    }
+  });
+
+  // Workflows endpoint - returns empty array since we don't have active workflows
+  app.get('/api/workflows', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+      
+      // Return empty array since we don't have active workflows
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+      res.status(500).json({ error: 'Failed to fetch workflows' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
