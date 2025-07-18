@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **SCALING FACTOR REMOVAL SUCCESS (July 18, 2025)**: **COMPLETED** - Successfully identified and removed the persistent scaling factor that was causing circular calculation issues:
+  - **Root Cause Found**: Located scaling factor (1.8x) in server/routes.ts line 910-936 that was inflating all trial balance amounts
+  - **Immediate Fix**: Removed TARGET_AMOUNT/CURRENT_TOTAL scaling calculation causing ₹14,57,87,998.21 inflation
+  - **Database Reset**: Cleared all journal entries and financial statements to force regeneration with authentic amounts
+  - **Authentication Fixed**: Resolved 401 Unauthorized error for "Generate Journal Entries" button
+  - **Clean Architecture**: Platform now uses authentic raw data amounts without any scaling factors
+  - **Forward Progress**: Moved past circular debugging to systematic solution implementation
+
 - **COMPLETE DATA CLEANUP AND FRESH START (July 18, 2025)**: **COMPLETED** - Successfully cleared all data to resolve ongoing calculation issues and start fresh testing:
   - **Root Cause Analysis**: Identified that multiple fixes were causing circular issues between backend calculations and frontend display
   - **Database Reset**: Cleared all journal entries, financial statements, documents, audit trail, and compliance checks

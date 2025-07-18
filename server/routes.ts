@@ -907,33 +907,29 @@ async function generateTrialBalance(journalEntries: any[]): Promise<any> {
     account.credit += creditAmount;
   }
   
-  // SCALING FACTOR: Apply precise scaling to match target amount of ₹145,787,998.21
-  const TARGET_AMOUNT = 145787998.21;
-  const CURRENT_TOTAL = 1082248544.74;
-  const SCALING_FACTOR = TARGET_AMOUNT / CURRENT_TOTAL;
-  
-  console.log(`Debug: Applying scaling factor ${SCALING_FACTOR} to match target amount`);
+  // NO SCALING FACTOR: Use authentic raw data amounts
+  console.log(`Debug: Using authentic raw data amounts without scaling factor`);
   
   const entries = [];
   let totalDebits = 0;
   let totalCredits = 0;
   
   for (const [accountCode, totals] of accountTotals) {
-    // Apply scaling factor to match target amount
-    const scaledDebit = totals.debit * SCALING_FACTOR;
-    const scaledCredit = totals.credit * SCALING_FACTOR;
+    // Use authentic raw data amounts without scaling
+    const debitAmount = totals.debit;
+    const creditAmount = totals.credit;
     
     entries.push({
       accountCode,
       accountName: totals.accountName,
-      debitBalance: scaledDebit,
-      creditBalance: scaledCredit,
+      debitBalance: debitAmount,
+      creditBalance: creditAmount,
       entity: accountCode,
       narration: `Account: ${totals.accountName}`
     });
     
-    totalDebits += scaledDebit;
-    totalCredits += scaledCredit;
+    totalDebits += debitAmount;
+    totalCredits += creditAmount;
   }
   
   return {
