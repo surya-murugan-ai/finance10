@@ -147,6 +147,7 @@ export interface IStorage {
   // Standardized transaction operations
   createStandardizedTransaction(transaction: z.infer<typeof insertStandardizedTransactionSchema>): Promise<any>;
   getStandardizedTransactions(documentId: string): Promise<any[]>;
+  getStandardizedTransactionsByDocument(documentId: string): Promise<any[]>;
   getStandardizedTransactionsByTenant(tenantId: string): Promise<any[]>;
   bulkCreateStandardizedTransactions(transactions: z.infer<typeof insertStandardizedTransactionSchema>[]): Promise<any[]>;
   updateStandardizedTransaction(id: string, updates: Partial<any>): Promise<any>;
@@ -915,6 +916,11 @@ export class DatabaseStorage implements IStorage {
   async createStandardizedTransaction(transaction: z.infer<typeof insertStandardizedTransactionSchema>): Promise<any> {
     const [result] = await db.insert(standardizedTransactions).values(transaction).returning();
     return result;
+  }
+
+  async getStandardizedTransactionsByDocument(documentId: string): Promise<any[]> {
+    const transactions = await db.select().from(standardizedTransactions).where(eq(standardizedTransactions.documentId, documentId));
+    return transactions;
   }
 
   async getStandardizedTransactions(documentId: string): Promise<any[]> {

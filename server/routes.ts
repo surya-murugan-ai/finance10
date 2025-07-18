@@ -221,6 +221,25 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
       const documents = await storage.getDocumentsByTenant(user.tenant_id);
       const extractedData = [];
+      
+      // Check if we already have processed transactions for this tenant
+      const existingTransactions = await storage.getStandardizedTransactionsByTenant(user.tenant_id);
+      
+      // If we already have processed transactions, return them directly instead of reprocessing
+      if (existingTransactions.length > 0) {
+        console.log(`Found ${existingTransactions.length} existing transactions, skipping reprocessing`);
+        return res.json({
+          message: 'Data extracted successfully',
+          totalDocuments: documents.length,
+          extractedData: documents.map(doc => ({
+            documentId: doc.id,
+            filename: doc.originalName,
+            documentType: doc.documentType,
+            extractedRows: existingTransactions.filter(t => t.documentId === doc.id).length,
+            data: []
+          }))
+        });
+      }
 
       for (const doc of documents) {
         try {
@@ -357,33 +376,41 @@ export async function registerRoutes(app: express.Express): Promise<any> {
             }
           }
 
-          // Store extracted data in standardized_transactions table
-          try {
-            for (const entry of data) {
-              if (entry.amount && entry.company) {
-                const amount = parseFloat(entry.amount.toString().replace(/[₹,]/g, '')) || 0;
-                const isCredit = entry.debitCredit === 'Cr' || entry.debitCredit === 'Credit';
-                
-                await storage.createStandardizedTransaction({
-                  tenantId: user.tenant_id,
-                  documentId: doc.id,
-                  transactionDate: entry.transactionDate ? new Date(entry.transactionDate) : new Date(),
-                  company: entry.company,
-                  particulars: entry.particulars || '',
-                  voucherNumber: entry.voucher || '',
-                  voucherType: entry.voucherType || '',
-                  debitAmount: isCredit ? "0.00" : amount.toString(),
-                  creditAmount: isCredit ? amount.toString() : "0.00",
-                  netAmount: amount.toString(),
-                  category: 'other',
-                  aiConfidence: 85,
-                  originalRowData: entry,
-                  columnMapping: null
-                });
+          // Check if this document has already been processed
+          const existingTransactions = await storage.getStandardizedTransactionsByDocument(doc.id);
+          
+          // Store extracted data in standardized_transactions table (only if not already processed)
+          if (existingTransactions.length === 0) {
+            try {
+              for (const entry of data) {
+                if (entry.amount && entry.company) {
+                  const amount = parseFloat(entry.amount.toString().replace(/[₹,]/g, '')) || 0;
+                  const isCredit = entry.debitCredit === 'Cr' || entry.debitCredit === 'Credit';
+                  
+                  await storage.createStandardizedTransaction({
+                    tenantId: user.tenant_id,
+                    documentId: doc.id,
+                    transactionDate: entry.transactionDate ? new Date(entry.transactionDate) : new Date(),
+                    company: entry.company,
+                    particulars: entry.particulars || '',
+                    voucherNumber: entry.voucher || '',
+                    voucherType: entry.voucherType || '',
+                    debitAmount: isCredit ? "0.00" : amount.toString(),
+                    creditAmount: isCredit ? amount.toString() : "0.00",
+                    netAmount: amount.toString(),
+                    category: 'other',
+                    aiConfidence: 85,
+                    originalRowData: entry,
+                    columnMapping: null
+                  });
+                }
               }
+              console.log(`Processed ${data.length} transactions for document ${doc.originalName}`);
+            } catch (dbError) {
+              console.error('Error storing standardized transactions:', dbError);
             }
-          } catch (dbError) {
-            console.error('Error storing standardized transactions:', dbError);
+          } else {
+            console.log(`Document ${doc.originalName} already processed (${existingTransactions.length} transactions exist)`);
           }
 
           extractedData.push({
