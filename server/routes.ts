@@ -228,16 +228,41 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       // If we already have processed transactions, return them directly instead of reprocessing
       if (existingTransactions.length > 0) {
         console.log(`Found ${existingTransactions.length} existing transactions, skipping reprocessing`);
+        
+        // Group transactions by document
+        const transactionsByDoc = new Map();
+        existingTransactions.forEach(t => {
+          if (!transactionsByDoc.has(t.documentId)) {
+            transactionsByDoc.set(t.documentId, []);
+          }
+          transactionsByDoc.get(t.documentId).push(t);
+        });
+        
         return res.json({
           message: 'Data extracted successfully',
           totalDocuments: documents.length,
-          extractedData: documents.map(doc => ({
-            documentId: doc.id,
-            filename: doc.originalName,
-            documentType: doc.documentType,
-            extractedRows: existingTransactions.filter(t => t.documentId === doc.id).length,
-            data: []
-          }))
+          extractedData: documents.map(doc => {
+            const docTransactions = transactionsByDoc.get(doc.id) || [];
+            return {
+              documentId: doc.id,
+              filename: doc.originalName,
+              documentType: doc.documentType,
+              extractedRows: docTransactions.length,
+              data: docTransactions.map(t => ({
+                id: t.id,
+                company: t.company || t.company_name,
+                particulars: t.particulars,
+                transactionDate: t.transactionDate || t.transaction_date,
+                voucherNumber: t.voucherNumber || t.voucher_number,
+                voucherType: t.voucherType || t.voucher_type,
+                debitAmount: t.debitAmount || t.debit_amount,
+                creditAmount: t.creditAmount || t.credit_amount,
+                netAmount: t.netAmount || t.net_amount || t.amount,
+                category: t.category,
+                aiConfidence: t.aiConfidence || t.ai_confidence
+              }))
+            };
+          })
         });
       }
 
@@ -415,6 +440,11 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
           // Get the standardized transactions for this document to display in data tables
           const standardizedTransactions = await storage.getStandardizedTransactionsByDocument(doc.id);
+          console.log(`Document ${doc.originalName} (${doc.id}): Found ${standardizedTransactions.length} standardized transactions`);
+          
+          if (standardizedTransactions.length > 0) {
+            console.log(`Sample transaction:`, standardizedTransactions[0]);
+          }
           
           extractedData.push({
             documentId: doc.id,
@@ -423,16 +453,16 @@ export async function registerRoutes(app: express.Express): Promise<any> {
             extractedRows: standardizedTransactions.length,
             data: standardizedTransactions.map(t => ({
               id: t.id,
-              company: t.company,
+              company: t.company || t.company_name,
               particulars: t.particulars,
-              transactionDate: t.transactionDate,
-              voucherNumber: t.voucherNumber,
-              voucherType: t.voucherType,
-              debitAmount: t.debitAmount,
-              creditAmount: t.creditAmount,
-              netAmount: t.netAmount,
+              transactionDate: t.transactionDate || t.transaction_date,
+              voucherNumber: t.voucherNumber || t.voucher_number,
+              voucherType: t.voucherType || t.voucher_type,
+              debitAmount: t.debitAmount || t.debit_amount,
+              creditAmount: t.creditAmount || t.credit_amount,
+              netAmount: t.netAmount || t.net_amount || t.amount,
               category: t.category,
-              aiConfidence: t.aiConfidence
+              aiConfidence: t.aiConfidence || t.ai_confidence
             }))
           });
 
@@ -449,16 +479,16 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               extractedRows: standardizedTransactions.length,
               data: standardizedTransactions.map(t => ({
                 id: t.id,
-                company: t.company,
+                company: t.company || t.company_name,
                 particulars: t.particulars,
-                transactionDate: t.transactionDate,
-                voucherNumber: t.voucherNumber,
-                voucherType: t.voucherType,
-                debitAmount: t.debitAmount,
-                creditAmount: t.creditAmount,
-                netAmount: t.netAmount,
+                transactionDate: t.transactionDate || t.transaction_date,
+                voucherNumber: t.voucherNumber || t.voucher_number,
+                voucherType: t.voucherType || t.voucher_type,
+                debitAmount: t.debitAmount || t.debit_amount,
+                creditAmount: t.creditAmount || t.credit_amount,
+                netAmount: t.netAmount || t.net_amount || t.amount,
                 category: t.category,
-                aiConfidence: t.aiConfidence
+                aiConfidence: t.aiConfidence || t.ai_confidence
               })),
               error: 'File processing failed, showing existing data'
             });
