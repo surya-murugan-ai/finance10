@@ -309,18 +309,34 @@ Pay special attention to:
         transactionDate = new Date((dateValue - 25569) * 86400 * 1000);
       } else {
         const dateStr = String(dateValue).trim();
+        
         // Try different date formats
         transactionDate = new Date(dateStr);
         
         if (isNaN(transactionDate.getTime())) {
-          // Try parsing DD/MM/YYYY or MM/DD/YYYY format
+          // Try parsing DD-MMM-YY format (like "16-Jun-25")
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           const dateParts = dateStr.split(/[-/]/);
+          
           if (dateParts.length === 3) {
-            // Assume DD/MM/YYYY format for Indian documents
-            const day = parseInt(dateParts[0]);
-            const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
-            const year = parseInt(dateParts[2]);
-            transactionDate = new Date(year, month, day);
+            // Check if middle part is a month name (DD-MMM-YY format)
+            const monthIndex = monthNames.indexOf(dateParts[1]);
+            if (monthIndex !== -1) {
+              const day = parseInt(dateParts[0]);
+              const month = monthIndex; // Month is 0-indexed
+              let year = parseInt(dateParts[2]);
+              // Convert 2-digit year to 4-digit (assuming 20xx)
+              if (year < 100) {
+                year = 2000 + year;
+              }
+              transactionDate = new Date(year, month, day);
+            } else {
+              // Assume DD/MM/YYYY format for Indian documents
+              const day = parseInt(dateParts[0]);
+              const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+              const year = parseInt(dateParts[2]);
+              transactionDate = new Date(year, month, day);
+            }
           }
         }
       }
