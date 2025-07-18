@@ -39,7 +39,10 @@ export const localAuth: RequestHandler = async (req, res, next) => {
               email: user.email,
               first_name: user.firstName,
               last_name: user.lastName
-            }
+            },
+            tenant_id: user.tenantId,
+            id: user.id,
+            email: user.email
           };
           return next();
         }
@@ -62,7 +65,10 @@ export const localAuth: RequestHandler = async (req, res, next) => {
                 email: user.email,
                 first_name: user.firstName,
                 last_name: user.lastName
-              }
+              },
+              tenant_id: user.tenantId,
+              id: user.id,
+              email: user.email
             };
             return next();
           }

@@ -169,7 +169,7 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
       for (const doc of documents) {
         try {
-          const filePath = path.join(process.cwd(), doc.uploadPath);
+          const filePath = path.join(process.cwd(), doc.filePath);
           
           if (!fs.existsSync(filePath)) {
             console.warn(`File not found: ${filePath}`);
