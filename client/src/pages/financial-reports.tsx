@@ -95,6 +95,87 @@ export default function FinancialReports() {
     retry: false,
   });
 
+  const { data: trialBalanceData, isLoading: trialBalanceLoading } = useQuery({
+    queryKey: ["/api/reports/trial-balance", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`/api/reports/trial-balance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    },
+    retry: false,
+  });
+
+  const { data: profitLossData, isLoading: profitLossLoading } = useQuery({
+    queryKey: ["/api/reports/profit-loss", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`/api/reports/profit-loss`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    },
+    retry: false,
+  });
+
+  const { data: balanceSheetData, isLoading: balanceSheetLoading } = useQuery({
+    queryKey: ["/api/reports/balance-sheet", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(`/api/reports/balance-sheet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    },
+    retry: false,
+  });
+
   const generateReportMutation = useMutation({
     mutationFn: async (reportType: string) => {
       const token = localStorage.getItem('access_token');
@@ -423,30 +504,18 @@ export default function FinancialReports() {
     );
   };
 
-  // Calculate real trial balance from journal entries
-  const calculateTrialBalance = () => {
-    if (!journalEntries || journalEntries.length === 0) {
-      return { totalDebits: 0, totalCredits: 0, isBalanced: true };
-    }
-    
-    const totalDebits = journalEntries.reduce((sum, entry) => {
-      const debitAmount = typeof entry.debitAmount === 'string' ? parseFloat(entry.debitAmount) : entry.debitAmount;
-      return sum + (debitAmount || 0);
-    }, 0);
-    
-    const totalCredits = journalEntries.reduce((sum, entry) => {
-      const creditAmount = typeof entry.creditAmount === 'string' ? parseFloat(entry.creditAmount) : entry.creditAmount;
-      return sum + (creditAmount || 0);
-    }, 0);
-    
-    return {
-      totalDebits,
-      totalCredits,
-      isBalanced: Math.abs(totalDebits - totalCredits) < 0.01, // Allow for small rounding differences
-    };
+  // Use trial balance data from API
+  const trialBalance = trialBalanceData ? {
+    totalDebits: trialBalanceData.totalDebits || 0,
+    totalCredits: trialBalanceData.totalCredits || 0,
+    isBalanced: trialBalanceData.isBalanced || false,
+    entries: trialBalanceData.entries || []
+  } : { 
+    totalDebits: 0, 
+    totalCredits: 0, 
+    isBalanced: true, 
+    entries: [] 
   };
-
-  const trialBalance = calculateTrialBalance();
 
 
 
@@ -552,29 +621,22 @@ export default function FinancialReports() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {(() => {
-                      const plStatement = statements?.find(s => s.statementType === 'profit_loss');
-                      const plData = plStatement?.data || { totalRevenue: 0, totalExpenses: 0, netProfit: 0 };
-                      
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Revenue</span>
-                            <span className="font-semibold">{formatCurrency(plData.totalRevenue)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Expenses</span>
-                            <span className="font-semibold">{formatCurrency(plData.totalExpenses)}</span>
-                          </div>
-                          <div className="flex justify-between border-t pt-2">
-                            <span className="text-sm font-medium">Net Profit</span>
-                            <span className="font-semibold text-secondary">
-                              {formatCurrency(plData.netProfit)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total Revenue</span>
+                        <span className="font-semibold">{formatCurrency(profitLossData?.totalRevenue || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total Expenses</span>
+                        <span className="font-semibold">{formatCurrency(profitLossData?.totalExpenses || 0)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-sm font-medium">Net Income</span>
+                        <span className="font-semibold text-secondary">
+                          {formatCurrency(profitLossData?.netIncome || 0)}
+                        </span>
+                      </div>
+                    </div>
                     <Button 
                       className="w-full mt-4"
                       onClick={() => generateReportMutation.mutate('profit-loss')}
@@ -594,29 +656,22 @@ export default function FinancialReports() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {(() => {
-                      const bsStatement = statements?.find(s => s.statementType === 'balance_sheet');
-                      const bsData = bsStatement?.data || { totalAssets: 0, totalLiabilities: 0, totalEquity: 0 };
-                      
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Assets</span>
-                            <span className="font-semibold">{formatCurrency(bsData.totalAssets)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Liabilities</span>
-                            <span className="font-semibold">{formatCurrency(bsData.totalLiabilities)}</span>
-                          </div>
-                          <div className="flex justify-between border-t pt-2">
-                            <span className="text-sm font-medium">Total Equity</span>
-                            <span className="font-semibold text-secondary">
-                              {formatCurrency(bsData.totalEquity)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total Assets</span>
+                        <span className="font-semibold">{formatCurrency(balanceSheetData?.totalAssets || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total Liabilities</span>
+                        <span className="font-semibold">{formatCurrency(balanceSheetData?.totalLiabilities || 0)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-sm font-medium">Total Equity</span>
+                        <span className="font-semibold text-secondary">
+                          {formatCurrency(balanceSheetData?.totalEquity || 0)}
+                        </span>
+                      </div>
+                    </div>
                     <Button 
                       className="w-full mt-4"
                       onClick={() => generateReportMutation.mutate('balance-sheet')}
@@ -825,45 +880,23 @@ export default function FinancialReports() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {journalEntries && journalEntries.length > 0 ? (
-                          (() => {
-                            // Group entries by account code and calculate net balances
-                            const accountBalances = {};
-                            
-                            journalEntries.forEach(entry => {
-                              const debitAmount = typeof entry.debitAmount === 'string' ? parseFloat(entry.debitAmount) : entry.debitAmount;
-                              const creditAmount = typeof entry.creditAmount === 'string' ? parseFloat(entry.creditAmount) : entry.creditAmount;
-                              
-                              if (!accountBalances[entry.accountCode]) {
-                                accountBalances[entry.accountCode] = {
-                                  accountCode: entry.accountCode,
-                                  accountName: entry.accountName,
-                                  totalDebits: 0,
-                                  totalCredits: 0
-                                };
-                              }
-                              
-                              accountBalances[entry.accountCode].totalDebits += debitAmount || 0;
-                              accountBalances[entry.accountCode].totalCredits += creditAmount || 0;
-                            });
-                            
-                            return Object.values(accountBalances).map((account) => (
-                              <TableRow key={account.accountCode}>
-                                <TableCell className="font-mono">{account.accountCode}</TableCell>
-                                <TableCell>{account.accountName}</TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {account.totalDebits > 0 ? formatCurrency(account.totalDebits) : '-'}
-                                </TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {account.totalCredits > 0 ? formatCurrency(account.totalCredits) : '-'}
-                                </TableCell>
-                              </TableRow>
-                            ));
-                          })()
+                        {trialBalance.entries && trialBalance.entries.length > 0 ? (
+                          trialBalance.entries.map((entry) => (
+                            <TableRow key={entry.accountCode}>
+                              <TableCell className="font-mono">{entry.accountCode}</TableCell>
+                              <TableCell>{entry.accountName}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.debitBalance > 0 ? formatCurrency(entry.debitBalance) : '-'}
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                {entry.creditBalance > 0 ? formatCurrency(entry.creditBalance) : '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                              No journal entries found
+                              {trialBalanceLoading ? "Loading trial balance..." : "No trial balance data found"}
                             </TableCell>
                           </TableRow>
                         )}
@@ -922,22 +955,20 @@ export default function FinancialReports() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const profitLossStatement = statements?.find(s => s.statementType === 'profit_loss');
-                    if (!profitLossStatement) {
-                      return (
-                        <div className="text-center py-8">
-                          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-lg font-medium">No P&L statement found</p>
-                          <p className="text-sm text-muted-foreground">
-                            Click "Generate Report" to create a profit & loss statement
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    const plData = profitLossStatement.data;
-                    return displayFormat === 'compact' ? renderCompactPLFormat(plData) : (
+                  {profitLossLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : !profitLossData ? (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg font-medium">No P&L statement found</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click "Generate Report" to create a profit & loss statement
+                      </p>
+                    </div>
+                  ) : (
+                    displayFormat === 'compact' ? renderCompactPLFormat(profitLossData) : (
                       <div className="space-y-6">
                         <div>
                           <h3 className="text-lg font-semibold mb-3">Revenue</h3>
@@ -951,8 +982,8 @@ export default function FinancialReports() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {plData.revenue && plData.revenue.length > 0 ? (
-                                  plData.revenue.map((item, index) => (
+                                {profitLossData.revenue && profitLossData.revenue.length > 0 ? (
+                                  profitLossData.revenue.map((item, index) => (
                                     <TableRow key={index}>
                                       <TableCell className="font-mono">{item.accountCode}</TableCell>
                                       <TableCell>{item.accountName}</TableCell>
@@ -971,7 +1002,7 @@ export default function FinancialReports() {
                                 <TableRow className="border-t font-semibold">
                                   <TableCell colSpan={2}>Total Revenue</TableCell>
                                   <TableCell className="text-right">
-                                    {formatCurrency(plData.totalRevenue || 0)}
+                                    {formatCurrency(profitLossData.totalRevenue || 0)}
                                   </TableCell>
                                 </TableRow>
                               </TableBody>
@@ -991,8 +1022,8 @@ export default function FinancialReports() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {plData.expenses && plData.expenses.length > 0 ? (
-                                  plData.expenses.map((item, index) => (
+                                {profitLossData.expenses && profitLossData.expenses.length > 0 ? (
+                                  profitLossData.expenses.map((item, index) => (
                                     <TableRow key={index}>
                                       <TableCell className="font-mono">{item.accountCode}</TableCell>
                                       <TableCell>{item.accountName}</TableCell>
@@ -1011,7 +1042,7 @@ export default function FinancialReports() {
                                 <TableRow className="border-t font-semibold">
                                   <TableCell colSpan={2}>Total Expenses</TableCell>
                                   <TableCell className="text-right">
-                                    {formatCurrency(plData.totalExpenses || 0)}
+                                    {formatCurrency(profitLossData.totalExpenses || 0)}
                                   </TableCell>
                                 </TableRow>
                               </TableBody>
@@ -1021,15 +1052,15 @@ export default function FinancialReports() {
 
                         <div className="border-t-2 pt-4">
                           <div className="flex justify-between items-center text-lg font-bold">
-                            <span>Net Profit</span>
-                            <span className={plData.netProfit >= 0 ? "text-green-600" : "text-red-600"}>
-                              {formatCurrency(plData.netProfit || 0)}
+                            <span>Net Income</span>
+                            <span className={profitLossData.netIncome >= 0 ? "text-green-600" : "text-red-600"}>
+                              {formatCurrency(profitLossData.netIncome || 0)}
                             </span>
                           </div>
                         </div>
                       </div>
-                    );
-                  })()}
+                    )
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1053,25 +1084,24 @@ export default function FinancialReports() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const balanceSheetStatement = statements?.find(s => s.statementType === 'balance_sheet');
-                    if (!balanceSheetStatement) {
-                      return (
-                        <div className="text-center py-8">
-                          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-lg font-medium">No balance sheet found</p>
-                          <p className="text-sm text-muted-foreground">
-                            Click "Generate Report" to create a balance sheet
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    const bsData = balanceSheetStatement.data;
-                    const isBalanced = Math.abs(bsData.totalAssets - (bsData.totalLiabilities + bsData.totalEquity)) < 0.01;
+                  {balanceSheetLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : !balanceSheetData ? (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg font-medium">No balance sheet found</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click "Generate Report" to create a balance sheet
+                      </p>
+                    </div>
+                  ) : (
+                    (() => {
+                      const isBalanced = Math.abs(balanceSheetData.totalAssets - (balanceSheetData.totalLiabilities + balanceSheetData.totalEquity)) < 0.01;
                     
-                    return (
-                      <div className="space-y-4">
+                      return (
+                        <div className="space-y-4">
                         <div className="flex justify-center">
                           <Badge className={isBalanced ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                             {isBalanced ? "Balanced" : "Unbalanced"}
@@ -1082,8 +1112,8 @@ export default function FinancialReports() {
                           <div>
                             <h3 className="text-lg font-semibold mb-3">Assets</h3>
                             <div className="space-y-3">
-                              {bsData.assets && bsData.assets.length > 0 ? (
-                                bsData.assets.map((asset, index) => (
+                              {balanceSheetData.assets && balanceSheetData.assets.length > 0 ? (
+                                balanceSheetData.assets.map((asset, index) => (
                                   <div key={index} className="flex justify-between py-2 border-b">
                                     <div>
                                       <p className="font-medium">{asset.accountName}</p>
@@ -1100,7 +1130,7 @@ export default function FinancialReports() {
                               )}
                               <div className="flex justify-between py-2 border-t-2 font-semibold">
                                 <span>Total Assets</span>
-                                <span>{formatCurrency(bsData.totalAssets || 0)}</span>
+                                <span>{formatCurrency(balanceSheetData.totalAssets || 0)}</span>
                               </div>
                             </div>
                           </div>
@@ -1110,8 +1140,8 @@ export default function FinancialReports() {
                             <div className="space-y-3">
                               <div>
                                 <h4 className="font-medium text-muted-foreground mb-2">Liabilities</h4>
-                                {bsData.liabilities && bsData.liabilities.length > 0 ? (
-                                  bsData.liabilities.map((liability, index) => (
+                                {balanceSheetData.liabilities && balanceSheetData.liabilities.length > 0 ? (
+                                  balanceSheetData.liabilities.map((liability, index) => (
                                     <div key={index} className="flex justify-between py-2 border-b">
                                       <div>
                                         <p className="font-medium">{liability.accountName}</p>
@@ -1130,8 +1160,8 @@ export default function FinancialReports() {
                               
                               <div>
                                 <h4 className="font-medium text-muted-foreground mb-2">Equity</h4>
-                                {bsData.equity && bsData.equity.length > 0 ? (
-                                  bsData.equity.map((equity, index) => (
+                                {balanceSheetData.equity && balanceSheetData.equity.length > 0 ? (
+                                  balanceSheetData.equity.map((equity, index) => (
                                     <div key={index} className="flex justify-between py-2 border-b">
                                       <div>
                                         <p className="font-medium">{equity.accountName}</p>
@@ -1150,14 +1180,15 @@ export default function FinancialReports() {
                               
                               <div className="flex justify-between py-2 border-t-2 font-semibold">
                                 <span>Total Liabilities & Equity</span>
-                                <span>{formatCurrency((bsData.totalLiabilities || 0) + (bsData.totalEquity || 0))}</span>
+                                <span>{formatCurrency((balanceSheetData.totalLiabilities || 0) + (balanceSheetData.totalEquity || 0))}</span>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     );
-                  })()}
+                    })()
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
