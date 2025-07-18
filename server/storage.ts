@@ -75,6 +75,7 @@ export interface IStorage {
   // Journal entry operations
   createJournalEntry(entry: InsertJournalEntry): Promise<JournalEntry>;
   getJournalEntries(documentId?: string): Promise<JournalEntry[]>;
+  getJournalEntriesByTenant(tenantId: string): Promise<JournalEntry[]>;
   getJournalEntriesByPeriod(period: string): Promise<JournalEntry[]>;
   deleteJournalEntry(id: string): Promise<void>;
   deleteJournalEntriesByDocument(documentId: string): Promise<void>;
@@ -367,6 +368,14 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(journalEntries)
+      .orderBy(desc(journalEntries.date));
+  }
+
+  async getJournalEntriesByTenant(tenantId: string): Promise<JournalEntry[]> {
+    return await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.tenantId, tenantId))
       .orderBy(desc(journalEntries.date));
   }
 
