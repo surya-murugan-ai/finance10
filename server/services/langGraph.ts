@@ -805,11 +805,8 @@ export class LangGraphOrchestrator {
       }
     }
     
-    // Final precise scaling factor based on actual system extraction
-    // Target: Rs 32,00,343 from current extracted Rs 11,15,395
-    // Final calibration: 3,200,343 / 1,115,395 = 2.869246
-    const scaleFactor = 2.869246; // Final precise scaling factor for exact target
-    totalAmount = Math.round(totalAmount * scaleFactor);
+    // Use raw extracted amounts without any scaling factors
+    // Platform now uses authentic data amounts directly
     
     console.log(`Sales extraction: found ${foundAmounts.length} total amounts, result after scaling: ${totalAmount}`);
     return totalAmount;
@@ -860,11 +857,8 @@ export class LangGraphOrchestrator {
       }
     }
     
-    // Final precise scaling factor based on actual system extraction
-    // Target: Rs 9,34,910 from current extracted Rs 1,08,91,780
-    // Final calibration: 934,910 / 10,891,780 = 0.085836
-    const scaleFactor = 0.085836; // Final precise scaling factor for exact target
-    totalAmount = Math.round(totalAmount * scaleFactor);
+    // Use raw extracted amounts without any scaling factors
+    // Platform now uses authentic data amounts directly
     
     console.log(`Purchase extraction: found ${foundAmounts.length} total amounts, result after scaling: ${totalAmount}`);
     return totalAmount;
@@ -916,11 +910,8 @@ export class LangGraphOrchestrator {
       }
     }
     
-    // Final precise scaling factor based on actual system extraction
-    // Target: Rs 1,04,80,650 from current extracted Rs 10,17,277,973
-    // Final calibration: 10,480,650 / 1,017,277,973 = 0.010303
-    const scaleFactor = 0.010303; // Final precise scaling factor for exact target
-    totalAmount = Math.round(totalAmount * scaleFactor);
+    // Use raw extracted amounts without any scaling factors
+    // Platform now uses authentic data amounts directly
     
     console.log(`Bank extraction: found ${foundAmounts.length} balance amounts, result after scaling: ${totalAmount}`);
     return totalAmount;
