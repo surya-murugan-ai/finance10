@@ -17,13 +17,12 @@ import { Download, Search, Filter, FileText, Calendar, DollarSign, Building, Use
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ExtractedData {
-  id: string;
   documentId: string;
+  filename: string;
   documentType: string;
-  fileName: string;
-  data: any;
-  extractedAt: string;
-  confidence: number;
+  extractedRows: number;
+  data: any[];
+  error?: string;
 }
 
 export default function DataTables() {
@@ -59,7 +58,7 @@ export default function DataTables() {
   const extractedData = apiResponse?.extractedData || [];
   const filteredData = extractedData?.filter(item => {
     const matchesSearch = searchTerm === "" || 
-      item.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
       JSON.stringify(item.data).toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = selectedDocType === "all" || item.documentType === selectedDocType;
@@ -79,190 +78,46 @@ export default function DataTables() {
     return filteredData.filter(item => item.documentType === docType);
   };
 
-  const renderVendorInvoiceData = (data: any[]) => (
+  const renderGenericData = (data: any[], borderColor: string, bgColor: string) => (
     <div className="space-y-4">
       {data.map((item) => (
-        <Card key={item.id} className="border-l-4 border-l-blue-500">
+        <Card key={item.documentId} className={`border-l-4 ${borderColor}`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.fileName}</CardTitle>
-              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                {(item.confidence * 100).toFixed(1)}% confidence
+              <CardTitle className="text-lg">{item.filename}</CardTitle>
+              <Badge variant="outline" className={`${bgColor} text-white`}>
+                {item.extractedRows} rows extracted
               </Badge>
             </div>
             <CardDescription>
-              Extracted on {new Date(item.extractedAt).toLocaleDateString()}
+              Document Type: {item.documentType.replace('_', ' ').toUpperCase()}
+              {item.error && <span className="text-red-500 ml-2">Error: {item.error}</span>}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice No</TableHead>
-                  <TableHead>Vendor Name</TableHead>
-                  <TableHead>Invoice Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>GSTIN</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Row</TableHead>
+                  <TableHead>Data</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {item.data.invoices?.map((invoice: any, idx: number) => (
+                {item.data.slice(0, 10).map((row: any, idx: number) => (
                   <TableRow key={idx}>
-                    <TableCell className="font-medium">{invoice.invoiceNumber || "N/A"}</TableCell>
-                    <TableCell>{invoice.vendorName || "N/A"}</TableCell>
-                    <TableCell>{invoice.invoiceDate || "N/A"}</TableCell>
-                    <TableCell className="font-mono">₹{invoice.amount?.toLocaleString() || "0"}</TableCell>
-                    <TableCell className="font-mono text-sm">{invoice.gstin || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
-                        {invoice.status || "pending"}
-                      </Badge>
+                    <TableCell className="font-medium">{idx + 1}</TableCell>
+                    <TableCell className="font-mono text-sm max-w-lg truncate">
+                      {typeof row === 'object' ? JSON.stringify(row) : String(row)}
                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderSalesRegisterData = (data: any[]) => (
-    <div className="space-y-4">
-      {data.map((item) => (
-        <Card key={item.id} className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.fileName}</CardTitle>
-              <Badge variant="outline" className="bg-green-50 text-green-700">
-                {(item.confidence * 100).toFixed(1)}% confidence
-              </Badge>
-            </div>
-            <CardDescription>
-              Extracted on {new Date(item.extractedAt).toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice No</TableHead>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead>Sale Date</TableHead>
-                  <TableHead>Taxable Amount</TableHead>
-                  <TableHead>GST Amount</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.data.sales?.map((sale: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{sale.invoiceNumber || "N/A"}</TableCell>
-                    <TableCell>{sale.customerName || "N/A"}</TableCell>
-                    <TableCell>{sale.saleDate || "N/A"}</TableCell>
-                    <TableCell className="font-mono">₹{sale.taxableAmount?.toLocaleString() || "0"}</TableCell>
-                    <TableCell className="font-mono">₹{sale.gstAmount?.toLocaleString() || "0"}</TableCell>
-                    <TableCell className="font-mono font-semibold">₹{sale.totalAmount?.toLocaleString() || "0"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderSalaryRegisterData = (data: any[]) => (
-    <div className="space-y-4">
-      {data.map((item) => (
-        <Card key={item.id} className="border-l-4 border-l-purple-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.fileName}</CardTitle>
-              <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                {(item.confidence * 100).toFixed(1)}% confidence
-              </Badge>
-            </div>
-            <CardDescription>
-              Extracted on {new Date(item.extractedAt).toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Basic Salary</TableHead>
-                  <TableHead>TDS Deducted</TableHead>
-                  <TableHead>Net Salary</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.data.employees?.map((employee: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{employee.employeeId || "N/A"}</TableCell>
-                    <TableCell>{employee.employeeName || "N/A"}</TableCell>
-                    <TableCell>{employee.department || "N/A"}</TableCell>
-                    <TableCell className="font-mono">₹{employee.basicSalary?.toLocaleString() || "0"}</TableCell>
-                    <TableCell className="font-mono">₹{employee.tdsDeducted?.toLocaleString() || "0"}</TableCell>
-                    <TableCell className="font-mono font-semibold">₹{employee.netSalary?.toLocaleString() || "0"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderBankStatementData = (data: any[]) => (
-    <div className="space-y-4">
-      {data.map((item) => (
-        <Card key={item.id} className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.fileName}</CardTitle>
-              <Badge variant="outline" className="bg-orange-50 text-orange-700">
-                {(item.confidence * 100).toFixed(1)}% confidence
-              </Badge>
-            </div>
-            <CardDescription>
-              Extracted on {new Date(item.extractedAt).toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Debit</TableHead>
-                  <TableHead>Credit</TableHead>
-                  <TableHead>Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.data.transactions?.map((transaction: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{transaction.date || "N/A"}</TableCell>
-                    <TableCell>{transaction.description || "N/A"}</TableCell>
-                    <TableCell className="font-mono text-sm">{transaction.reference || "N/A"}</TableCell>
-                    <TableCell className="font-mono text-red-600">
-                      {transaction.debit ? `₹${transaction.debit.toLocaleString()}` : "-"}
+                {item.data.length > 10 && (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center text-muted-foreground">
+                      ... and {item.data.length - 10} more rows
                     </TableCell>
-                    <TableCell className="font-mono text-green-600">
-                      {transaction.credit ? `₹${transaction.credit.toLocaleString()}` : "-"}
-                    </TableCell>
-                    <TableCell className="font-mono font-semibold">₹{transaction.balance?.toLocaleString() || "0"}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -271,51 +126,7 @@ export default function DataTables() {
     </div>
   );
 
-  const renderPurchaseRegisterData = (data: any[]) => (
-    <div className="space-y-4">
-      {data.map((item) => (
-        <Card key={item.id} className="border-l-4 border-l-red-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.fileName}</CardTitle>
-              <Badge variant="outline" className="bg-red-50 text-red-700">
-                {(item.confidence * 100).toFixed(1)}% confidence
-              </Badge>
-            </div>
-            <CardDescription>
-              Extracted on {new Date(item.extractedAt).toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Purchase Order</TableHead>
-                  <TableHead>Vendor Name</TableHead>
-                  <TableHead>Purchase Date</TableHead>
-                  <TableHead>Item Description</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.data.purchases?.map((purchase: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{purchase.purchaseOrder || "N/A"}</TableCell>
-                    <TableCell>{purchase.vendorName || "N/A"}</TableCell>
-                    <TableCell>{purchase.purchaseDate || "N/A"}</TableCell>
-                    <TableCell>{purchase.itemDescription || "N/A"}</TableCell>
-                    <TableCell className="font-mono">{purchase.quantity || "0"}</TableCell>
-                    <TableCell className="font-mono font-semibold">₹{purchase.amount?.toLocaleString() || "0"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -447,7 +258,7 @@ export default function DataTables() {
               {getDocumentTypeData("vendor_invoice").length} documents
             </Badge>
           </div>
-          {renderVendorInvoiceData(getDocumentTypeData("vendor_invoice"))}
+          {renderGenericData(getDocumentTypeData("vendor_invoice"), "border-l-blue-500", "bg-blue-500")}
         </TabsContent>
 
         <TabsContent value="sales_register" className="space-y-4">
@@ -457,7 +268,7 @@ export default function DataTables() {
               {getDocumentTypeData("sales_register").length} documents
             </Badge>
           </div>
-          {renderSalesRegisterData(getDocumentTypeData("sales_register"))}
+          {renderGenericData(getDocumentTypeData("sales_register"), "border-l-green-500", "bg-green-500")}
         </TabsContent>
 
         <TabsContent value="salary_register" className="space-y-4">
@@ -467,7 +278,7 @@ export default function DataTables() {
               {getDocumentTypeData("salary_register").length} documents
             </Badge>
           </div>
-          {renderSalaryRegisterData(getDocumentTypeData("salary_register"))}
+          {renderGenericData(getDocumentTypeData("salary_register"), "border-l-purple-500", "bg-purple-500")}
         </TabsContent>
 
         <TabsContent value="bank_statement" className="space-y-4">
@@ -477,7 +288,7 @@ export default function DataTables() {
               {getDocumentTypeData("bank_statement").length} documents
             </Badge>
           </div>
-          {renderBankStatementData(getDocumentTypeData("bank_statement"))}
+          {renderGenericData(getDocumentTypeData("bank_statement"), "border-l-orange-500", "bg-orange-500")}
         </TabsContent>
 
         <TabsContent value="purchase_register" className="space-y-4">
@@ -487,7 +298,7 @@ export default function DataTables() {
               {getDocumentTypeData("purchase_register").length} documents
             </Badge>
           </div>
-          {renderPurchaseRegisterData(getDocumentTypeData("purchase_register"))}
+          {renderGenericData(getDocumentTypeData("purchase_register"), "border-l-red-500", "bg-red-500")}
         </TabsContent>
       </Tabs>
 
