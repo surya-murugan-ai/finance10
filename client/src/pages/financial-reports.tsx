@@ -135,7 +135,6 @@ export default function FinancialReports() {
 
   const formatCurrency = (amount: number) => {
     if (typeof amount !== 'number') return '₹0';
-    console.log('formatCurrency called with:', amount, 'type:', typeof amount);
     return `₹${amount.toLocaleString('en-IN')}`;
   };
 
@@ -218,10 +217,10 @@ export default function FinancialReports() {
                         <TableRow className="border-t-2 font-semibold">
                           <TableCell colSpan={2}>Total</TableCell>
                           <TableCell className="text-right">
-                            ₹685,748.92
+                            {formatCurrency(trialBalanceData.totalDebits)}
                           </TableCell>
                           <TableCell className="text-right">
-                            ₹685,748.92
+                            {formatCurrency(trialBalanceData.totalCredits)}
                           </TableCell>
                         </TableRow>
                       )}
