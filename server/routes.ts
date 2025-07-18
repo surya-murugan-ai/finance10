@@ -534,6 +534,58 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Specific financial report endpoints
+  app.post('/api/reports/trial-balance', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const reportData = await generateTrialBalance(entries);
+      
+      res.json(reportData);
+    } catch (error) {
+      console.error('Error generating trial balance:', error);
+      res.status(500).json({ error: 'Failed to generate trial balance' });
+    }
+  });
+
+  app.post('/api/reports/profit-loss', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const reportData = await generateProfitLoss(entries);
+      
+      res.json(reportData);
+    } catch (error) {
+      console.error('Error generating profit loss:', error);
+      res.status(500).json({ error: 'Failed to generate profit loss' });
+    }
+  });
+
+  app.post('/api/reports/balance-sheet', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const reportData = await generateBalanceSheet(entries);
+      
+      res.json(reportData);
+    } catch (error) {
+      console.error('Error generating balance sheet:', error);
+      res.status(500).json({ error: 'Failed to generate balance sheet' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -544,30 +596,35 @@ async function generateTrialBalance(journalEntries: any[]): Promise<any> {
   
   // Process all journal entries
   for (const entry of journalEntries) {
-    // Process debit account
-    if (!accountTotals.has(entry.debitAccount)) {
-      accountTotals.set(entry.debitAccount, { debit: 0, credit: 0 });
-    }
-    accountTotals.get(entry.debitAccount).debit += entry.amount;
+    const accountCode = entry.accountCode;
+    const debitAmount = parseFloat(entry.debitAmount) || 0;
+    const creditAmount = parseFloat(entry.creditAmount) || 0;
     
-    // Process credit account
-    if (!accountTotals.has(entry.creditAccount)) {
-      accountTotals.set(entry.creditAccount, { debit: 0, credit: 0 });
+    if (!accountTotals.has(accountCode)) {
+      accountTotals.set(accountCode, { 
+        accountName: entry.accountName,
+        debit: 0, 
+        credit: 0 
+      });
     }
-    accountTotals.get(entry.creditAccount).credit += entry.amount;
+    
+    const account = accountTotals.get(accountCode);
+    account.debit += debitAmount;
+    account.credit += creditAmount;
   }
   
-  const accounts = [];
+  const entries = [];
   let totalDebits = 0;
   let totalCredits = 0;
   
   for (const [accountCode, totals] of accountTotals) {
-    accounts.push({
+    entries.push({
       accountCode,
-      accountName: getAccountName(accountCode),
-      debit: totals.debit,
-      credit: totals.credit,
-      balance: totals.debit - totals.credit
+      accountName: totals.accountName,
+      debitBalance: totals.debit,
+      creditBalance: totals.credit,
+      entity: accountCode,
+      narration: `Account: ${totals.accountName}`
     });
     
     totalDebits += totals.debit;
@@ -575,9 +632,11 @@ async function generateTrialBalance(journalEntries: any[]): Promise<any> {
   }
   
   return {
-    accounts,
+    entries,
     totalDebits,
     totalCredits,
+    totalDebitsText: `₹${totalDebits.toLocaleString('en-IN')}`,
+    totalCreditsText: `₹${totalCredits.toLocaleString('en-IN')}`,
     isBalanced: Math.abs(totalDebits - totalCredits) < 0.01
   };
 }
@@ -592,17 +651,21 @@ async function generateProfitLoss(journalEntries: any[]): Promise<any> {
   
   // Process journal entries
   for (const entry of journalEntries) {
-    // Process debit account
-    if (!accountTotals.has(entry.debitAccount)) {
-      accountTotals.set(entry.debitAccount, { debit: 0, credit: 0 });
-    }
-    accountTotals.get(entry.debitAccount).debit += entry.amount;
+    const accountCode = entry.accountCode;
+    const debitAmount = parseFloat(entry.debitAmount) || 0;
+    const creditAmount = parseFloat(entry.creditAmount) || 0;
     
-    // Process credit account
-    if (!accountTotals.has(entry.creditAccount)) {
-      accountTotals.set(entry.creditAccount, { debit: 0, credit: 0 });
+    if (!accountTotals.has(accountCode)) {
+      accountTotals.set(accountCode, { 
+        accountName: entry.accountName,
+        debit: 0, 
+        credit: 0 
+      });
     }
-    accountTotals.get(entry.creditAccount).credit += entry.amount;
+    
+    const account = accountTotals.get(accountCode);
+    account.debit += debitAmount;
+    account.credit += creditAmount;
   }
   
   // Classify accounts
@@ -610,23 +673,23 @@ async function generateProfitLoss(journalEntries: any[]): Promise<any> {
     const code = accountCode.toString();
     
     if (code.startsWith('4')) {
-      // Revenue accounts
+      // Revenue accounts - credit balance
       const amount = totals.credit - totals.debit;
       if (amount > 0) {
         revenue.push({
           accountCode: code,
-          accountName: getAccountName(code),
+          accountName: totals.accountName,
           amount: amount
         });
         totalRevenue += amount;
       }
     } else if (code.startsWith('5')) {
-      // Expense accounts
+      // Expense accounts - debit balance
       const amount = totals.debit - totals.credit;
       if (amount > 0) {
         expenses.push({
           accountCode: code,
-          accountName: getAccountName(code),
+          accountName: totals.accountName,
           amount: amount
         });
         totalExpenses += amount;
@@ -655,53 +718,59 @@ async function generateBalanceSheet(journalEntries: any[]): Promise<any> {
   
   // Process journal entries
   for (const entry of journalEntries) {
-    // Process debit account
-    if (!accountTotals.has(entry.debitAccount)) {
-      accountTotals.set(entry.debitAccount, { debit: 0, credit: 0 });
-    }
-    accountTotals.get(entry.debitAccount).debit += entry.amount;
+    const accountCode = entry.accountCode;
+    const debitAmount = parseFloat(entry.debitAmount) || 0;
+    const creditAmount = parseFloat(entry.creditAmount) || 0;
     
-    // Process credit account
-    if (!accountTotals.has(entry.creditAccount)) {
-      accountTotals.set(entry.creditAccount, { debit: 0, credit: 0 });
+    if (!accountTotals.has(accountCode)) {
+      accountTotals.set(accountCode, { 
+        accountName: entry.accountName,
+        debit: 0, 
+        credit: 0 
+      });
     }
-    accountTotals.get(entry.creditAccount).credit += entry.amount;
+    
+    const account = accountTotals.get(accountCode);
+    account.debit += debitAmount;
+    account.credit += creditAmount;
   }
   
   // Classify accounts
   for (const [accountCode, totals] of accountTotals) {
+    if (!accountCode || !totals) continue;
+    
     const code = accountCode.toString();
     const netBalance = totals.debit - totals.credit;
     
     if (code.startsWith('1')) {
-      // Asset accounts
+      // Asset accounts - debit balance
       const amount = netBalance;
       if (amount > 0) {
         assets.push({
           accountCode: code,
-          accountName: getAccountName(code),
+          accountName: totals.accountName,
           amount: amount
         });
         totalAssets += amount;
       }
     } else if (code.startsWith('2')) {
-      // Liability accounts
+      // Liability accounts - credit balance
       const amount = -netBalance;
       if (amount > 0) {
         liabilities.push({
           accountCode: code,
-          accountName: getAccountName(code),
+          accountName: totals.accountName,
           amount: amount
         });
         totalLiabilities += amount;
       }
     } else if (code.startsWith('3')) {
-      // Equity accounts
+      // Equity accounts - credit balance
       const amount = -netBalance;
       if (amount > 0) {
         equity.push({
           accountCode: code,
-          accountName: getAccountName(code),
+          accountName: totals.accountName,
           amount: amount
         });
         totalEquity += amount;
