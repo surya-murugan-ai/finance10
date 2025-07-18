@@ -400,6 +400,7 @@ export class LangGraphOrchestrator {
           narration: entry.narration || 'Auto-generated journal entry',
           entity: entry.entity || 'System',
           documentId: document.id,
+          tenantId: workflow.globalState.tenantId,
           createdBy: workflow.globalState.userId,
         });
         workflow.globalState.journalEntries.push(journalEntry);
@@ -420,7 +421,7 @@ export class LangGraphOrchestrator {
       for (const entry of defaultEntries) {
         const journalEntry = await storage.createJournalEntry({
           journalId: entry.journalId,
-          date: entry.date,
+          date: entry.date instanceof Date ? entry.date : new Date(entry.date),
           accountCode: entry.accountCode,
           accountName: entry.accountName,
           debitAmount: entry.debitAmount,
@@ -428,6 +429,7 @@ export class LangGraphOrchestrator {
           narration: entry.narration,
           entity: entry.entity,
           documentId: document.id,
+          tenantId: workflow.globalState.tenantId,
           createdBy: workflow.globalState.userId,
         });
         workflow.globalState.journalEntries.push(journalEntry);
@@ -712,7 +714,7 @@ export class LangGraphOrchestrator {
       
       if (!fs.default.existsSync(filePath)) {
         console.log(`File not found: ${filePath}, using default amount`);
-        return this.getDefaultAmountForDocumentType(document.documentType || 'unknown');
+        return this.getDefaultAmountForDocumentType(document.documentType || 'other');
       }
       
       // Read the Excel file
@@ -749,11 +751,11 @@ export class LangGraphOrchestrator {
       }
       
       // If no amounts found, use document-specific defaults
-      return this.getDefaultAmountForDocumentType(document.documentType || 'unknown');
+      return this.getDefaultAmountForDocumentType(document.documentType || 'other');
       
     } catch (error) {
       console.error(`Error extracting amount from ${fileName}:`, error);
-      return this.getDefaultAmountForDocumentType(document.documentType || 'unknown');
+      return this.getDefaultAmountForDocumentType(document.documentType || 'other');
     }
   }
   
@@ -1020,11 +1022,11 @@ export class LangGraphOrchestrator {
       console.log('CORRECTION APPLIED: sales_register (corrected from misnamed purchase register - contains sales data)');
       return 'sales_register';
     } else if (filename.includes('Unu7zVyms4tltpk57Bjrl_Sales Register.xlsx')) {
-      console.log('CORRECTION APPLIED: fixed_assets (corrected from misnamed sales register - contains fixed assets data)');
-      return 'fixed_assets';
+      console.log('CORRECTION APPLIED: fixed_asset_register (corrected from misnamed sales register - contains fixed assets data)');
+      return 'fixed_asset_register';
     } else if (filename.includes('95dENJhd91F_w91rHRnIE_Sales Register.xlsx')) {
-      console.log('CORRECTION APPLIED: fixed_assets (corrected from misnamed sales register - contains fixed assets data)');
-      return 'fixed_assets';
+      console.log('CORRECTION APPLIED: fixed_asset_register (corrected from misnamed sales register - contains fixed assets data)');
+      return 'fixed_asset_register';
     } else if (filename.includes('WnFzK7JkA4nwUV-gLqkB0_Purchase Register.xlsx')) {
       console.log('CORRECTION APPLIED: sales_register (corrected from misnamed purchase register - contains sales data)');
       return 'sales_register';
@@ -1044,11 +1046,11 @@ export class LangGraphOrchestrator {
       console.log('Detected: salary_register');
       return 'salary_register';
     } else if (name.includes('fixed') && name.includes('asset')) {
-      console.log('Detected: fixed_assets');
-      return 'fixed_assets';
+      console.log('Detected: fixed_asset_register');
+      return 'fixed_asset_register';
     } else if (name.includes('tds') && name.includes('certificate')) {
-      console.log('Detected: tds_certificate');
-      return 'tds_certificate';
+      console.log('Detected: tds');
+      return 'tds';
     } else if (name.includes('bank') && name.includes('statement')) {
       console.log('Detected: bank_statement');
       return 'bank_statement';
@@ -1056,8 +1058,8 @@ export class LangGraphOrchestrator {
       console.log('Detected: vendor_invoice');
       return 'vendor_invoice';
     } else {
-      console.log('Detected: unknown - falling back to default');
-      return 'unknown';
+      console.log('Detected: other - falling back to default');
+      return 'other';
     }
   }
 

@@ -165,7 +165,7 @@ export class ContentBasedClassifier {
   private async performContentAnalysis(content: string, fileName: string): Promise<Partial<ContentAnalysis>> {
     if (!content.trim()) {
       return {
-        documentType: 'unknown',
+        documentType: 'other',
         confidence: 0.1,
         reasoning: 'No content available for analysis'
       };
@@ -214,7 +214,7 @@ export class ContentBasedClassifier {
     } catch (error) {
       console.error('AI content analysis failed:', error);
       return {
-        documentType: 'unknown',
+        documentType: 'other',
         confidence: 0.2,
         reasoning: 'AI analysis failed'
       };
@@ -264,7 +264,7 @@ export class ContentBasedClassifier {
       ]
     };
 
-    let bestMatch = 'unknown';
+    let bestMatch = 'other';
     let bestScore = 0;
     let matchedIndicators: string[] = [];
 
@@ -298,7 +298,7 @@ export class ContentBasedClassifier {
     // Prioritize AI analysis if confidence is high
     if (aiAnalysis.confidence && aiAnalysis.confidence > this.CONFIDENCE_THRESHOLD) {
       return {
-        documentType: aiAnalysis.documentType || 'unknown',
+        documentType: aiAnalysis.documentType || 'other',
         confidence: aiAnalysis.confidence,
         reasoning: aiAnalysis.reasoning || 'AI-based classification',
         keyIndicators: aiAnalysis.keyIndicators || [],
@@ -310,7 +310,7 @@ export class ContentBasedClassifier {
     // Use pattern analysis as backup
     if (patternAnalysis.confidence && patternAnalysis.confidence > 0.5) {
       return {
-        documentType: patternAnalysis.documentType || 'unknown',
+        documentType: patternAnalysis.documentType || 'other',
         confidence: patternAnalysis.confidence,
         reasoning: patternAnalysis.reasoning || 'Pattern-based classification',
         keyIndicators: patternAnalysis.keyIndicators || [],
@@ -344,7 +344,7 @@ export class ContentBasedClassifier {
     if (name.includes('vendor') || name.includes('invoice')) return 'vendor_invoice';
     if (name.includes('tds') || name.includes('certificate')) return 'tds';
     
-    return 'unknown';
+    return 'other';
   }
 
   /**

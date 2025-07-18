@@ -385,7 +385,7 @@ Please analyze and respond with JSON containing:
         isIntercompany: false,
         parentEntity: entry.entity,
         counterpartyEntity: 'Unknown',
-        transactionType: 'unknown',
+        transactionType: 'other',
         confidence: 0,
       };
     }

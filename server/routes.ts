@@ -128,14 +128,15 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       }
 
       const document = await storage.createDocument({
-        filename: req.file.filename,
+        fileName: req.file.filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
-        size: req.file.size,
-        uploadPath: req.file.path,
-        documentType: 'unknown',
+        fileSize: req.file.size,
+        filePath: req.file.path,
+        documentType: 'other',
         status: 'uploaded',
-        tenant_id: user.tenant_id
+        uploadedBy: user.id,
+        tenantId: user.tenant_id
       });
 
       res.json({
@@ -359,27 +360,94 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       }
 
       const documents = await storage.getDocumentsByTenant(user.tenant_id);
-      const journalEntries = [];
+      let totalEntries = 0;
+      let processedDocuments = 0;
 
       for (const doc of documents) {
-        // Generate journal entries based on document type
-        const entry = {
-          description: `Journal entry for ${doc.originalName}`,
-          date: new Date().toISOString(),
-          debitAccount: '1100',
-          creditAccount: '4100',
-          amount: Math.floor(Math.random() * 500000) + 50000,
-          documentId: doc.id,
-          tenant_id: user.tenant_id
-        };
+        // Check if journal entries already exist for this document
+        const existingEntries = await storage.getJournalEntriesByTenant(user.tenant_id);
+        const docEntries = existingEntries.filter(entry => entry.documentId === doc.id);
+        
+        if (docEntries.length > 0) {
+          console.log(`Skipping document ${doc.originalName} - journal entries already exist`);
+          continue;
+        }
 
-        const createdEntry = await storage.createJournalEntry(entry);
-        journalEntries.push(createdEntry);
+        // Generate simple journal entries directly
+        try {
+          // Create basic journal entries based on document type
+          const currentDate = new Date();
+          const documentType = doc.documentType || 'other';
+          
+          let debitAccount = '1100'; // Default: Cash/Bank
+          let creditAccount = '4100'; // Default: Revenue
+          let amount = Math.floor(Math.random() * 100000) + 10000; // Random amount for now
+          
+          // Customize based on document type
+          if (documentType === 'vendor_invoice') {
+            debitAccount = '5100'; // Expense
+            creditAccount = '2100'; // Payable
+          } else if (documentType === 'purchase_register') {
+            debitAccount = '5300'; // Purchase
+            creditAccount = '2100'; // Payable
+          } else if (documentType === 'sales_register') {
+            debitAccount = '1200'; // Receivable
+            creditAccount = '4100'; // Revenue
+          } else if (documentType === 'bank_statement') {
+            debitAccount = '1100'; // Cash
+            creditAccount = '4200'; // Other Income
+          }
+          
+          const journalId = `JE${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Create two entries (debit and credit)
+          const entries = [
+            {
+              journalId: `${journalId}_DR`,
+              date: currentDate,
+              accountCode: debitAccount,
+              accountName: `Account ${debitAccount}`,
+              debitAmount: amount.toString(),
+              creditAmount: "0",
+              narration: `Processing ${doc.originalName}`,
+              entity: 'System Generated',
+              documentId: doc.id,
+              tenantId: user.tenant_id,
+              createdBy: user.id,
+            },
+            {
+              journalId: `${journalId}_CR`,
+              date: currentDate,
+              accountCode: creditAccount,
+              accountName: `Account ${creditAccount}`,
+              debitAmount: "0",
+              creditAmount: amount.toString(),
+              narration: `Processing ${doc.originalName}`,
+              entity: 'System Generated',
+              documentId: doc.id,
+              tenantId: user.tenant_id,
+              createdBy: user.id,
+            }
+          ];
+          
+          for (const entry of entries) {
+            await storage.createJournalEntry(entry);
+            totalEntries++;
+          }
+          
+          processedDocuments++;
+          
+        } catch (error) {
+          console.error(`Error processing document ${doc.originalName}:`, error);
+          continue;
+        }
       }
 
       res.json({
         message: 'Journal entries generated successfully',
-        entries: journalEntries
+        totalEntries,
+        processedDocuments,
+        totalDocuments: documents.length
       });
     } catch (error) {
       console.error('Error generating journal entries:', error);
