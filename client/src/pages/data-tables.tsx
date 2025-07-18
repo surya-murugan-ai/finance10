@@ -75,54 +75,82 @@ export default function DataTables() {
   ];
 
   const getDocumentTypeData = (docType: string) => {
-    return filteredData.filter(item => item.documentType === docType);
+    const filtered = filteredData.filter(item => item.documentType === docType);
+    console.log(`Documents for ${docType}:`, filtered.length, filtered.map(f => f.filename));
+    return filtered;
   };
 
   const renderGenericData = (data: any[], borderColor: string, bgColor: string) => (
     <div className="space-y-4">
-      {data.map((item) => (
-        <Card key={item.documentId} className={`border-l-4 ${borderColor}`}>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{item.filename}</CardTitle>
-              <Badge variant="outline" className={`${bgColor} text-white`}>
-                {item.extractedRows} rows extracted
-              </Badge>
+      {data.length === 0 ? (
+        <Card className="p-8 text-center">
+          <div className="space-y-4">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
+            <div>
+              <h3 className="text-lg font-semibold text-muted-foreground">No Documents Found</h3>
+              <p className="text-sm text-muted-foreground">
+                No documents of this type have been uploaded yet.
+              </p>
             </div>
-            <CardDescription>
-              Document Type: {item.documentType.replace('_', ' ').toUpperCase()}
-              {item.error && <span className="text-red-500 ml-2">Error: {item.error}</span>}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Row</TableHead>
-                  <TableHead>Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.data.slice(0, 10).map((row: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{idx + 1}</TableCell>
-                    <TableCell className="font-mono text-sm max-w-lg truncate">
-                      {typeof row === 'object' ? JSON.stringify(row) : String(row)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {item.data.length > 10 && (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      ... and {item.data.length - 10} more rows
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
+          </div>
         </Card>
-      ))}
+      ) : (
+        data.map((item) => (
+          <Card key={item.documentId} className={`border-l-4 ${borderColor}`}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{item.filename}</CardTitle>
+                <Badge variant="outline" className={`${bgColor} text-white`}>
+                  {item.extractedRows} rows extracted
+                </Badge>
+              </div>
+              <CardDescription>
+                Document Type: {item.documentType.replace('_', ' ').toUpperCase()}
+                {item.error && <span className="text-red-500 ml-2">Error: {item.error}</span>}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Row #</TableHead>
+                    <TableHead>Key</TableHead>
+                    <TableHead>Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {item.data.slice(0, 15).map((row: any, idx: number) => {
+                    if (typeof row === 'object' && row !== null) {
+                      return Object.entries(row).map(([key, value], entryIdx) => (
+                        <TableRow key={`${idx}-${entryIdx}`}>
+                          <TableCell className="font-medium">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-blue-600">{key}</TableCell>
+                          <TableCell className="font-mono text-sm">{String(value)}</TableCell>
+                        </TableRow>
+                      ));
+                    } else {
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{idx + 1}</TableCell>
+                          <TableCell className="text-muted-foreground">-</TableCell>
+                          <TableCell className="font-mono text-sm">{String(row)}</TableCell>
+                        </TableRow>
+                      );
+                    }
+                  })}
+                  {item.data.length > 15 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground">
+                        ... and {item.data.length - 15} more rows
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 
