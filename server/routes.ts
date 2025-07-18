@@ -9,6 +9,7 @@ import XLSX from 'xlsx';
 import { localAuth, getCurrentUser } from './localAuth';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { FinancialReportsService } from './services/financialReports';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
@@ -549,7 +550,10 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       }
 
       const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
-      const reportData = await generateTrialBalance(entries);
+      
+      // Use the detailed FinancialReportsService for entity-level breakdown
+      const financialReportsService = new FinancialReportsService();
+      const reportData = await financialReportsService.generateTrialBalance(entries);
       
       res.json(reportData);
     } catch (error) {

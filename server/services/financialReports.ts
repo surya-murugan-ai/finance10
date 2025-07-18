@@ -50,7 +50,7 @@ export class FinancialReportsService {
     // Process each journal entry to create detailed subsidiary accounts
     for (const entry of journalEntries) {
       // Create a unique key combining account code and entity for detailed breakdown
-      const entityKey = `${entry.accountCode}-${entry.entity}`;
+      const entityKey = `${entry.accountCode}-${entry.entity || 'Unknown'}`;
       
       const current = entityBalances.get(entityKey) || {
         accountCode: entry.accountCode,
@@ -67,20 +67,22 @@ export class FinancialReportsService {
       entityBalances.set(entityKey, current);
     }
 
+    console.log(`Debug: Created ${entityBalances.size} entity balances from ${journalEntries.length} journal entries`);
+
     // Convert to trial balance format with detailed breakdown
     const entries: TrialBalanceEntry[] = [];
     let totalDebits = 0;
     let totalCredits = 0;
 
+    // Add detailed entity breakdown for each account
     for (const [, balance] of entityBalances) {
       const netDebit = Math.max(0, balance.debitTotal - balance.creditTotal);
       const netCredit = Math.max(0, balance.creditTotal - balance.debitTotal);
 
-      // Only include entries with non-zero balances
       if (netDebit > 0 || netCredit > 0) {
         entries.push({
           accountCode: balance.accountCode,
-          accountName: balance.entity, // Use entity name as account name for detailed view
+          accountName: `${balance.accountName} - ${balance.entity}`,
           debitBalance: netDebit,
           creditBalance: netCredit,
           entity: balance.entity,
@@ -92,8 +94,13 @@ export class FinancialReportsService {
       }
     }
 
-    // Sort by entity name for better readability
-    entries.sort((a, b) => (a.entity || '').localeCompare(b.entity || ''));
+    // Sort by account code then by entity name for better readability
+    entries.sort((a, b) => {
+      if (a.accountCode !== b.accountCode) {
+        return a.accountCode.localeCompare(b.accountCode);
+      }
+      return (a.entity || '').localeCompare(b.entity || '');
+    });
 
     return {
       entries,
