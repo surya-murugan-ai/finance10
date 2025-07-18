@@ -75,7 +75,24 @@ export default function DataTables() {
   ];
 
   const getDocumentTypeData = (docType: string) => {
-    const filtered = filteredData.filter(item => item.documentType === docType);
+    const filtered = filteredData.filter(item => {
+      // Since documents are classified as "other" in DB, infer type from filename
+      const filename = item.filename.toLowerCase();
+      
+      if (docType === "sales_register") {
+        return filename.includes("sales") || filename.includes("sales reg");
+      } else if (docType === "purchase_register") {
+        return filename.includes("purchase") || filename.includes("purchase reg");
+      } else if (docType === "bank_statement") {
+        return filename.includes("bank") || filename.includes("db bank");
+      } else if (docType === "salary_register") {
+        return filename.includes("salary") || filename.includes("payroll");
+      } else if (docType === "vendor_invoice") {
+        return filename.includes("invoice") || filename.includes("vendor");
+      } else {
+        return item.documentType === docType;
+      }
+    });
     console.log(`Documents for ${docType}:`, filtered.length, filtered.map(f => f.filename));
     return filtered;
   };
