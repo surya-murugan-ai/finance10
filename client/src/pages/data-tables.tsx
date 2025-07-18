@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Search, Filter, FileText, Calendar, DollarSign, Building, Users } from "lucide-react";
+import { Download, Search, Filter, FileText, Calendar, DollarSign, Building, Users, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ExtractedData {
@@ -24,6 +24,113 @@ interface ExtractedData {
   data: any[];
   error?: string;
 }
+
+// Separate component for expandable invoice row
+const ExpandableInvoiceRow = ({ row, idx }: { row: any, idx: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  const hasItems = row.invoiceItems && row.invoiceItems.length > 0;
+  
+  return (
+    <>
+      <TableRow className={hasItems ? "cursor-pointer hover:bg-muted/50" : ""}>
+        <TableCell className="font-medium">
+          {row.date || row.transactionDate || '-'}
+        </TableCell>
+        <TableCell className="font-medium">
+          <div className="flex items-center gap-2">
+            {hasItems && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpanded(!expanded)}
+                className="h-6 w-6 p-0"
+              >
+                {expanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {row.particulars || row.company || '-'}
+            {hasItems && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {row.invoiceItems.length} items
+              </Badge>
+            )}
+          </div>
+        </TableCell>
+        <TableCell>
+          {row.voucherType || row.transactionType || '-'}
+        </TableCell>
+        <TableCell>
+          {row.voucherNumber || row.voucher || '-'}
+        </TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {row.narration || '-'}
+        </TableCell>
+        <TableCell className="text-right font-semibold text-green-600">
+          {row.netAmount ? `₹${parseFloat(row.netAmount).toLocaleString('en-IN')}` : 
+           row.debitAmount ? `₹${parseFloat(row.debitAmount).toLocaleString('en-IN')}` : 
+           row.creditAmount ? `₹${parseFloat(row.creditAmount).toLocaleString('en-IN')}` : 
+           row.amount ? `₹${parseFloat(row.amount).toLocaleString('en-IN')}` : '-'}
+        </TableCell>
+        <TableCell className="text-right font-mono text-sm">
+          {row.grossTotal || row.netAmount || '-'}
+        </TableCell>
+      </TableRow>
+      
+      {/* Expanded Invoice Items */}
+      {expanded && hasItems && (
+        <TableRow>
+          <TableCell colSpan={7} className="p-0">
+            <div className="bg-muted/30 p-4 border-t">
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm mb-3">Invoice Line Items:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {row.invoiceItems.map((item: any, itemIdx: number) => (
+                    <div key={itemIdx} className="bg-white p-3 rounded-lg border">
+                      <div className="space-y-1 text-sm">
+                        <div className="font-medium text-gray-900">
+                          {item.description}
+                        </div>
+                        {item.itemCode && (
+                          <div className="text-xs text-gray-500">
+                            Code: {item.itemCode}
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center text-xs text-gray-600">
+                          <span>
+                            {item.quantity && item.unit ? `${item.quantity} ${item.unit}` : ''}
+                            {item.rate ? ` @ ₹${parseFloat(item.rate).toLocaleString('en-IN')}` : ''}
+                          </span>
+                          <span className="font-semibold text-green-600">
+                            ₹{parseFloat(item.amount).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        {item.hsnCode && (
+                          <div className="text-xs text-gray-500">
+                            HSN: {item.hsnCode}
+                          </div>
+                        )}
+                        {item.gstRate && (
+                          <div className="text-xs text-gray-500">
+                            GST: {item.gstRate}% 
+                            {item.gstAmount && ` (₹${parseFloat(item.gstAmount).toLocaleString('en-IN')})`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+};
 
 export default function DataTables() {
   const { toast } = useToast();
@@ -144,32 +251,7 @@ export default function DataTables() {
                     {item.data.slice(0, 15).map((row: any, idx: number) => {
                       if (typeof row === 'object' && row !== null) {
                         return (
-                          <TableRow key={idx}>
-                            <TableCell className="font-medium">
-                              {row.date || row.transactionDate || '-'}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {row.particulars || row.company || '-'}
-                            </TableCell>
-                            <TableCell>
-                              {row.voucherType || row.transactionType || '-'}
-                            </TableCell>
-                            <TableCell>
-                              {row.voucherNumber || row.voucher || '-'}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {row.narration || '-'}
-                            </TableCell>
-                            <TableCell className="text-right font-semibold text-green-600">
-                              {row.netAmount ? `₹${parseFloat(row.netAmount).toLocaleString('en-IN')}` : 
-                               row.debitAmount ? `₹${parseFloat(row.debitAmount).toLocaleString('en-IN')}` : 
-                               row.creditAmount ? `₹${parseFloat(row.creditAmount).toLocaleString('en-IN')}` : 
-                               row.amount ? `₹${parseFloat(row.amount).toLocaleString('en-IN')}` : '-'}
-                            </TableCell>
-                            <TableCell className="text-right font-mono text-sm">
-                              {row.grossTotal || row.netAmount || '-'}
-                            </TableCell>
-                          </TableRow>
+                          <ExpandableInvoiceRow key={`${item.documentId}-${idx}`} row={row} idx={idx} />
                         );
                       } else {
                         return (

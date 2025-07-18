@@ -22,6 +22,20 @@ export interface ExcelAnalysis {
   summary: string;
 }
 
+export interface InvoiceLineItem {
+  itemCode?: string;
+  description: string;
+  quantity?: number;
+  unit?: string;
+  rate?: number;
+  amount: number;
+  gstRate?: number;
+  gstAmount?: number;
+  hsnCode?: string;
+  discountPercent?: number;
+  discountAmount?: number;
+}
+
 export interface StandardizedTransaction {
   transactionDate: Date;
   company: string;
@@ -36,6 +50,8 @@ export interface StandardizedTransaction {
   aiConfidence: number;
   originalRowData: any;
   columnMapping: any;
+  invoiceItems?: InvoiceLineItem[];  // New field for itemized invoices
+  isItemized?: boolean;  // Flag to indicate if this is an itemized invoice
 }
 
 export class IntelligentDataExtractor {
@@ -132,6 +148,7 @@ Please analyze and return a JSON response with:
 5. Company name extraction
 6. Time period identification
 7. Summary description
+8. Invoice itemization detection
 
 Return only valid JSON in this format:
 {
@@ -150,12 +167,29 @@ Return only valid JSON in this format:
     "particulars": "Particulars",
     "amount": "Amount",
     "debit": "Debit",
-    "credit": "Credit"
+    "credit": "Credit",
+    "quantity": "Quantity",
+    "rate": "Rate",
+    "itemCode": "Item Code",
+    "description": "Description",
+    "unit": "Unit",
+    "gstRate": "GST Rate",
+    "gstAmount": "GST Amount",
+    "hsnCode": "HSN Code"
   },
   "companyName": "Company Name",
   "period": "Q1 2025",
-  "summary": "Sales register containing transaction data"
+  "summary": "Sales register containing transaction data",
+  "isItemized": false,
+  "itemizedPattern": "none"
 }
+
+Pay special attention to:
+1. Invoice itemization patterns (multiple rows for same invoice number)
+2. Product/service details (item codes, descriptions, quantities, rates)
+3. GST and tax information
+4. HSN codes for Indian compliance
+5. Line item structure vs summary transactions
 `;
 
     const response = await this.anthropicClient.analyzeContent(prompt);
@@ -307,6 +341,10 @@ Return only valid JSON in this format:
     // Determine category based on document type
     const category = this.determineCategory(analysis.documentType, debitAmount, creditAmount);
 
+    // Extract invoice line items if this is an itemized invoice
+    const invoiceItems = this.extractInvoiceItems(row, analysis, headers);
+    const isItemized = invoiceItems.length > 0;
+
     return {
       transactionDate,
       company: getValue(mapping.company) || analysis.companyName || 'Unknown Company',
@@ -320,8 +358,54 @@ Return only valid JSON in this format:
       category,
       aiConfidence: analysis.confidence,
       originalRowData: row,
-      columnMapping: mapping
+      columnMapping: mapping,
+      invoiceItems: isItemized ? invoiceItems : undefined,
+      isItemized
     };
+  }
+
+  private extractInvoiceItems(row: any[], analysis: ExcelAnalysis, headers: string[]): InvoiceLineItem[] {
+    const mapping = analysis.columnMapping;
+    const items: InvoiceLineItem[] = [];
+
+    // Helper function to get value by column name
+    const getValue = (columnName: string | null): any => {
+      if (!columnName) return null;
+      const index = headers.indexOf(columnName);
+      return index >= 0 ? row[index] : null;
+    };
+
+    // Check if this row contains itemized data
+    const itemCode = getValue(mapping.itemCode);
+    const description = getValue(mapping.description) || getValue(mapping.particulars);
+    const quantity = getValue(mapping.quantity);
+    const rate = getValue(mapping.rate);
+    const amount = getValue(mapping.amount);
+    const gstRate = getValue(mapping.gstRate);
+    const gstAmount = getValue(mapping.gstAmount);
+    const hsnCode = getValue(mapping.hsnCode);
+    const unit = getValue(mapping.unit);
+
+    // If we have itemized data, create an invoice line item
+    if (description && (quantity || rate || amount)) {
+      const item: InvoiceLineItem = {
+        description: String(description),
+        amount: this.parseAmount(amount) || 0
+      };
+
+      // Add optional fields if available
+      if (itemCode) item.itemCode = String(itemCode);
+      if (quantity) item.quantity = this.parseAmount(quantity);
+      if (rate) item.rate = this.parseAmount(rate);
+      if (unit) item.unit = String(unit);
+      if (gstRate) item.gstRate = this.parseAmount(gstRate);
+      if (gstAmount) item.gstAmount = this.parseAmount(gstAmount);
+      if (hsnCode) item.hsnCode = String(hsnCode);
+
+      items.push(item);
+    }
+
+    return items;
   }
 
   private parseAmount(value: any): number {
