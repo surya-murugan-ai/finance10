@@ -249,18 +249,19 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               documentType: doc.documentType,
               extractedRows: docTransactions.length,
               data: docTransactions.map(t => ({
-                id: t.id,
-                company: t.company || t.company_name,
-                particulars: t.particulars,
-                transactionDate: t.transactionDate || t.transaction_date,
-                voucherNumber: t.voucherNumber || t.voucher_number,
-                voucherType: t.voucherType || t.voucher_type,
-                debitAmount: t.debitAmount || t.debit_amount,
-                creditAmount: t.creditAmount || t.credit_amount,
-                netAmount: t.netAmount || t.net_amount || t.amount,
-                category: t.category,
-                aiConfidence: t.aiConfidence || t.ai_confidence
-              }))
+                  id: t.id,
+                  company: t.company || t.companyName,
+                  particulars: t.particulars,
+                  transactionDate: t.originalRowData?.transactionDate || t.transactionDate || t.transaction_date,
+                  voucherNumber: t.voucherNumber || t.voucher_number,
+                  voucherType: t.voucherType || t.voucher_type,
+                  debitAmount: t.debitAmount || t.debit_amount,
+                  creditAmount: t.creditAmount || t.credit_amount,
+                  netAmount: t.netAmount || t.net_amount || t.amount,
+                  category: t.category,
+                  aiConfidence: t.aiConfidence || t.ai_confidence,
+                  narration: t.originalRowData?.narration || t.narration || ''
+                }))
             };
           })
         });
@@ -481,14 +482,15 @@ export async function registerRoutes(app: express.Express): Promise<any> {
                 id: t.id,
                 company: t.company || t.company_name,
                 particulars: t.particulars,
-                transactionDate: t.transactionDate || t.transaction_date,
+                transactionDate: t.originalRowData?.transactionDate || t.transactionDate || t.transaction_date,
                 voucherNumber: t.voucherNumber || t.voucher_number,
                 voucherType: t.voucherType || t.voucher_type,
                 debitAmount: t.debitAmount || t.debit_amount,
                 creditAmount: t.creditAmount || t.credit_amount,
                 netAmount: t.netAmount || t.net_amount || t.amount,
                 category: t.category,
-                aiConfidence: t.aiConfidence || t.ai_confidence
+                aiConfidence: t.aiConfidence || t.ai_confidence,
+                narration: t.originalRowData?.narration || t.narration || ''
               })),
               error: 'File processing failed, showing existing data'
             });
