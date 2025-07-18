@@ -191,7 +191,7 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               defval: '' 
             });
             
-            // Find the header row (row 4 in this Excel structure - index 3)
+            // Find the header row (usually row 4 or 6 depending on document structure)
             let headerRowIndex = -1;
             for (let i = 0; i < rawData.length; i++) {
               const row = rawData[i] as any[];
@@ -227,13 +227,22 @@ export async function registerRoutes(app: express.Express): Promise<any> {
                   grossTotal: row[6] || ''
                 };
                 
-                // Extract and format amount from Value column
-                if (entry.value) {
-                  const valueStr = entry.value.toString();
-                  const numericValue = parseFloat(valueStr.replace(/[₹Rs,\s]/g, ''));
-                  if (!isNaN(numericValue)) {
-                    entry.amount = numericValue;
-                    entry.formattedAmount = `₹${numericValue.toLocaleString('en-IN')}`;
+                // Extract and format amount from Value or Gross Total column
+                let amountSource = entry.value || entry.grossTotal;
+                if (!amountSource && entry.grossTotal) {
+                  amountSource = entry.grossTotal;
+                }
+                
+                if (amountSource) {
+                  const valueStr = amountSource.toString();
+                  // Handle formats like "25000.00 Cr" or "44430.00 Dr"
+                  const numericMatch = valueStr.match(/([0-9,]+\.?[0-9]*)/);
+                  if (numericMatch) {
+                    const numericValue = parseFloat(numericMatch[1].replace(/,/g, ''));
+                    if (!isNaN(numericValue)) {
+                      entry.amount = numericValue;
+                      entry.formattedAmount = `₹${numericValue.toLocaleString('en-IN')}`;
+                    }
                   }
                 }
                 
