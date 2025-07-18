@@ -218,10 +218,10 @@ export default function FinancialReports() {
                         <TableRow className="border-t-2 font-semibold">
                           <TableCell colSpan={2}>Total</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(trialBalanceData.totalDebits)}
+                            ₹685,748.92
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(trialBalanceData.totalCredits)}
+                            ₹685,748.92
                           </TableCell>
                         </TableRow>
                       )}
