@@ -110,84 +110,67 @@ export default function DataTables() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Row #</TableHead>
-                    <TableHead>Key</TableHead>
-                    <TableHead>Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {item.data.slice(0, 15).map((row: any, idx: number) => {
-                    if (typeof row === 'object' && row !== null) {
-                      // Show standardized business fields in order
-                      const standardFields = [
-                        ['company', 'Company'],
-                        ['transactionDate', 'Date'],
-                        ['formattedAmount', 'Amount'],
-                        ['transactionType', 'Type'],
-                        ['voucher', 'Voucher'],
-                        ['voucherType', 'Voucher Type'],
-                        ['narration', 'Narration']
-                      ];
-                      
-                      const displayFields = [];
-                      
-                      // Add standard fields first
-                      standardFields.forEach(([field, label]) => {
-                        if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
-                          displayFields.push([field, row[field], label]);
-                        }
-                      });
-                      
-                      // Add other important fields
-                      Object.entries(row).forEach(([key, value]) => {
-                        if (!standardFields.some(([field]) => field === key) && 
-                            value !== undefined && value !== null && value !== '' &&
-                            !['rowNumber', 'date', 'particulars', 'voucherNumber', 'value', 'grossTotal'].includes(key)) {
-                          displayFields.push([key, value, key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())]);
-                        }
-                      });
-                      
-                      return displayFields.slice(0, 5).map(([key, value, label], entryIdx) => (
-                        <TableRow key={`${idx}-${entryIdx}`}>
-                          <TableCell className="font-medium">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-blue-600">
-                            {label}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {key === 'formattedAmount' ? (
-                              <span className="font-semibold text-green-600">{String(value)}</span>
-                            ) : key === 'transactionType' ? (
-                              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                {String(value)}
-                              </span>
-                            ) : (
-                              String(value)
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ));
-                    } else {
-                      return (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{idx + 1}</TableCell>
-                          <TableCell className="text-muted-foreground">-</TableCell>
-                          <TableCell className="font-mono text-sm">{String(row)}</TableCell>
-                        </TableRow>
-                      );
-                    }
-                  })}
-                  {item.data.length > 15 && (
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">
-                        ... and {item.data.length - 15} more rows
-                      </TableCell>
+                      <TableHead className="w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[200px]">Particulars</TableHead>
+                      <TableHead className="w-[120px]">Voucher Type</TableHead>
+                      <TableHead className="w-[100px]">Voucher No.</TableHead>
+                      <TableHead className="min-w-[150px]">Narration</TableHead>
+                      <TableHead className="w-[120px] text-right">Value</TableHead>
+                      <TableHead className="w-[120px] text-right">Gross Total</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {item.data.slice(0, 15).map((row: any, idx: number) => {
+                      if (typeof row === 'object' && row !== null) {
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">
+                              {row.date || row.transactionDate || '-'}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {row.particulars || row.company || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {row.voucherType || row.transactionType || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {row.voucherNumber || row.voucher || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {row.narration || '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-green-600">
+                              {row.formattedAmount || (row.amount ? `₹${row.amount.toLocaleString('en-IN')}` : '-')}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">
+                              {row.grossTotal || '-'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      } else {
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell colSpan={7} className="text-center text-muted-foreground">
+                              {String(row)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                    })}
+                    {item.data.length > 15 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                          ... and {item.data.length - 15} more rows
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         ))
