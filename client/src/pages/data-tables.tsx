@@ -121,37 +121,48 @@ export default function DataTables() {
                 <TableBody>
                   {item.data.slice(0, 15).map((row: any, idx: number) => {
                     if (typeof row === 'object' && row !== null) {
-                      // Show key business fields first
-                      const mainFields = ['company', 'transactionDate', 'amount', 'formattedAmount', 'voucherNumber'];
+                      // Show standardized business fields in order
+                      const standardFields = [
+                        ['company', 'Company'],
+                        ['transactionDate', 'Date'],
+                        ['formattedAmount', 'Amount'],
+                        ['transactionType', 'Type'],
+                        ['voucher', 'Voucher'],
+                        ['voucherType', 'Voucher Type'],
+                        ['narration', 'Narration']
+                      ];
+                      
                       const displayFields = [];
                       
-                      // Add main fields first
-                      mainFields.forEach(field => {
-                        if (row[field] !== undefined) {
-                          displayFields.push([field, row[field]]);
+                      // Add standard fields first
+                      standardFields.forEach(([field, label]) => {
+                        if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
+                          displayFields.push([field, row[field], label]);
                         }
                       });
                       
-                      // Add other fields
+                      // Add other important fields
                       Object.entries(row).forEach(([key, value]) => {
-                        if (!mainFields.includes(key) && value !== undefined && value !== null && value !== '') {
-                          displayFields.push([key, value]);
+                        if (!standardFields.some(([field]) => field === key) && 
+                            value !== undefined && value !== null && value !== '' &&
+                            !['rowNumber', 'date', 'particulars', 'voucherNumber', 'value', 'grossTotal'].includes(key)) {
+                          displayFields.push([key, value, key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())]);
                         }
                       });
                       
-                      return displayFields.slice(0, 5).map(([key, value], entryIdx) => (
+                      return displayFields.slice(0, 5).map(([key, value, label], entryIdx) => (
                         <TableRow key={`${idx}-${entryIdx}`}>
                           <TableCell className="font-medium">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-blue-600">
-                            {key === 'company' ? 'Company' :
-                             key === 'transactionDate' ? 'Date' :
-                             key === 'formattedAmount' ? 'Amount' :
-                             key === 'voucherNumber' ? 'Voucher' :
-                             key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            {label}
                           </TableCell>
                           <TableCell className="font-mono text-sm">
                             {key === 'formattedAmount' ? (
                               <span className="font-semibold text-green-600">{String(value)}</span>
+                            ) : key === 'transactionType' ? (
+                              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                {String(value)}
+                              </span>
                             ) : (
                               String(value)
                             )}

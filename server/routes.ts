@@ -191,11 +191,11 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               defval: '' 
             });
             
-            // Find the header row (usually row 4 based on the structure)
+            // Find the header row (row 4 in this Excel structure - index 3)
             let headerRowIndex = -1;
             for (let i = 0; i < rawData.length; i++) {
               const row = rawData[i] as any[];
-              if (row && row.length > 0 && row[0] && row[0].toString().toLowerCase().includes('date')) {
+              if (row && row.length > 5 && row[0] && row[0].toString().toLowerCase().includes('date')) {
                 headerRowIndex = i;
                 break;
               }
@@ -208,45 +208,62 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               // Process each data row
               for (let i = 0; i < dataRows.length; i++) {
                 const row = dataRows[i] as any[];
-                if (row && row.length > 0 && row[0] && row[0].toString().trim()) {
-                  const entry: any = {};
-                  
-                  // Map headers to values
-                  headers.forEach((header, index) => {
-                    if (header && row[index]) {
-                      entry[header] = row[index];
-                    }
-                  });
-                  
-                  // Extract company name from 'Particulars' column
-                  if (entry['Particulars']) {
-                    entry.company = entry['Particulars'];
+                
+                // Skip empty rows and Grand Total rows
+                if (!row || row.length === 0 || !row[0] || 
+                    (row[1] && row[1].toString().toLowerCase().includes('grand total'))) {
+                  continue;
+                }
+                
+                // Create standardized entry with proper column mapping
+                const entry: any = {
+                  rowNumber: i + 1,
+                  date: row[0] || '',
+                  particulars: row[1] || '',
+                  voucherType: row[2] || '',
+                  voucherNumber: row[3] || '',
+                  narration: row[4] || '',
+                  value: row[5] || '',
+                  grossTotal: row[6] || ''
+                };
+                
+                // Extract and format amount from Value column
+                if (entry.value) {
+                  const valueStr = entry.value.toString();
+                  const numericValue = parseFloat(valueStr.replace(/[₹Rs,\s]/g, ''));
+                  if (!isNaN(numericValue)) {
+                    entry.amount = numericValue;
+                    entry.formattedAmount = `₹${numericValue.toLocaleString('en-IN')}`;
                   }
-                  
-                  // Extract amount from 'Value' column
-                  if (entry['Value']) {
-                    const valueStr = entry['Value'].toString();
-                    const amount = parseFloat(valueStr.replace(/[₹Rs,\s]/g, ''));
-                    if (!isNaN(amount)) {
-                      entry.amount = amount;
-                      entry.formattedAmount = `₹${amount.toLocaleString()}`;
-                    }
-                  }
-                  
-                  // Extract date
-                  if (entry['Date']) {
-                    entry.transactionDate = entry['Date'];
-                  }
-                  
-                  // Extract voucher info
-                  if (entry['Voucher No.']) {
-                    entry.voucherNumber = entry['Voucher No.'];
-                  }
-                  
-                  // Skip Grand Total rows
-                  if (entry.company && !entry.company.toString().toLowerCase().includes('grand total')) {
-                    data.push(entry);
-                  }
+                }
+                
+                // Clean up company name from Particulars
+                if (entry.particulars) {
+                  entry.company = entry.particulars.toString().trim();
+                }
+                
+                // Format date
+                if (entry.date) {
+                  entry.transactionDate = entry.date.toString().trim();
+                }
+                
+                // Add voucher info
+                if (entry.voucherNumber) {
+                  entry.voucher = entry.voucherNumber.toString().trim();
+                }
+                
+                // Add transaction type based on document type
+                if (doc.documentType === 'sales_register') {
+                  entry.transactionType = 'Sale';
+                } else if (doc.documentType === 'purchase_register') {
+                  entry.transactionType = 'Purchase';
+                } else if (doc.documentType === 'bank_statement') {
+                  entry.transactionType = entry.voucherType || 'Bank';
+                }
+                
+                // Only add valid entries with company name and amount
+                if (entry.company && entry.amount) {
+                  data.push(entry);
                 }
               }
             } else {
