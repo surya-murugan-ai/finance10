@@ -863,7 +863,7 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Trial Balance - {selectedPeriod}</CardTitle>
-                    <Badge className={trialBalance.isBalanced ? "badge-compliant" : "badge-non-compliant"}>
+                    <Badge variant={trialBalance.isBalanced ? "default" : "destructive"}>
                       {trialBalance.isBalanced ? "Balanced" : "Unbalanced"}
                     </Badge>
                   </div>
