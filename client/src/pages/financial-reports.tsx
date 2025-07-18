@@ -612,14 +612,14 @@ export default function FinancialReports() {
                               {entry.date ? new Date(entry.date).toLocaleDateString() : 'N/A'}
                             </TableCell>
                             <TableCell className="max-w-xs">
-                              <div className="truncate">{entry.description || 'N/A'}</div>
+                              <div className="truncate">{entry.narration || entry.accountName || 'N/A'}</div>
                             </TableCell>
                             <TableCell className="font-mono">{entry.accountCode || 'N/A'}</TableCell>
                             <TableCell className="text-right font-mono">
-                              {entry.debitAmount > 0 ? formatCurrency(entry.debitAmount) : '-'}
+                              {parseFloat(entry.debitAmount || 0) > 0 ? formatCurrency(parseFloat(entry.debitAmount)) : '-'}
                             </TableCell>
                             <TableCell className="text-right font-mono">
-                              {entry.creditAmount > 0 ? formatCurrency(entry.creditAmount) : '-'}
+                              {parseFloat(entry.creditAmount || 0) > 0 ? formatCurrency(parseFloat(entry.creditAmount)) : '-'}
                             </TableCell>
                           </TableRow>
                         ))
