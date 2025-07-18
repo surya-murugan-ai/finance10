@@ -1000,6 +1000,101 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Test endpoint to demonstrate itemized invoice functionality
+  app.get('/api/test-itemized-data', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const testData = [
+        {
+          id: 1001,
+          company: "Sapience Agribusiness Consulting LLP",
+          particulars: "Sales Invoice INV-2025-001 - Items: Organic Fertilizer NPK 10:26:26 50 kg @₹1200; Neem Oil Pesticide 25 ltr @₹800; Vermicompost Premium 100 kg @₹450",
+          transactionDate: "2025-04-15T00:00:00.000Z",
+          voucherNumber: "INV-2025-001",
+          voucherType: "Sales Invoice",
+          debitAmount: "197532.00",
+          creditAmount: "0.00",
+          netAmount: "197532.00",
+          category: "sales",
+          aiConfidence: 95,
+          invoiceItems: [
+            {
+              itemCode: "FERT-NPK-001",
+              description: "Organic Fertilizer NPK 10:26:26",
+              quantity: 50,
+              unit: "kg",
+              rate: 1200.00,
+              amount: 60000.00,
+              gstRate: 18,
+              gstAmount: 10800.00,
+              hsnCode: "31051000"
+            },
+            {
+              itemCode: "PEST-NEEM-002",
+              description: "Neem Oil Pesticide",
+              quantity: 25,
+              unit: "ltr",
+              rate: 800.00,
+              amount: 20000.00,
+              gstRate: 18,
+              gstAmount: 3600.00,
+              hsnCode: "38089110"
+            },
+            {
+              itemCode: "COMP-VERM-003",
+              description: "Vermicompost Premium",
+              quantity: 100,
+              unit: "kg",
+              rate: 450.00,
+              amount: 45000.00,
+              gstRate: 18,
+              gstAmount: 8100.00,
+              hsnCode: "31010000"
+            }
+          ],
+          isItemized: true
+        },
+        {
+          id: 1002,
+          company: "Bengal Animal Health Products Ltd",
+          particulars: "Purchase Invoice - Items: Calcium Supplement 25 kg @₹900",
+          transactionDate: "2025-04-16T00:00:00.000Z",
+          voucherNumber: "PI-2025-007",
+          voucherType: "Purchase Invoice",
+          debitAmount: "0.00",
+          creditAmount: "26550.00",
+          netAmount: "-26550.00",
+          category: "purchase",
+          aiConfidence: 90,
+          invoiceItems: [
+            {
+              itemCode: "CALC-SUPP-003",
+              description: "Calcium Supplement",
+              quantity: 25,
+              unit: "kg",
+              rate: 900.00,
+              amount: 22500.00,
+              gstRate: 18,
+              gstAmount: 4050.00,
+              hsnCode: "23091000"
+            }
+          ],
+          isItemized: true
+        }
+      ];
+
+      res.json({
+        success: true,
+        message: "Test itemized invoice data",
+        data: testData,
+        totalItems: testData.length
+      });
+
+    } catch (error) {
+      console.error('Error generating test itemized data:', error);
+      res.status(500).json({ error: 'Failed to generate test data' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -1472,123 +1567,3 @@ async function generateCashFlow(journalEntries: any[]): Promise<any> {
     netCashFlow
   };
 }
-
-// Test endpoint to demonstrate itemized invoice functionality
-app.get('/api/test-itemized-data', jwtAuth, async (req: Request, res: Response) => {
-  try {
-    const testData = [
-      {
-        id: 1001,
-        company: "Sapience Agribusiness Consulting LLP",
-        particulars: "Sales Invoice INV-2025-001 - Items: Organic Fertilizer NPK 10:26:26 50 kg @₹1200; Neem Oil Pesticide 25 ltr @₹800; Vermicompost Premium 100 kg @₹450",
-        transactionDate: "2025-04-15T00:00:00.000Z",
-        voucherNumber: "INV-2025-001",
-        voucherType: "Sales Invoice",
-        debitAmount: "197532.00",
-        creditAmount: "0.00",
-        netAmount: "197532.00",
-        category: "sales",
-        aiConfidence: 95,
-        invoiceItems: [
-          {
-            itemCode: "FERT-NPK-001",
-            description: "Organic Fertilizer NPK 10:26:26",
-            quantity: 50,
-            unit: "kg",
-            rate: 1200.00,
-            amount: 60000.00,
-            gstRate: 18,
-            gstAmount: 10800.00,
-            hsnCode: "31051000"
-          },
-          {
-            itemCode: "PEST-NEEM-002",
-            description: "Neem Oil Pesticide",
-            quantity: 25,
-            unit: "ltr",
-            rate: 800.00,
-            amount: 20000.00,
-            gstRate: 18,
-            gstAmount: 3600.00,
-            hsnCode: "38089390"
-          },
-          {
-            itemCode: "COMP-VERM-003",
-            description: "Vermicompost Premium",
-            quantity: 100,
-            unit: "kg",
-            rate: 450.00,
-            amount: 45000.00,
-            gstRate: 5,
-            gstAmount: 2250.00,
-            hsnCode: "31010000"
-          }
-        ],
-        isItemized: true
-      },
-      {
-        id: 1002,
-        company: "Bengal Animal Health & Nutrition Solutions",
-        particulars: "Sales Invoice INV-2025-002 - Items: Cattle Feed Premium 200 kg @₹650; Mineral Mixture 50 kg @₹1200; Calcium Supplement 25 kg @₹900",
-        transactionDate: "2025-04-18T00:00:00.000Z",
-        voucherNumber: "INV-2025-002",
-        voucherType: "Sales Invoice",
-        debitAmount: "233750.00",
-        creditAmount: "0.00",
-        netAmount: "233750.00",
-        category: "sales",
-        aiConfidence: 95,
-        invoiceItems: [
-          {
-            itemCode: "FEED-CATT-001",
-            description: "Cattle Feed Premium",
-            quantity: 200,
-            unit: "kg",
-            rate: 650.00,
-            amount: 130000.00,
-            gstRate: 5,
-            gstAmount: 6500.00,
-            hsnCode: "23099090"
-          },
-          {
-            itemCode: "MINR-MIX-002",
-            description: "Mineral Mixture",
-            quantity: 50,
-            unit: "kg",
-            rate: 1200.00,
-            amount: 60000.00,
-            gstRate: 18,
-            gstAmount: 10800.00,
-            hsnCode: "23091000"
-          },
-          {
-            itemCode: "CALC-SUPP-003",
-            description: "Calcium Supplement",
-            quantity: 25,
-            unit: "kg",
-            rate: 900.00,
-            amount: 22500.00,
-            gstRate: 18,
-            gstAmount: 4050.00,
-            hsnCode: "23091000"
-          }
-        ],
-        isItemized: true
-      }
-    ];
-
-    res.json({
-      success: true,
-      message: "Test itemized invoice data",
-      data: testData,
-      totalItems: testData.length
-    });
-
-  } catch (error) {
-    console.error('Error generating test itemized data:', error);
-    res.status(500).json({ error: 'Failed to generate test data' });
-  }
-});
-
-}
-
