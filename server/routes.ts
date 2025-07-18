@@ -596,6 +596,23 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  app.post('/api/reports/cash-flow', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const reportData = await generateCashFlow(entries);
+      
+      res.json(reportData);
+    } catch (error) {
+      console.error('Error generating cash flow:', error);
+      res.status(500).json({ error: 'Failed to generate cash flow' });
+    }
+  });
+
   // Agent Chat API endpoints
   app.post('/api/agent-chat/start', jwtAuth, async (req: any, res) => {
     try {
@@ -1074,6 +1091,84 @@ async function generateBalanceSheet(journalEntries: any[]): Promise<any> {
     totalLiabilities,
     totalEquity,
     isBalanced: Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 0.01
+  };
+}
+
+async function generateCashFlow(journalEntries: any[]): Promise<any> {
+  const operatingActivities = [];
+  const investingActivities = [];
+  const financingActivities = [];
+  let netCashFlow = 0;
+  
+  const accountTotals = new Map();
+  
+  // Process journal entries
+  for (const entry of journalEntries) {
+    const accountCode = entry.accountCode;
+    const debitAmount = parseFloat(entry.debitAmount) || 0;
+    const creditAmount = parseFloat(entry.creditAmount) || 0;
+    
+    if (!accountTotals.has(accountCode)) {
+      accountTotals.set(accountCode, { 
+        accountName: entry.accountName,
+        debit: 0, 
+        credit: 0 
+      });
+    }
+    
+    const account = accountTotals.get(accountCode);
+    account.debit += debitAmount;
+    account.credit += creditAmount;
+  }
+  
+  // Classify activities based on account codes
+  for (const [accountCode, totals] of accountTotals) {
+    if (!accountCode || !totals) continue;
+    
+    const code = accountCode.toString();
+    const netAmount = totals.debit - totals.credit;
+    
+    if (code.startsWith('1') || code.startsWith('4') || code.startsWith('5')) {
+      // Operating activities - current assets, revenue, expenses
+      const amount = Math.abs(netAmount);
+      if (amount > 0) {
+        operatingActivities.push({
+          accountCode: code,
+          accountName: totals.accountName,
+          amount: amount
+        });
+        netCashFlow += netAmount;
+      }
+    } else if (code.startsWith('2')) {
+      // Investing activities - long-term assets and investments
+      const amount = Math.abs(netAmount);
+      if (amount > 0) {
+        investingActivities.push({
+          accountCode: code,
+          accountName: totals.accountName,
+          amount: amount
+        });
+        netCashFlow += netAmount;
+      }
+    } else if (code.startsWith('3')) {
+      // Financing activities - equity and long-term debt
+      const amount = Math.abs(netAmount);
+      if (amount > 0) {
+        financingActivities.push({
+          accountCode: code,
+          accountName: totals.accountName,
+          amount: amount
+        });
+        netCashFlow += netAmount;
+      }
+    }
+  }
+  
+  return {
+    operatingActivities,
+    investingActivities,
+    financingActivities,
+    netCashFlow
   };
 }
 
