@@ -863,8 +863,8 @@ export default function FinancialReports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Trial Balance - {selectedPeriod}</CardTitle>
-                    <Badge variant={trialBalanceLoading ? "outline" : (trialBalance.isBalanced ? "default" : "destructive")}>
-                      {trialBalanceLoading ? "Loading..." : (trialBalance.isBalanced ? "Balanced" : "Unbalanced")}
+                    <Badge variant={trialBalanceLoading ? "outline" : (trialBalanceData?.isBalanced ? "default" : "destructive")}>
+                      {trialBalanceLoading ? "Loading..." : (trialBalanceData?.isBalanced ? "Balanced" : "Unbalanced")}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -880,16 +880,16 @@ export default function FinancialReports() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {trialBalance.entries && trialBalance.entries.length > 0 ? (
-                          trialBalance.entries.map((entry) => (
-                            <TableRow key={entry.accountCode}>
-                              <TableCell className="font-mono">{entry.accountCode}</TableCell>
-                              <TableCell>{entry.accountName}</TableCell>
+                        {trialBalanceData?.entries && trialBalanceData.entries.length > 0 ? (
+                          trialBalanceData.entries.map((entry, index) => (
+                            <TableRow key={entry.accountCode || `entry-${index}`}>
+                              <TableCell className="font-mono">{entry.accountCode || 'N/A'}</TableCell>
+                              <TableCell>{entry.accountName || 'Unknown'}</TableCell>
                               <TableCell className="text-right font-mono">
-                                {entry.debitBalance > 0 ? formatCurrency(entry.debitBalance) : '-'}
+                                {(entry.debitBalance || 0) > 0 ? formatCurrency(entry.debitBalance) : '-'}
                               </TableCell>
                               <TableCell className="text-right font-mono">
-                                {entry.creditBalance > 0 ? formatCurrency(entry.creditBalance) : '-'}
+                                {(entry.creditBalance || 0) > 0 ? formatCurrency(entry.creditBalance) : '-'}
                               </TableCell>
                             </TableRow>
                           ))
@@ -903,10 +903,10 @@ export default function FinancialReports() {
                         <TableRow className="border-t-2 font-semibold">
                           <TableCell colSpan={2}>Total</TableCell>
                           <TableCell className="text-right">
-                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalance.totalDebits)}
+                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalanceData?.totalDebits || 0)}
                           </TableCell>
                           <TableCell className="text-right">
-                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalance.totalCredits)}
+                            {trialBalanceLoading ? "Loading..." : formatCurrency(trialBalanceData?.totalCredits || 0)}
                           </TableCell>
                         </TableRow>
                       </TableBody>
