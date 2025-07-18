@@ -154,11 +154,23 @@ export default function FinancialReports() {
               <Button
                 onClick={async () => {
                   try {
-                    await apiRequest('/api/journal-entries/generate', {
+                    const token = localStorage.getItem('access_token');
+                    const response = await fetch('/api/journal-entries/generate', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
                       body: JSON.stringify({ period: selectedPeriod })
                     });
+                    
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Journal entries generated:', result);
+                    
                     await Promise.all([
                       queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] }),
                       queryClient.invalidateQueries({ queryKey: ['/api/reports/trial-balance'] }),

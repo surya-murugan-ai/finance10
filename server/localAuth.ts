@@ -79,6 +79,7 @@ export const localAuth: RequestHandler = async (req, res, next) => {
     }
   }
 
+  console.log('Authentication failed - no valid token found');
   return res.status(401).json({ message: "Unauthorized" });
 };
 
