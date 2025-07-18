@@ -589,16 +589,16 @@ export default function FinancialReports() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Debits</span>
-                        <span className="font-semibold">{formatCurrency(trialBalance.totalDebits)}</span>
+                        <span className="font-semibold">{formatCurrency(trialBalanceData?.totalDebits || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Total Credits</span>
-                        <span className="font-semibold">{formatCurrency(trialBalance.totalCredits)}</span>
+                        <span className="font-semibold">{formatCurrency(trialBalanceData?.totalCredits || 0)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span className="text-sm font-medium">Balance</span>
                         <span className="font-semibold text-secondary">
-                          {formatCurrency(trialBalance.totalDebits - trialBalance.totalCredits)}
+                          {formatCurrency((trialBalanceData?.totalDebits || 0) - (trialBalanceData?.totalCredits || 0))}
                         </span>
                       </div>
                     </div>
