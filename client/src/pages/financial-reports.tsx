@@ -136,7 +136,9 @@ export default function FinancialReports() {
 
   const formatCurrency = (amount: number) => {
     if (typeof amount !== 'number') return '₹0';
-    return `₹${amount.toLocaleString('en-IN')}`;
+    // Fixed: Ensure proper number formatting without any scaling
+    const numAmount = parseFloat(amount.toString());
+    return `₹${numAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
   };
 
   return (
