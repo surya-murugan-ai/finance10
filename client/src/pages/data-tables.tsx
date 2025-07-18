@@ -161,10 +161,13 @@ export default function DataTables() {
                               {row.narration || '-'}
                             </TableCell>
                             <TableCell className="text-right font-semibold text-green-600">
-                              {row.formattedAmount || (row.amount ? `₹${row.amount.toLocaleString('en-IN')}` : '-')}
+                              {row.netAmount ? `₹${parseFloat(row.netAmount).toLocaleString('en-IN')}` : 
+                               row.debitAmount ? `₹${parseFloat(row.debitAmount).toLocaleString('en-IN')}` : 
+                               row.creditAmount ? `₹${parseFloat(row.creditAmount).toLocaleString('en-IN')}` : 
+                               row.amount ? `₹${parseFloat(row.amount).toLocaleString('en-IN')}` : '-'}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm">
-                              {row.grossTotal || '-'}
+                              {row.grossTotal || row.netAmount || '-'}
                             </TableCell>
                           </TableRow>
                         );
