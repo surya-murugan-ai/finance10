@@ -1549,8 +1549,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
   // Data Source Configuration API endpoints
   app.get('/api/data-sources', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const dataSources = dataSourceService.getDataSources();
-      res.json(Array.from(dataSources.values()));
+      const dataSources = await dataSourceService.getAllDataSources();
+      res.json(dataSources);
     } catch (error) {
       console.error('Error fetching data sources:', error);
       res.status(500).json({ error: 'Failed to fetch data sources' });
@@ -1559,8 +1559,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   app.get('/api/erp-connectors', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const connectors = dataSourceService.getERPConnectors();
-      res.json(Array.from(connectors.values()));
+      const connectors = await dataSourceService.getAllERPConnectors();
+      res.json(connectors);
     } catch (error) {
       console.error('Error fetching ERP connectors:', error);
       res.status(500).json({ error: 'Failed to fetch ERP connectors' });
@@ -1569,8 +1569,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   app.get('/api/data-formats', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const formats = dataSourceService.getDataFormatTemplates();
-      res.json(Array.from(formats.values()));
+      const formats = await dataSourceService.getAllDataFormats();
+      res.json(formats);
     } catch (error) {
       console.error('Error fetching data formats:', error);
       res.status(500).json({ error: 'Failed to fetch data formats' });
@@ -1579,8 +1579,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   app.get('/api/master-data', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const masterData = dataSourceService.getMasterData();
-      res.json(Array.from(masterData.values()));
+      const masterData = await dataSourceService.getAllMasterData();
+      res.json(masterData);
     } catch (error) {
       console.error('Error fetching master data:', error);
       res.status(500).json({ error: 'Failed to fetch master data' });
@@ -1589,7 +1589,7 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   app.get('/api/data-sources/stats', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const stats = await dataSourceService.getDataSourceStatistics();
+      const stats = await dataSourceService.getDataSourceStats();
       res.json(stats);
     } catch (error) {
       console.error('Error fetching data source stats:', error);
@@ -1599,7 +1599,7 @@ export async function registerRoutes(app: express.Express): Promise<any> {
 
   app.get('/api/erp-connectors/stats', jwtAuth, async (req: Request, res: Response) => {
     try {
-      const stats = await dataSourceService.getERPConnectorStatistics();
+      const stats = await dataSourceService.getERPStats();
       res.json(stats);
     } catch (error) {
       console.error('Error fetching ERP connector stats:', error);
