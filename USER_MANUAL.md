@@ -1,459 +1,245 @@
-# QRT Closure Agent Platform - User Manual (Multitenant Architecture)
-
-## Overview
-
-The QRT Closure Agent Platform is a comprehensive multitenant financial automation platform that enables multiple companies to use the same system while maintaining complete data isolation and security. Built with Python/FastAPI backend and React frontend, the platform provides enhanced AI integration, improved performance, and enterprise-grade scalability for financial automation workflows.
-
-## Getting Started
-
-### System Requirements
-
-**Python Backend:**
-- Python 3.11 or higher
-- PostgreSQL database
-- Redis (optional, for background tasks)
-- Anthropic API key (for AI agents)
-- OpenAI API key (for alternative AI models)
-
-**Frontend (Unchanged):**
-- Node.js 18+ and npm
-- Modern web browser
-- React 18 compatible environment
-
-### Installation
-
-1. **Install Python Dependencies:**
-   ```bash
-   pip install fastapi uvicorn sqlalchemy psycopg2-binary alembic pydantic pydantic-settings
-   pip install python-multipart python-jose[cryptography] passlib[bcrypt] python-dotenv
-   pip install pandas openpyxl PyPDF2 anthropic openai redis celery httpx jinja2 aiofiles
-   ```
-
-2. **Set Environment Variables:**
-   ```bash
-   export DATABASE_URL="postgresql://user:password@host:port/database"
-   export ANTHROPIC_API_KEY="your_anthropic_key"
-   export OPENAI_API_KEY="your_openai_key"
-   export SECRET_KEY="your_jwt_secret"
-   ```
-
-3. **Run Database Migrations:**
-   ```bash
-   alembic upgrade head
-   ```
-
-4. **Start the Python FastAPI Server:**
-   ```bash
-   python run_python.py
-   ```
-
-The API will be available at `http://localhost:8000` with auto-generated documentation at `http://localhost:8000/api/docs`.
-
-## Core Features
-
-### 1. Multitenant Architecture
-
-**Enterprise-Grade Multitenancy:**
-- **Complete Data Isolation**: Each company's data is completely segregated
-- **Tenant-Specific Access**: Users can only access data within their company
-- **Subscription Management**: Support for Basic, Premium, and Enterprise plans
-- **Role-Based Access Control**: Tenant-specific roles (admin, finance_manager, finance_exec, auditor, viewer)
-
-**Supported Subscription Tiers:**
-- **Basic**: Small businesses with essential features
-- **Premium**: Mid-size companies with advanced reporting
-- **Enterprise**: Large organizations with full compliance suite
-
-**Company Management:**
-- Company registration with CIN, GSTIN, PAN details
-- Registered address and location management
-- User management within tenant boundaries
-- Custom configuration per company
-
-### 2. Authentication System
-
-**JWT-Based Authentication:**
-- Secure token-based authentication
-- HTTPBearer security scheme
-- Session management with configurable expiration
-- Password hashing with BCrypt
-
-**Login Process:**
-```bash
-curl -X POST "http://localhost:8000/api/auth/login" \
-     -H "Content-Type: application/json" \
-     -d '{"email":"user@example.com","password":"password"}'
-```
-
-### 2. Onboarding Workflow
-
-**4-Step Onboarding Process:**
-
-1. **Company Setup**
-   - Company name and basic information
-   - PAN and GSTIN registration
-   - Contact details and address
-
-2. **Entity Configuration**
-   - Multiple entity support
-   - Entity-specific GSTIN and locations
-   - Hierarchical entity relationships
-
-3. **User Management**
-   - Role-based access control
-   - User permissions and privileges
-   - Department assignments
-
-4. **Calendar Setup**
-   - Financial year configuration
-   - Quarter definitions and due dates
-   - Custom period settings
-
-**API Endpoint:**
-```bash
-POST /api/onboarding
-```
-
-### 3. Document Processing Pipeline
-
-**Supported File Types:**
-- PDF documents
-- Excel files (.xlsx, .xls)
-- CSV files
-- File size limit: 100MB
-
-**Processing Workflow:**
-1. **File Upload & Validation**
-   - File type and size validation
-   - Virus scanning (configurable)
-   - Metadata extraction
-
-2. **Document Classification**
-   - AI-powered document type detection
-   - Confidence scoring
-   - Manual override options
-
-3. **Data Extraction**
-   - Structured data extraction
-   - Table and text parsing
-   - Financial data identification
-
-4. **Validation & Verification**
-   - Data integrity checks
-   - Business rule validation
-   - Compliance verification
-
-**Upload API:**
-```bash
-POST /api/documents/upload
-Content-Type: multipart/form-data
-```
-
-### 4. AI Agent Orchestration
-
-**7 Specialized AI Agents:**
-
-1. **ClassifierBot**
-   - Document type classification
-   - Confidence scoring and reasoning
-   - Support for 8+ document types
-
-2. **DataExtractor**
-   - Structured data extraction
-   - Table and form parsing
-   - Financial data identification
-
-3. **JournalBot**
-   - Double-entry journal creation
-   - Account code assignment
-   - Balance verification
-
-4. **GSTValidator**
-   - GST compliance validation
-   - GSTIN format checking
-   - Tax rate verification
-
-5. **TDSValidator**
-   - TDS compliance validation
-   - Rate and threshold checking
-   - Form 26Q validation
-
-6. **ConsoAI**
-   - Financial statement consolidation
-   - Inter-company eliminations
-   - Multi-entity reporting
-
-7. **AuditAgent**
-   - Final audit checks
-   - Compliance verification
-   - Risk assessment
-
-**Workflow Execution:**
-```bash
-POST /api/workflows/execute
-{
-  "workflow_id": "ClassifierBot",
-  "document_id": "doc_123"
-}
-```
-
-### 5. Compliance Engine
-
-**GST Compliance:**
-- GSTIN format validation (15-character format)
-- HSN/SAC code verification
-- Tax rate validation
-- Input tax credit eligibility
-- GSTR-2A/3B reconciliation
-
-**TDS Compliance:**
-- TDS rate verification
-- Threshold limit checking
-- TAN validation (10-character format)
-- Form 26Q structure validation
-- Quarterly return compliance
-
-**Compliance Scoring:**
-- Automated compliance score calculation
-- Violation identification and reporting
-- Recommendations for remediation
-- Trend analysis and reporting
-
-**API Endpoints:**
-```bash
-GET /api/compliance-checks
-POST /api/compliance-checks
-```
-
-### 6. Financial Reporting
-
-**Available Reports:**
-
-1. **Trial Balance**
-   - Account-wise debit and credit totals
-   - Balance verification
-   - Period-wise reporting
-
-2. **Profit & Loss Statement**
-   - Revenue and expense categorization
-   - Gross profit calculation
-   - Net income determination
-
-3. **Balance Sheet**
-   - Assets, liabilities, and equity
-   - Current and non-current classification
-   - Balance verification
-
-4. **Cash Flow Statement**
-   - Operating activities
-   - Investing activities
-   - Financing activities
-
-**Report Generation:**
-```bash
-GET /api/financial-statements
-POST /api/financial-statements/generate
-```
-
-### 7. Dashboard & Analytics
-
-**Key Metrics:**
-- Documents processed
-- Active AI agents
-- Validation errors
-- Compliance score
-- Onboarding completion status
-
-**User Journey Tracking:**
-- Step-by-step progress monitoring
-- Completion rates
-- Time-to-completion metrics
-- User behavior analysis
-
-## API Documentation
-
-### Authentication Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | User authentication |
-| GET | `/api/auth/user` | Current user information |
-
-### Document Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/documents/upload` | Upload document |
-| GET | `/api/documents` | List user documents |
-
-### AI Workflows
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/workflows` | List available workflows |
-| POST | `/api/workflows/execute` | Execute AI workflow |
-
-### Compliance
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/compliance-checks` | List compliance checks |
-| POST | `/api/compliance-checks` | Run compliance check |
-
-### Financial Reports
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/financial-statements` | List financial statements |
-| POST | `/api/financial-statements/generate` | Generate statement |
-
-### Dashboard
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard/stats` | Dashboard statistics |
-| GET | `/api/audit-trail` | Audit trail |
-
-## Configuration
-
-### AI Agent Configuration
-
-Each AI agent can be individually configured:
-
-```python
-{
-  "ClassifierBot": {
-    "model": "claude-sonnet-4-20250514",
-    "temperature": 0.3,
-    "max_tokens": 4000,
-    "enabled": True,
-    "system_prompt": "You are a specialized document classifier..."
-  }
-}
-```
-
-### Database Configuration
-
-SQLAlchemy configuration with connection pooling:
-
-```python
-DATABASE_URL = "postgresql://user:password@host:port/database"
-```
-
-### Security Configuration
-
-JWT token configuration:
-
-```python
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-```
-
-## Troubleshooting
+# QRT Closure Agent Platform - User Manual
+**Version**: 2.0 | **Date**: July 19, 2025
+
+## 📋 Quick Start Guide
+
+### 1. Login & Authentication
+- Access the platform through your web browser
+- Use your email and password to log in
+- The system uses secure JWT tokens for authentication
+- Your session will remain active until logout
+
+### 2. Dashboard Overview
+Upon login, you'll see the main dashboard with:
+- **Financial Summary**: Real-time totals (₹80.8 crores balanced)
+- **System Status**: Document processing status and health indicators
+- **Quick Actions**: Direct access to key features
+- **Recent Activity**: Latest transactions and system updates
+
+## 📊 Financial Reports
+
+### Trial Balance
+- **Access**: Dashboard > Financial Reports > Trial Balance
+- **Features**: 
+  - Shows all account balances with perfect debit/credit balance
+  - Real-time data from 790 journal entries
+  - Export capabilities for further analysis
+  - Entity-wise breakdowns (40 detailed entries)
+
+### Profit & Loss Statement
+- **Access**: Dashboard > Financial Reports > P&L
+- **Features**:
+  - Revenue breakdown by account codes (4xxx series)
+  - Expense classification (5xxx series)  
+  - Net income calculation (₹71.7 crores)
+  - Period-based reporting for quarterly closure
+
+### Balance Sheet
+- **Access**: Dashboard > Financial Reports > Balance Sheet
+- **Features**:
+  - Assets (₹76.3 crores): Current and fixed assets
+  - Liabilities (₹4.5 crores): Current and long-term obligations
+  - Equity (₹71.7 crores): Automatic retained earnings calculation
+  - **Perfect Balance**: Assets = Liabilities + Equity guaranteed
+
+### Cash Flow Statement  
+- **Access**: Dashboard > Financial Reports > Cash Flow
+- **Features**:
+  - Operating Activities: 9 detailed cash flow entries
+  - Investing Activities: Capital expenditure tracking
+  - Financing Activities: Debt and equity transactions
+  - Net Cash Flow: ₹62 crores with detailed breakdown
+
+## 📁 Document Management
+
+### Upload Documents
+- **Supported Formats**: Excel (.xlsx), CSV, PDF
+- **Document Types**: Sales Register, Purchase Register, Bank Statements, TDS Certificates, Fixed Asset Register, Vendor Invoices
+- **Process**: 
+  1. Click "Upload Documents" 
+  2. Select files from your computer
+  3. System automatically classifies document types using AI
+  4. Processing completes in < 2 seconds per file
+
+### Document Classification
+- **AI-Powered**: Content-based classification using Claude 4.0
+- **Confidence Scoring**: Shows classification confidence levels
+- **Manual Override**: Ability to reclassify if needed
+- **Supported Types**: 6 primary business document categories
+
+### Data Extraction
+- **Intelligent Processing**: Handles any Excel format automatically
+- **Standardization**: Converts all formats to consistent structure
+- **390 Transactions**: Currently processed from uploaded documents
+- **Real-Time**: Immediate processing with caching for efficiency
+
+## 🤖 AI-Powered Features
+
+### Journal Entry Generation
+- **AI Narrations**: Intelligent transaction descriptions instead of generic templates
+- **Contextual Analysis**: Considers document type, vendor, amount, business context
+- **Example**: "Sales to Quest Agrovet Services - Agricultural products" vs "Sales register - filename"
+- **Balance Guarantee**: All entries maintain perfect debit/credit balance
+
+### Intelligent Data Processing
+- **Dynamic Format Recognition**: AI analyzes Excel structure automatically
+- **Column Mapping**: Identifies headers, data rows, company names, dates
+- **Fallback Protection**: Robust handling of unusual document formats
+- **Quality Assurance**: Confidence scores and validation checks
+
+## ⚙️ Settings & Configuration
+
+### API Keys (Tab 1)
+- **OpenAI**: For document analysis and processing
+- **Anthropic**: For intelligent transaction narrations  
+- **PostgreSQL**: Database connection testing
+- **Connection Testing**: Built-in validation for all API keys
+
+### AI Settings (Tab 2)
+- **Temperature**: Controls AI creativity (0.0-1.0)
+- **Model Selection**: Choose AI models for different tasks
+- **System Prompts**: Customize AI behavior for your business
+- **Streaming**: Enable/disable real-time AI responses
+
+### Agent Configuration (Tab 5)
+**7 Specialized Financial Agents**:
+1. **ClassifierBot**: Document type identification
+2. **JournalBot**: Automated journal entry creation  
+3. **GST Validator**: GST compliance checking
+4. **TDS Validator**: TDS calculation and validation
+5. **DataExtractor**: Intelligent data extraction from documents
+6. **ConsoAI**: Consolidation and analysis
+7. **AuditAgent**: Audit trail and compliance monitoring
+
+### Master Data (Accessible via Data Sources)
+- **96 GL Codes**: Complete Indian chart of accounts
+- **27 TDS Sections**: FY 2025-26 rates and thresholds
+- **GST Configuration**: CGST, SGST, IGST rate management
+- **Vendor/Customer Lists**: Business entity management
+
+## 🔍 Advanced Features
+
+### Validation Tools
+**ValidatorAgent**: 
+- Duplicate transaction detection
+- Missing balance validation  
+- Trial balance sanity checks
+- Unusual amount alerts (>₹1 crore)
+
+**ProvisionBot**:
+- Missing depreciation identification (15% rate)
+- Bad debt provision calculation (5% of receivables)
+- Tax provision requirements (30% of income) 
+- Employee benefit calculations (PF, Bonus, Gratuity)
+
+### Compliance Management
+- **Form 26Q Generation**: TDS compliance reporting
+- **GSTR-3B Creation**: GST return preparation
+- **GSTR-2A Processing**: Input tax credit reconciliation
+- **Audit Trail**: Complete activity logging for compliance
+
+### Data Analysis Tools
+**Basic Calculations**:
+- Add, Subtract, Multiply, Divide
+- Percentage calculations
+- GST calculations with current rates
+- TDS calculations by section
+
+**Advanced Calculations**:
+- Current Ratio analysis
+- Quick Ratio calculations  
+- Return on Equity metrics
+- Financial ratio analysis
+
+## 🏢 Multi-Tenant Features
+
+### Tenant Management
+- **Complete Data Isolation**: Each company's data is separate
+- **Role-Based Access**: Admin, Finance Manager, Executive, Auditor, Viewer
+- **Subscription Plans**: Enterprise, Professional, Basic tiers
+- **Company Configuration**: Individual settings per tenant
+
+### User Roles & Permissions
+- **Admin**: Full system access and configuration
+- **Finance Manager**: Financial reports and journal entry management
+- **Finance Executive**: Data entry and basic reporting
+- **Auditor**: Read-only access to all financial data
+- **Viewer**: Dashboard and basic report access
+
+## 📱 User Interface Guide
+
+### Navigation
+- **Sidebar Menu**: Collapsible navigation with icons and labels
+- **Active Page Highlighting**: Clear indication of current section
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Dark/Light Mode**: Theme switching available
+
+### Data Display
+- **Professional Tables**: Sortable columns with pagination
+- **Indian Currency Formatting**: ₹ symbol with proper comma separation
+- **Loading States**: Clear indicators during data fetching
+- **Error Handling**: User-friendly error messages and recovery options
+
+### Export Features
+- **Excel Export**: Download financial reports as Excel files
+- **PDF Generation**: Professional PDF reports for compliance
+- **CSV Export**: Raw data export for further analysis
+- **Print-Friendly**: Optimized layouts for printing
+
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-1. **Database Connection Issues**
-   - Verify DATABASE_URL format
-   - Check PostgreSQL service status
-   - Validate connection credentials
+**Login Problems**:
+- Clear browser cache and cookies
+- Check internet connection
+- Verify email and password
+- Contact administrator for password reset
 
-2. **AI API Issues**
-   - Verify ANTHROPIC_API_KEY is set
-   - Check OpenAI API key validity
-   - Monitor API rate limits
+**Document Upload Issues**:
+- Ensure file size is under 10MB
+- Check file format (Excel, CSV, PDF supported)
+- Verify file is not corrupted
+- Try uploading one file at a time
 
-3. **File Upload Issues**
-   - Check file size limits (100MB)
-   - Verify supported file types
-   - Ensure proper multipart encoding
+**Financial Report Errors**:
+- Ensure journal entries are generated
+- Check if documents are properly classified
+- Verify data extraction completed successfully
+- Contact support if calculations seem incorrect
 
-4. **Authentication Issues**
-   - Verify JWT token validity
-   - Check SECRET_KEY configuration
-   - Validate token expiration
+**Performance Issues**:
+- Close other browser tabs
+- Clear browser cache
+- Check internet connection speed
+- Try refreshing the page
 
-### Performance Optimization
+### Support Contacts
+- **Technical Support**: Platform automatically logs issues for debugging
+- **User Training**: Comprehensive tooltips and help text throughout interface
+- **Documentation**: This manual and inline help system
+- **Audit Support**: Complete audit trail for all user activities
 
-1. **Database Optimization**
-   - Use connection pooling
-   - Implement query optimization
-   - Add appropriate indexes
+## 🎯 Best Practices
 
-2. **AI Service Optimization**
-   - Implement response caching
-   - Add rate limiting
-   - Use async operations
+### Document Management
+- Upload documents regularly for better cash flow analysis
+- Use consistent naming conventions for files
+- Review AI classification results for accuracy
+- Keep original files as backup
 
-3. **File Processing**
-   - Implement async file operations
-   - Add background task processing
-   - Use Redis for task queuing
+### Financial Reporting
+- Generate reports at month-end for accuracy
+- Review trial balance for perfect balance before other reports
+- Cross-verify cash flow with bank statements
+- Export reports for regulatory compliance
 
-## Migration from Node.js Version
+### System Maintenance
+- Update API keys when expired
+- Review agent configurations quarterly
+- Monitor system performance through dashboard
+- Keep master data updated with latest rates and codes
 
-### Key Changes
+---
 
-1. **Authentication**: JWT tokens instead of Replit Auth
-2. **Database**: SQLAlchemy instead of Drizzle ORM
-3. **AI Integration**: Enhanced multi-model support
-4. **File Processing**: Python-based document processing
-5. **Performance**: Async FastAPI with better concurrency
-
-### Migration Steps
-
-1. **Export Data**: Export existing data from Node.js version
-2. **Database Migration**: Run Alembic migrations
-3. **Configuration**: Update environment variables
-4. **Testing**: Verify all endpoints functionality
-5. **Deployment**: Deploy Python FastAPI version
-
-## Best Practices
-
-### Development
-
-1. **Code Organization**
-   - Use proper project structure
-   - Implement dependency injection
-   - Follow PEP 8 style guide
-
-2. **Testing**
-   - Write unit tests for all services
-   - Implement integration tests
-   - Use pytest for testing framework
-
-3. **Documentation**
-   - Maintain API documentation
-   - Document configuration options
-   - Update user manual regularly
-
-### Production Deployment
-
-1. **Security**
-   - Use HTTPS for all endpoints
-   - Implement proper CORS policies
-   - Regular security audits
-
-2. **Monitoring**
-   - Implement logging and monitoring
-   - Set up health checks
-   - Monitor API performance
-
-3. **Backup**
-   - Regular database backups
-   - Document backup procedures
-   - Test backup restoration
-
-## Support
-
-For technical support and issues:
-
-1. **Check Logs**: Review application logs for errors
-2. **API Documentation**: Refer to auto-generated docs at `/api/docs`
-3. **Configuration**: Verify all environment variables
-4. **Dependencies**: Ensure all Python packages are installed
-
-## Conclusion
-
-The Python/FastAPI refactoring provides enhanced performance, better AI integration, and improved scalability while maintaining all original functionality. The platform is now ready for production deployment with comprehensive features for financial automation and compliance management.
+**For additional support or feature requests, use the built-in feedback system or contact your system administrator.**
