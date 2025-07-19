@@ -91,6 +91,17 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
   };
 
   const maxItems = Math.max(...invoiceGroups.map(group => group.items.length));
+  
+  // Get all unique item names for headers
+  const allItemNames = invoiceGroups.reduce((names: string[], group) => {
+    group.items.forEach(item => {
+      const itemDetails = extractItemDetails(item.particulars);
+      if (!names.includes(itemDetails.description)) {
+        names.push(itemDetails.description);
+      }
+    });
+    return names;
+  }, []);
 
   return (
     <Card>
@@ -112,9 +123,9 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                 <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Narration</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Value</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Gross Total</th>
-                {Array.from({ length: maxItems }, (_, i) => (
+                {allItemNames.slice(0, maxItems).map((itemName, i) => (
                   <th key={i} className="border border-gray-300 px-3 py-2 text-left font-semibold min-w-48">
-                    Item {i + 1}
+                    {itemName}
                   </th>
                 ))}
               </tr>
@@ -149,26 +160,33 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                   <td className="border border-gray-300 px-3 py-2 text-right font-medium">
                     ₹{group.grossTotal.toLocaleString('en-IN')}
                   </td>
-                  {group.items.map((item, index) => {
-                    const itemDetails = extractItemDetails(item.particulars);
-                    return (
-                      <td key={index} className="border border-gray-300 px-3 py-2">
-                        <div className="text-sm space-y-1">
-                          <div className="font-medium text-blue-900">{itemDetails.description}</div>
-                          <div className="text-gray-600">{itemDetails.quantityUnit}</div>
-                          <div className="text-gray-800">Rate: ₹{itemDetails.rate}</div>
-                          <div className="text-green-700 font-medium">₹{parseFloat(item.netAmount).toLocaleString('en-IN')}</div>
-                          {itemDetails.hsnCode && (
-                            <div className="text-xs text-gray-500">HSN: {itemDetails.hsnCode}</div>
-                          )}
-                        </div>
-                      </td>
-                    );
+                  {allItemNames.slice(0, maxItems).map((itemName, colIndex) => {
+                    // Find the item in this group that matches this column's item name
+                    const matchingItem = group.items.find(item => {
+                      const itemDetails = extractItemDetails(item.particulars);
+                      return itemDetails.description === itemName;
+                    });
+                    
+                    if (matchingItem) {
+                      const itemDetails = extractItemDetails(matchingItem.particulars);
+                      return (
+                        <td key={colIndex} className="border border-gray-300 px-3 py-2">
+                          <div className="text-sm space-y-1">
+                            <div className="text-gray-600">{itemDetails.quantityUnit}</div>
+                            <div className="text-gray-800">Rate: ₹{itemDetails.rate}</div>
+                            <div className="text-green-700 font-medium">₹{parseFloat(matchingItem.netAmount).toLocaleString('en-IN')}</div>
+                            {itemDetails.hsnCode && (
+                              <div className="text-xs text-gray-500">HSN: {itemDetails.hsnCode}</div>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    } else {
+                      return (
+                        <td key={colIndex} className="border border-gray-300 px-3 py-2"></td>
+                      );
+                    }
                   })}
-                  {/* Fill empty item columns */}
-                  {Array.from({ length: maxItems - group.items.length }, (_, i) => (
-                    <td key={`empty-${i}`} className="border border-gray-300 px-3 py-2"></td>
-                  ))}
                 </tr>
               ))}
             </tbody>
