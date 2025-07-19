@@ -285,7 +285,66 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setFormData(settings);
+      // Ensure all required sections exist with proper defaults
+      const safeSettings: SettingsConfig = {
+        id: settings.id || "",
+        apiKeys: settings.apiKeys || {
+          openai: "",
+          anthropic: "",
+          pinecone: "",
+          postgres: "",
+        },
+        aiSettings: settings.aiSettings || {
+          temperature: 0.7,
+          maxTokens: 4000,
+          model: "claude-sonnet-4-20250514",
+          systemPrompt: "You are a helpful AI assistant specialized in financial document processing and analysis.",
+          enableStreaming: true,
+          responseFormat: "json",
+        },
+        agentConfigs: settings.agentConfigs || {},
+        vectorDatabase: settings.vectorDatabase || {
+          provider: "pinecone",
+          indexName: "financial-docs",
+          dimension: 1536,
+          metric: "cosine",
+          namespace: "default",
+          topK: 10,
+          enableHybridSearch: false,
+        },
+        security: settings.security || {
+          enableRateLimit: true,
+          rateLimitRequests: 100,
+          rateLimitWindow: 15,
+          enableApiKeyRotation: false,
+          rotationInterval: 30,
+          enableAuditLog: true,
+        },
+        processing: settings.processing || {
+          enableParallelProcessing: true,
+          maxConcurrentJobs: 5,
+          retryAttempts: 3,
+          timeoutSeconds: 30,
+          enableAutoClassification: true,
+          confidenceThreshold: 0.8,
+        },
+        notifications: settings.notifications || {
+          emailEnabled: false,
+          slackEnabled: false,
+          webhookUrl: "",
+          notifyOnCompletion: true,
+          notifyOnError: true,
+          notifyOnThreshold: false,
+        },
+        compliance: settings.compliance || {
+          enableDataRetention: true,
+          retentionDays: 2555,
+          enableEncryption: true,
+          enablePIIDetection: true,
+          enableComplianceReports: true,
+        },
+      };
+      setFormData(safeSettings);
     }
   }, [settings]);
 
