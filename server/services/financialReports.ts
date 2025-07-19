@@ -333,9 +333,9 @@ export class FinancialReportsService {
   }
 
   async generateCashFlow(journalEntries: JournalEntry[]): Promise<{
-    operating: CashFlowEntry[];
-    investing: CashFlowEntry[];
-    financing: CashFlowEntry[];
+    operatingActivities: CashFlowEntry[];
+    investingActivities: CashFlowEntry[];
+    financingActivities: CashFlowEntry[];
     netCashFlow: number;
   }> {
     const operating: CashFlowEntry[] = [];
@@ -394,9 +394,9 @@ export class FinancialReportsService {
       .reduce((sum, entry) => sum + entry.amount, 0);
 
     return {
-      operating,
-      investing,
-      financing,
+      operatingActivities: operating,
+      investingActivities: investing,
+      financingActivities: financing,
       netCashFlow,
     };
   }
