@@ -489,35 +489,170 @@ class DataSourceService {
         id: "gl_codes",
         type: "gl_codes",
         data: [
-          { code: "1001", name: "Cash", type: "Asset", category: "Current Assets" },
-          { code: "1002", name: "Bank", type: "Asset", category: "Current Assets" },
-          { code: "1003", name: "Accounts Receivable", type: "Asset", category: "Current Assets" },
-          { code: "2001", name: "Accounts Payable", type: "Liability", category: "Current Liabilities" },
-          { code: "2002", name: "GST Payable", type: "Liability", category: "Current Liabilities" },
-          { code: "2003", name: "TDS Payable", type: "Liability", category: "Current Liabilities" },
-          { code: "3001", name: "Share Capital", type: "Equity", category: "Equity" },
-          { code: "4001", name: "Sales Revenue", type: "Revenue", category: "Income" },
-          { code: "5001", name: "Purchase Expenses", type: "Expense", category: "Cost of Goods Sold" },
-          { code: "5002", name: "Salary Expenses", type: "Expense", category: "Operating Expenses" }
+          // ASSETS (10000-19999) - Current Assets
+          { code: "10001", name: "Cash in Hand", type: "Asset", category: "Current Assets" },
+          { code: "10002", name: "Cash at Bank - Current Account", type: "Asset", category: "Current Assets" },
+          { code: "10003", name: "Cash at Bank - Savings Account", type: "Asset", category: "Current Assets" },
+          { code: "10010", name: "Accounts Receivable/Trade Debtors", type: "Asset", category: "Current Assets" },
+          { code: "10011", name: "Bills Receivable", type: "Asset", category: "Current Assets" },
+          { code: "10020", name: "Inventory - Raw Materials", type: "Asset", category: "Current Assets" },
+          { code: "10021", name: "Inventory - Work in Progress", type: "Asset", category: "Current Assets" },
+          { code: "10022", name: "Inventory - Finished Goods", type: "Asset", category: "Current Assets" },
+          { code: "10030", name: "Prepaid Expenses", type: "Asset", category: "Current Assets" },
+          { code: "10031", name: "Advance to Suppliers", type: "Asset", category: "Current Assets" },
+          { code: "10040", name: "Short-term Investments", type: "Asset", category: "Current Assets" },
+          { code: "10050", name: "GST Input Tax Credit - CGST", type: "Asset", category: "Current Assets" },
+          { code: "10051", name: "GST Input Tax Credit - SGST", type: "Asset", category: "Current Assets" },
+          { code: "10052", name: "GST Input Tax Credit - IGST", type: "Asset", category: "Current Assets" },
+          
+          // Fixed Assets
+          { code: "11001", name: "Land & Building", type: "Asset", category: "Fixed Assets" },
+          { code: "11002", name: "Plant & Machinery", type: "Asset", category: "Fixed Assets" },
+          { code: "11003", name: "Office Equipment", type: "Asset", category: "Fixed Assets" },
+          { code: "11004", name: "Furniture & Fixtures", type: "Asset", category: "Fixed Assets" },
+          { code: "11005", name: "Vehicles", type: "Asset", category: "Fixed Assets" },
+          { code: "11010", name: "Computer Hardware", type: "Asset", category: "Fixed Assets" },
+          { code: "11020", name: "Accumulated Depreciation - Building", type: "Asset", category: "Fixed Assets" },
+          { code: "11021", name: "Accumulated Depreciation - Machinery", type: "Asset", category: "Fixed Assets" },
+          { code: "11022", name: "Accumulated Depreciation - Equipment", type: "Asset", category: "Fixed Assets" },
+          
+          // Non-Current Assets
+          { code: "12001", name: "Long-term Investments", type: "Asset", category: "Non-Current Assets" },
+          { code: "12002", name: "Goodwill", type: "Asset", category: "Non-Current Assets" },
+          { code: "12003", name: "Patents & Trademarks", type: "Asset", category: "Non-Current Assets" },
+          { code: "12004", name: "Security Deposits", type: "Asset", category: "Non-Current Assets" },
+
+          // LIABILITIES (20000-29999) - Current Liabilities
+          { code: "20001", name: "Accounts Payable/Trade Creditors", type: "Liability", category: "Current Liabilities" },
+          { code: "20002", name: "Bills Payable", type: "Liability", category: "Current Liabilities" },
+          { code: "20010", name: "Short-term Bank Loans", type: "Liability", category: "Current Liabilities" },
+          { code: "20011", name: "Bank Overdraft", type: "Liability", category: "Current Liabilities" },
+          { code: "20020", name: "Accrued Expenses", type: "Liability", category: "Current Liabilities" },
+          { code: "20021", name: "Outstanding Salaries", type: "Liability", category: "Current Liabilities" },
+          { code: "20030", name: "GST Output Tax Liability - CGST", type: "Liability", category: "Current Liabilities" },
+          { code: "20031", name: "GST Output Tax Liability - SGST", type: "Liability", category: "Current Liabilities" },
+          { code: "20032", name: "GST Output Tax Liability - IGST", type: "Liability", category: "Current Liabilities" },
+          { code: "20040", name: "TDS Payable", type: "Liability", category: "Current Liabilities" },
+          { code: "20041", name: "ESI Payable", type: "Liability", category: "Current Liabilities" },
+          { code: "20042", name: "PF Payable", type: "Liability", category: "Current Liabilities" },
+          { code: "20050", name: "Advance from Customers", type: "Liability", category: "Current Liabilities" },
+          { code: "20060", name: "Income Tax Provision", type: "Liability", category: "Current Liabilities" },
+          
+          // Long-term Liabilities
+          { code: "21001", name: "Long-term Bank Loans", type: "Liability", category: "Long-term Liabilities" },
+          { code: "21002", name: "Mortgage Loans", type: "Liability", category: "Long-term Liabilities" },
+          { code: "21003", name: "Debentures", type: "Liability", category: "Long-term Liabilities" },
+          { code: "21010", name: "Provision for Gratuity", type: "Liability", category: "Long-term Liabilities" },
+          { code: "21011", name: "Provision for Leave Encashment", type: "Liability", category: "Long-term Liabilities" },
+
+          // EQUITY (30000-39999)
+          { code: "30001", name: "Share Capital - Equity Shares", type: "Equity", category: "Equity" },
+          { code: "30002", name: "Share Capital - Preference Shares", type: "Equity", category: "Equity" },
+          { code: "30010", name: "Share Premium", type: "Equity", category: "Equity" },
+          { code: "30020", name: "General Reserve", type: "Equity", category: "Equity" },
+          { code: "30021", name: "Statutory Reserve", type: "Equity", category: "Equity" },
+          { code: "30030", name: "Retained Earnings", type: "Equity", category: "Equity" },
+          { code: "30031", name: "Current Year Profit/Loss", type: "Equity", category: "Equity" },
+
+          // REVENUE/INCOME (40000-49999) - Operating Revenue
+          { code: "40001", name: "Sales Revenue - Domestic", type: "Revenue", category: "Operating Revenue" },
+          { code: "40002", name: "Sales Revenue - Export", type: "Revenue", category: "Operating Revenue" },
+          { code: "40003", name: "Service Revenue", type: "Revenue", category: "Operating Revenue" },
+          { code: "40010", name: "Sales Returns", type: "Revenue", category: "Operating Revenue" },
+          { code: "40011", name: "Sales Discounts", type: "Revenue", category: "Operating Revenue" },
+          
+          // Other Income
+          { code: "41001", name: "Interest Income", type: "Revenue", category: "Other Income" },
+          { code: "41002", name: "Dividend Income", type: "Revenue", category: "Other Income" },
+          { code: "41003", name: "Rental Income", type: "Revenue", category: "Other Income" },
+          { code: "41004", name: "Commission Income", type: "Revenue", category: "Other Income" },
+          { code: "41005", name: "Foreign Exchange Gain", type: "Revenue", category: "Other Income" },
+          { code: "41010", name: "Other Miscellaneous Income", type: "Revenue", category: "Other Income" },
+
+          // EXPENSES (50000-59999) - Cost of Goods Sold
+          { code: "50001", name: "Raw Material Consumption", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50002", name: "Direct Labor", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50003", name: "Manufacturing Overhead", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50010", name: "Purchase Returns", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50011", name: "Purchase Discounts", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50020", name: "Freight Inward", type: "Expense", category: "Cost of Goods Sold" },
+          { code: "50021", name: "Custom Duty", type: "Expense", category: "Cost of Goods Sold" },
+          
+          // Operating Expenses
+          { code: "51001", name: "Salaries & Wages", type: "Expense", category: "Operating Expenses" },
+          { code: "51002", name: "Employee Benefits", type: "Expense", category: "Operating Expenses" },
+          { code: "51003", name: "Rent Expense", type: "Expense", category: "Operating Expenses" },
+          { code: "51004", name: "Electricity Expense", type: "Expense", category: "Operating Expenses" },
+          { code: "51005", name: "Telephone Expense", type: "Expense", category: "Operating Expenses" },
+          { code: "51010", name: "Office Supplies", type: "Expense", category: "Operating Expenses" },
+          { code: "51011", name: "Printing & Stationery", type: "Expense", category: "Operating Expenses" },
+          { code: "51020", name: "Marketing & Advertising", type: "Expense", category: "Operating Expenses" },
+          { code: "51021", name: "Travel & Conveyance", type: "Expense", category: "Operating Expenses" },
+          { code: "51030", name: "Professional Fees", type: "Expense", category: "Operating Expenses" },
+          { code: "51031", name: "Legal & Regulatory Fees", type: "Expense", category: "Operating Expenses" },
+          { code: "51040", name: "Insurance Premium", type: "Expense", category: "Operating Expenses" },
+          { code: "51041", name: "Repairs & Maintenance", type: "Expense", category: "Operating Expenses" },
+          
+          // Financial Expenses
+          { code: "52001", name: "Interest Expense - Bank Loans", type: "Expense", category: "Financial Expenses" },
+          { code: "52002", name: "Bank Charges", type: "Expense", category: "Financial Expenses" },
+          { code: "52003", name: "Foreign Exchange Loss", type: "Expense", category: "Financial Expenses" },
+          { code: "52010", name: "Late Payment Fees", type: "Expense", category: "Financial Expenses" },
+          
+          // Administrative Expenses
+          { code: "53001", name: "Depreciation Expense", type: "Expense", category: "Administrative Expenses" },
+          { code: "53002", name: "Audit Fees", type: "Expense", category: "Administrative Expenses" },
+          { code: "53003", name: "Director Fees", type: "Expense", category: "Administrative Expenses" },
+          { code: "53010", name: "Bad Debt Expense", type: "Expense", category: "Administrative Expenses" },
+          { code: "53011", name: "Provision for Doubtful Debts", type: "Expense", category: "Administrative Expenses" },
+          
+          // Tax Expenses
+          { code: "54001", name: "Income Tax Expense", type: "Expense", category: "Tax Expenses" },
+          { code: "54002", name: "Deferred Tax", type: "Expense", category: "Tax Expenses" },
+          { code: "54003", name: "GST Expense (non-recoverable)", type: "Expense", category: "Tax Expenses" }
         ],
         last_updated: new Date(),
-        source: "system_default"
+        source: "indian_accounting_standards"
       },
       {
         id: "tds_sections",
         type: "tds_sections",
         data: [
-          { code: "194A", description: "Interest other than on securities", rate: 10, threshold: 40000 },
-          { code: "194C", description: "Payment to contractors", rate: 1, threshold: 100000 },
-          { code: "194I", description: "Rent", rate: 10, threshold: 240000 },
-          { code: "194J", description: "Professional/Technical Services", rate: 10, threshold: 30000 },
-          { code: "194H", description: "Commission or brokerage", rate: 5, threshold: 15000 },
-          { code: "192", description: "Salary", rate: 0, threshold: 250000 },
-          { code: "194B", description: "Winnings from lottery", rate: 30, threshold: 10000 },
-          { code: "194D", description: "Insurance commission", rate: 5, threshold: 15000 }
+          // Major TDS Sections - FY 2025-26 (AY 2026-27)
+          { code: "192", description: "Salary", rate: "As per tax slab", threshold: "No threshold", applicability: "Salary payments to employees", effective_date: "All years" },
+          { code: "193", description: "Interest on Securities", rate: 10, threshold: 2500, applicability: "Interest on listed debentures (from April 2023)", effective_date: "FY 2023-24 onwards" },
+          { code: "194", description: "Dividend", rate: 10, threshold: 5000, applicability: "Dividend payments", higher_rate: "20% if PAN not provided", effective_date: "All years" },
+          { code: "194A", description: "Interest (other than securities)", rate: 10, threshold: 50000, applicability: "Banking companies and co-operative societies (enhanced from Rs. 40,000)", effective_date: "April 2025" },
+          { code: "194B", description: "Lottery/Gambling", rate: 30, threshold: 10000, applicability: "Winnings from lottery, crossword, gambling", effective_date: "All years" },
+          { code: "194BA", description: "Online Games", rate: 30, threshold: "No threshold", applicability: "TDS on net winnings at year-end or withdrawal", effective_date: "FY 2023-24 onwards" },
+          { code: "194C", description: "Contract Payments", rate: "1% (individuals/HUF), 2% (others)", threshold: 30000, applicability: "Payments to contractors per financial year", effective_date: "All years" },
+          { code: "194H", description: "Commission & Brokerage", rate: 2, threshold: 15000, applicability: "Commission and brokerage (reduced from 5%)", effective_date: "October 2024" },
+          { code: "194I", description: "Rent", rate: "10% (land/buildings), 2% (machinery/equipment)", threshold: "Varies", applicability: "Rental payments", effective_date: "All years" },
+          { code: "194IA", description: "Property Sale", rate: "1% (residents), 12.5% (NRIs)", threshold: 5000000, applicability: "Property sale above Rs. 50 lakhs", effective_date: "All years" },
+          { code: "194J", description: "Professional/Technical Services", rate: 10, threshold: 30000, applicability: "Professional fees, technical services, royalties, director's commission", effective_date: "All years" },
+          { code: "194LBC", description: "Securitization Trust", rate: 10, threshold: "No threshold", applicability: "Income from investments in securitization trusts (reduced from 25%/30%)", effective_date: "April 2025" },
+          { code: "194T", description: "Partner's Remuneration (NEW)", rate: 10, threshold: 20000, applicability: "Commission, remuneration, bonuses, salary, interest to partners", effective_date: "April 2025" },
+          { code: "195", description: "Non-Resident Payments", rate: "As per Finance Act or DTAA", threshold: "No threshold", applicability: "Payments to non-residents", higher_rate: "If PAN not furnished", effective_date: "All years" },
+          
+          // Additional Common Sections
+          { code: "194D", description: "Insurance Commission", rate: 5, threshold: 15000, applicability: "Insurance commission payments", effective_date: "All years" },
+          { code: "194E", description: "Non-resident Sports/Entertainment", rate: 20, threshold: "No threshold", applicability: "Payments to non-resident sportsmen/entertainers", effective_date: "All years" },
+          { code: "194F", description: "Mutual Fund Units", rate: 20, threshold: "No threshold", applicability: "Repurchase of mutual fund units", effective_date: "All years" },
+          { code: "194G", description: "Commission on Sale of Lottery Tickets", rate: 5, threshold: 15000, applicability: "Commission on lottery ticket sales", effective_date: "All years" },
+          { code: "194K", description: "Units of Mutual Fund/UTI", rate: 10, threshold: "No threshold", applicability: "Income from units", effective_date: "All years" },
+          { code: "194LA", description: "Land/Building Compensation", rate: 10, threshold: 250000, applicability: "Compensation on acquisition of land/building", effective_date: "All years" },
+          { code: "194LB", description: "Income from Infrastructure Debt Fund/REIT", rate: 5, threshold: 5000, applicability: "Distributed income from infrastructure debt fund", effective_date: "All years" },
+          { code: "194M", description: "Commission/Brokerage to Resident", rate: 5, threshold: 15000, applicability: "Commission/brokerage to residents", effective_date: "All years" },
+          { code: "194N", description: "Cash Withdrawal", rate: 2, threshold: "Varies", applicability: "Cash withdrawals exceeding limits", effective_date: "September 2019" },
+          { code: "194O", description: "E-commerce Transactions", rate: 1, threshold: 500000, applicability: "E-commerce operator payments", effective_date: "October 2020" },
+          { code: "194Q", description: "Purchase of Goods", rate: 0.1, threshold: 5000000, applicability: "Purchase of goods exceeding Rs. 50 lakhs", effective_date: "July 2021" },
+          { code: "194S", description: "Cryptocurrency/Virtual Digital Assets", rate: 1, threshold: 10000, applicability: "Transfer of virtual digital assets", effective_date: "July 2022" },
+          
+          // Important Notes
+          { code: "NOTES", description: "Important Changes for FY 2025-26", rate: "N/A", threshold: "N/A", applicability: "1. Sections 206AB & 206CCA (higher rates for non-filers) removed from April 2025. 2. Health & Education Cess: 4% on total tax. 3. DTAA benefits available for lower rates. 4. Due date: 7th of following month.", effective_date: "April 2025" }
         ],
         last_updated: new Date(),
-        source: "income_tax_department"
+        source: "income_tax_act_2025"
       },
       {
         id: "vendors",
