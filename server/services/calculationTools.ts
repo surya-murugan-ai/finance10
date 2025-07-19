@@ -339,6 +339,323 @@ export class CalculationTools {
       'compoundInterest(principal, rate, time, frequency) - Calculate compound interest'
     ];
   }
+
+  /**
+   * Financial Statement Calculators
+   */
+  currentRatio(currentAssets: number, currentLiabilities: number): CalculationResult & {
+    interpretation: string;
+    riskLevel: string;
+  } {
+    if (currentLiabilities === 0) {
+      throw new Error('Current liabilities cannot be zero for current ratio calculation');
+    }
+    const result = this.round(currentAssets / currentLiabilities);
+    
+    let interpretation: string;
+    let riskLevel: string;
+    
+    if (result >= 2) {
+      interpretation = 'Excellent liquidity position';
+      riskLevel = 'Low';
+    } else if (result >= 1.5) {
+      interpretation = 'Good liquidity position';
+      riskLevel = 'Low';
+    } else if (result >= 1) {
+      interpretation = 'Adequate liquidity position';
+      riskLevel = 'Medium';
+    } else {
+      interpretation = 'Poor liquidity position';
+      riskLevel = 'High';
+    }
+    
+    return {
+      result,
+      formula: `Current Assets ÷ Current Liabilities = ₹${currentAssets.toLocaleString('en-IN')} ÷ ₹${currentLiabilities.toLocaleString('en-IN')} = ${result}`,
+      precision: this.precision,
+      interpretation,
+      riskLevel
+    };
+  }
+
+  quickRatio(quickAssets: number, currentLiabilities: number): CalculationResult & {
+    interpretation: string;
+    riskLevel: string;
+  } {
+    if (currentLiabilities === 0) {
+      throw new Error('Current liabilities cannot be zero for quick ratio calculation');
+    }
+    const result = this.round(quickAssets / currentLiabilities);
+    
+    let interpretation: string;
+    let riskLevel: string;
+    
+    if (result >= 1) {
+      interpretation = 'Strong liquidity - can cover short-term obligations';
+      riskLevel = 'Low';
+    } else if (result >= 0.8) {
+      interpretation = 'Acceptable liquidity position';
+      riskLevel = 'Medium';
+    } else {
+      interpretation = 'Weak liquidity - may struggle with short-term obligations';
+      riskLevel = 'High';
+    }
+    
+    return {
+      result,
+      formula: `Quick Assets ÷ Current Liabilities = ₹${quickAssets.toLocaleString('en-IN')} ÷ ₹${currentLiabilities.toLocaleString('en-IN')} = ${result}`,
+      precision: this.precision,
+      interpretation,
+      riskLevel
+    };
+  }
+
+  returnOnEquity(netIncome: number, shareholderEquity: number): CalculationResult & {
+    interpretation: string;
+    performance: string;
+  } {
+    if (shareholderEquity === 0) {
+      throw new Error('Shareholder equity cannot be zero for ROE calculation');
+    }
+    const result = this.round((netIncome / shareholderEquity) * 100);
+    
+    let interpretation: string;
+    let performance: string;
+    
+    if (result >= 20) {
+      interpretation = 'Exceptional profitability and efficiency';
+      performance = 'Excellent';
+    } else if (result >= 15) {
+      interpretation = 'Strong profitability performance';
+      performance = 'Good';
+    } else if (result >= 10) {
+      interpretation = 'Average profitability performance';
+      performance = 'Average';
+    } else {
+      interpretation = 'Below average profitability';
+      performance = 'Poor';
+    }
+    
+    return {
+      result,
+      formula: `(Net Income ÷ Shareholder Equity) × 100 = (₹${netIncome.toLocaleString('en-IN')} ÷ ₹${shareholderEquity.toLocaleString('en-IN')}) × 100 = ${result}%`,
+      precision: this.precision,
+      interpretation,
+      performance
+    };
+  }
+
+  /**
+   * Journal Entry and Bookkeeping Tools
+   */
+  createJournalEntry(description: string, entries: Array<{account: string, debit: number, credit: number}>): {
+    entryId: string;
+    date: string;
+    description: string;
+    entries: Array<{account: string, debit: number, credit: number}>;
+    totalDebits: number;
+    totalCredits: number;
+    isBalanced: boolean;
+    formula: string;
+    status: string;
+  } {
+    const totalDebits = this.round(entries.reduce((sum, entry) => sum + entry.debit, 0));
+    const totalCredits = this.round(entries.reduce((sum, entry) => sum + entry.credit, 0));
+    const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
+    
+    return {
+      entryId: `JE-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      description,
+      entries,
+      totalDebits,
+      totalCredits,
+      isBalanced,
+      formula: `Total Debits = ₹${totalDebits.toLocaleString('en-IN')}, Total Credits = ₹${totalCredits.toLocaleString('en-IN')}`,
+      status: isBalanced ? 'Valid' : `Unbalanced by ₹${Math.abs(totalDebits - totalCredits).toLocaleString('en-IN')}`
+    };
+  }
+
+  validateJournalEntries(entries: Array<{account: string, debit: number, credit: number}>): {
+    totalDebits: number;
+    totalCredits: number;
+    difference: number;
+    isBalanced: boolean;
+    entryCount: number;
+    formula: string;
+    status: string;
+    errors: string[];
+  } {
+    const totalDebits = this.round(entries.reduce((sum, entry) => sum + entry.debit, 0));
+    const totalCredits = this.round(entries.reduce((sum, entry) => sum + entry.credit, 0));
+    const difference = this.round(totalDebits - totalCredits);
+    const isBalanced = Math.abs(difference) < 0.01;
+    
+    const errors: string[] = [];
+    if (!isBalanced) {
+      errors.push(`Journal entries are unbalanced by ₹${Math.abs(difference).toLocaleString('en-IN')}`);
+    }
+    
+    entries.forEach((entry, index) => {
+      if (!entry.account || entry.account.trim() === '') {
+        errors.push(`Entry ${index + 1}: Account name is required`);
+      }
+      if (entry.debit < 0 || entry.credit < 0) {
+        errors.push(`Entry ${index + 1}: Negative amounts are not allowed`);
+      }
+      if (entry.debit > 0 && entry.credit > 0) {
+        errors.push(`Entry ${index + 1}: Cannot have both debit and credit amounts`);
+      }
+      if (entry.debit === 0 && entry.credit === 0) {
+        errors.push(`Entry ${index + 1}: Must have either debit or credit amount`);
+      }
+    });
+    
+    return {
+      totalDebits,
+      totalCredits,
+      difference,
+      isBalanced,
+      entryCount: entries.length,
+      formula: `∑Debits = ₹${totalDebits.toLocaleString('en-IN')}, ∑Credits = ₹${totalCredits.toLocaleString('en-IN')}`,
+      status: isBalanced && errors.length === 0 ? 'Valid' : 'Invalid',
+      errors
+    };
+  }
+
+  /**
+   * Trial Balance Calculators
+   */
+  generateTrialBalance(accounts: Array<{code: string, name: string, debit: number, credit: number}>): {
+    accounts: Array<{
+      code: string;
+      name: string;
+      debit: number;
+      credit: number;
+      balance: number;
+      balanceType: string;
+    }>;
+    totals: {
+      totalDebits: number;
+      totalCredits: number;
+      difference: number;
+      isBalanced: boolean;
+    };
+    formula: string;
+    status: string;
+    accountCount: number;
+  } {
+    const processedAccounts = accounts.map(acc => {
+      const balance = this.round(acc.debit - acc.credit);
+      return {
+        ...acc,
+        balance: Math.abs(balance),
+        balanceType: balance >= 0 ? 'Debit' : 'Credit'
+      };
+    });
+    
+    const totalDebits = this.round(accounts.reduce((sum, acc) => sum + acc.debit, 0));
+    const totalCredits = this.round(accounts.reduce((sum, acc) => sum + acc.credit, 0));
+    const difference = this.round(totalDebits - totalCredits);
+    const isBalanced = Math.abs(difference) < 0.01;
+    
+    return {
+      accounts: processedAccounts,
+      totals: {
+        totalDebits,
+        totalCredits,
+        difference,
+        isBalanced
+      },
+      formula: `∑Debits = ₹${totalDebits.toLocaleString('en-IN')}, ∑Credits = ₹${totalCredits.toLocaleString('en-IN')}`,
+      status: isBalanced ? 'Balanced' : `Unbalanced by ₹${Math.abs(difference).toLocaleString('en-IN')}`,
+      accountCount: accounts.length
+    };
+  }
+
+  calculateAccountBalance(transactions: Array<{date: string, debit: number, credit: number, description: string}>): {
+    transactions: Array<{
+      date: string;
+      debit: number;
+      credit: number;
+      description: string;
+      runningBalance: number;
+      balanceType: string;
+    }>;
+    summary: {
+      finalBalance: number;
+      balanceType: string;
+      totalDebits: number;
+      totalCredits: number;
+      transactionCount: number;
+    };
+    formula: string;
+  } {
+    let runningBalance = 0;
+    const processedTransactions = transactions.map(txn => {
+      runningBalance = this.round(runningBalance + txn.debit - txn.credit);
+      return {
+        ...txn,
+        runningBalance: Math.abs(runningBalance),
+        balanceType: runningBalance >= 0 ? 'Debit' : 'Credit'
+      };
+    });
+    
+    const totalDebits = this.round(transactions.reduce((sum, txn) => sum + txn.debit, 0));
+    const totalCredits = this.round(transactions.reduce((sum, txn) => sum + txn.credit, 0));
+    const finalBalance = this.round(totalDebits - totalCredits);
+    
+    return {
+      transactions: processedTransactions,
+      summary: {
+        finalBalance: Math.abs(finalBalance),
+        balanceType: finalBalance >= 0 ? 'Debit' : 'Credit',
+        totalDebits,
+        totalCredits,
+        transactionCount: transactions.length
+      },
+      formula: `Final Balance = ∑Debits - ∑Credits = ₹${totalDebits.toLocaleString('en-IN')} - ₹${totalCredits.toLocaleString('en-IN')} = ₹${Math.abs(finalBalance).toLocaleString('en-IN')} ${finalBalance >= 0 ? 'Dr' : 'Cr'}`
+    };
+  }
+
+  /**
+   * Advanced Financial Analysis
+   */
+  workingCapital(currentAssets: number, currentLiabilities: number): CalculationResult & {
+    interpretation: string;
+    adequacy: string;
+  } {
+    const result = this.round(currentAssets - currentLiabilities);
+    
+    let interpretation: string;
+    let adequacy: string;
+    
+    if (result > 0) {
+      const ratio = currentAssets / currentLiabilities;
+      if (ratio >= 2) {
+        interpretation = 'Excellent working capital position';
+        adequacy = 'Highly Adequate';
+      } else if (ratio >= 1.5) {
+        interpretation = 'Good working capital position';
+        adequacy = 'Adequate';
+      } else {
+        interpretation = 'Minimal working capital position';
+        adequacy = 'Barely Adequate';
+      }
+    } else {
+      interpretation = 'Negative working capital - potential liquidity issues';
+      adequacy = 'Inadequate';
+    }
+    
+    return {
+      result: Math.abs(result),
+      formula: `Current Assets - Current Liabilities = ₹${currentAssets.toLocaleString('en-IN')} - ₹${currentLiabilities.toLocaleString('en-IN')} = ₹${Math.abs(result).toLocaleString('en-IN')}`,
+      precision: this.precision,
+      currency: this.currency,
+      interpretation,
+      adequacy
+    };
+  }
 }
 
 // Export singleton instance

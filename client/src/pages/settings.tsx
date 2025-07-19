@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import PageLayout from "@/components/layout/PageLayout";
 import { CalculationToolsDemo } from "@/components/CalculationToolsDemo";
+import AdvancedCalculationToolsDemo from "@/components/AdvancedCalculationToolsDemo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,8 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  Calculator
+  Calculator,
+  TrendingUp
 } from "lucide-react";
 
 interface SettingsConfig {
@@ -412,7 +414,7 @@ export default function SettingsPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-9">
+            <TabsList className="grid w-full grid-cols-10">
               <TabsTrigger value="api-keys" className="flex items-center gap-2">
                 <Key className="w-4 h-4" />
                 API Keys
@@ -423,7 +425,11 @@ export default function SettingsPage() {
               </TabsTrigger>
               <TabsTrigger value="calculation-tools" className="flex items-center gap-2">
                 <Calculator className="w-4 h-4" />
-                Calc Tools
+                Basic Calc
+              </TabsTrigger>
+              <TabsTrigger value="advanced-calc" className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Advanced Calc
               </TabsTrigger>
               <TabsTrigger value="agent-configs" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -516,6 +522,24 @@ export default function SettingsPage() {
             {/* Calculation Tools Tab */}
             <TabsContent value="calculation-tools" className="space-y-6">
               <CalculationToolsDemo />
+            </TabsContent>
+
+            {/* Advanced Calculation Tools Tab */}
+            <TabsContent value="advanced-calc" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Advanced Financial Calculation Tools
+                  </CardTitle>
+                  <CardDescription>
+                    Comprehensive financial statement calculators, journal entry tools, and trial balance calculators for advanced financial analysis.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AdvancedCalculationToolsDemo />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* AI Settings Tab */}
