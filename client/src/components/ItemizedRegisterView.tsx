@@ -90,9 +90,7 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
     };
   };
 
-  const maxItems = Math.max(...invoiceGroups.map(group => group.items.length));
-  
-  // Get all unique item names for headers
+  // Get all unique item names for headers - this determines the number of columns
   const allItemNames = invoiceGroups.reduce((names: string[], group) => {
     group.items.forEach(item => {
       const itemDetails = extractItemDetails(item.particulars);
@@ -102,6 +100,9 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
     });
     return names;
   }, []);
+  
+  // Use the total number of unique items across all invoices
+  const totalUniqueItems = allItemNames.length;
 
   return (
     <Card>
@@ -123,7 +124,7 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                 <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Narration</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Value</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Gross Total</th>
-                {allItemNames.slice(0, maxItems).map((itemName, i) => (
+                {allItemNames.map((itemName, i) => (
                   <th key={i} className="border border-gray-300 px-3 py-2 text-left font-semibold min-w-48">
                     {itemName}
                   </th>
@@ -160,7 +161,7 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                   <td className="border border-gray-300 px-3 py-2 text-right font-medium">
                     ₹{group.grossTotal.toLocaleString('en-IN')}
                   </td>
-                  {allItemNames.slice(0, maxItems).map((itemName, colIndex) => {
+                  {allItemNames.map((itemName, colIndex) => {
                     // Find the item in this group that matches this column's item name
                     const matchingItem = group.items.find(item => {
                       const itemDetails = extractItemDetails(item.particulars);
@@ -233,6 +234,7 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
         <div className="mt-4 p-3 bg-gray-50 rounded">
           <div className="flex justify-between items-center text-sm">
             <span>Total Invoices: {invoiceGroups.length}</span>
+            <span>Unique Products: {totalUniqueItems}</span>
             <span>Total Line Items: {transactions.length}</span>
             <span className="font-bold">
               Grand Total: ₹{invoiceGroups.reduce((sum, group) => sum + group.totalValue, 0).toLocaleString('en-IN')}
