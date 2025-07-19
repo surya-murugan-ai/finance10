@@ -235,8 +235,11 @@ export default function DataTables() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Check if this is an itemized invoice to show special register format */}
-              {item.filename.includes("Itemized") && item.data.length > 0 ? (
+              {/* Check if this is an itemized invoice or sales register to show special register format */}
+              {(item.filename.includes("Itemized") || 
+                (item.filename.toLowerCase().includes("sales") && 
+                 item.data.length > 0 && 
+                 item.data.some((row: any) => row.particulars && row.particulars.includes("INV-")))) ? (
                 <ItemizedRegisterView 
                   transactions={item.data} 
                   documentName={item.filename}
