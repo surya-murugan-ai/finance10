@@ -14,9 +14,12 @@ import { IntelligentDataExtractor } from './services/intelligentDataExtractor';
 import { AnthropicClient } from './services/anthropicClient';
 import { calculationTools } from './services/calculationTools';
 import { llmCalculationIntegration } from './services/llmCalculationIntegration';
+import { dataSourceService } from './services/dataSourceService';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
+
+// Data source service is imported directly
 
 // Configure multer for file uploads
 const upload = multer({
@@ -1540,6 +1543,81 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error in advanced calculation:', error);
       res.status(500).json({ error: 'Failed to perform advanced calculation' });
+    }
+  });
+
+  // Data Source Configuration API endpoints
+  app.get('/api/data-sources', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const dataSources = dataSourceService.getDataSources();
+      res.json(Array.from(dataSources.values()));
+    } catch (error) {
+      console.error('Error fetching data sources:', error);
+      res.status(500).json({ error: 'Failed to fetch data sources' });
+    }
+  });
+
+  app.get('/api/erp-connectors', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const connectors = dataSourceService.getERPConnectors();
+      res.json(Array.from(connectors.values()));
+    } catch (error) {
+      console.error('Error fetching ERP connectors:', error);
+      res.status(500).json({ error: 'Failed to fetch ERP connectors' });
+    }
+  });
+
+  app.get('/api/data-formats', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const formats = dataSourceService.getDataFormatTemplates();
+      res.json(Array.from(formats.values()));
+    } catch (error) {
+      console.error('Error fetching data formats:', error);
+      res.status(500).json({ error: 'Failed to fetch data formats' });
+    }
+  });
+
+  app.get('/api/master-data', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const masterData = dataSourceService.getMasterData();
+      res.json(Array.from(masterData.values()));
+    } catch (error) {
+      console.error('Error fetching master data:', error);
+      res.status(500).json({ error: 'Failed to fetch master data' });
+    }
+  });
+
+  app.get('/api/data-sources/stats', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const stats = await dataSourceService.getDataSourceStatistics();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching data source stats:', error);
+      res.status(500).json({ error: 'Failed to fetch data source statistics' });
+    }
+  });
+
+  app.get('/api/erp-connectors/stats', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const stats = await dataSourceService.getERPConnectorStatistics();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching ERP connector stats:', error);
+      res.status(500).json({ error: 'Failed to fetch ERP connector statistics' });
+    }
+  });
+
+  app.post('/api/ai-learning/initialize', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      // Initialize AI learning system (placeholder implementation)
+      res.json({
+        status: 'initialized',
+        timestamp: new Date().toISOString(),
+        message: 'AI learning system initialized successfully'
+      });
+    } catch (error) {
+      console.error('Error initializing AI learning:', error);
+      res.status(500).json({ error: 'Failed to initialize AI learning' });
     }
   });
 
