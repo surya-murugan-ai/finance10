@@ -343,6 +343,38 @@ export class AnthropicService {
     return JSON.parse(responseText.trim());
   }
 
+  async analyzeTransactionNarration(transactionData: any): Promise<string> {
+    const prompt = `
+    Analyze this individual financial transaction and provide a professional narration for the journal entry.
+    
+    Transaction Details:
+    ${JSON.stringify(transactionData, null, 2)}
+    
+    Requirements:
+    - Create a concise, professional narration (max 50 words)
+    - Include relevant business context if apparent
+    - Use standard accounting terminology
+    - Include party/vendor name if available
+    - Mention document reference if helpful
+    - Follow Indian business practices
+    
+    Examples:
+    - "Sales to Quest Agrovet Services - Invoice #INV001 - Agricultural products"
+    - "Bank receipt from Bharath Agrovet Industries - Payment for fertilizer supplies"
+    - "Purchase from Sapience Agribusiness - Consulting services for Q1 2025"
+    
+    Respond with only the narration text, no additional formatting.
+    `;
+
+    const response = await anthropic.messages.create({
+      max_tokens: 512,
+      messages: [{ role: 'user', content: prompt }],
+      model: DEFAULT_MODEL_STR,
+    });
+
+    return response.content[0].text.trim();
+  }
+
   async analyzeIntercompanyTransaction(entry: any): Promise<{
     isIntercompany: boolean;
     parentEntity: string;

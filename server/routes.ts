@@ -890,6 +890,27 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Clear journal entries for testing (development only)
+  app.delete('/api/journal-entries/clear', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      // Delete all journal entries for this tenant
+      const deletedEntries = await storage.clearJournalEntriesByTenant(user.tenant_id);
+      
+      res.json({
+        message: 'Journal entries cleared successfully',
+        deletedCount: deletedEntries
+      });
+    } catch (error) {
+      console.error('Error clearing journal entries:', error);
+      res.status(500).json({ error: 'Failed to clear journal entries' });
+    }
+  });
+
   // Agent Chat API endpoints
   app.post('/api/agent-chat/start', jwtAuth, async (req: any, res) => {
     try {

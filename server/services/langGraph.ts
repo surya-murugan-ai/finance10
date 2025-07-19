@@ -505,7 +505,29 @@ export class LangGraphOrchestrator {
     
     // If documentType is not set, infer from filename
     const documentType = document.documentType || this.inferDocumentType(document.fileName || document.originalName);
+
+    // Prepare transaction data for AI analysis
+    const transactionContext = {
+      documentType,
+      amount,
+      vendorName,
+      fileName: document.fileName || document.originalName,
+      extractedData: extractedData?.extractedData,
+      date: date.toISOString().split('T')[0]
+    };
     
+    // Get AI-generated narration for the transaction
+    let aiNarration = '';
+    try {
+      // Import anthropicService properly
+      const { anthropicService } = await import('./anthropic');
+      aiNarration = await anthropicService.analyzeTransactionNarration(transactionContext);
+      console.log(`AI Generated Narration: "${aiNarration}"`);
+    } catch (error) {
+      console.log('AI narration failed, using fallback:', error.message);
+      aiNarration = `${documentType} - ${vendorName} - ${document.fileName}`;
+    }
+
     switch (documentType) {
       case 'vendor_invoice':
         return [
@@ -516,7 +538,7 @@ export class LangGraphOrchestrator {
             accountName: 'Vendor Expenses',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Vendor invoice - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -526,7 +548,7 @@ export class LangGraphOrchestrator {
             accountName: 'Accounts Payable',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Vendor invoice - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -540,7 +562,7 @@ export class LangGraphOrchestrator {
             accountName: 'Accounts Receivable',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Sales register - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -550,7 +572,7 @@ export class LangGraphOrchestrator {
             accountName: 'Sales Revenue',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Sales register - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -564,7 +586,7 @@ export class LangGraphOrchestrator {
             accountName: 'Salary Expense',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Salary register - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -574,7 +596,7 @@ export class LangGraphOrchestrator {
             accountName: 'Salary Payable',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Salary register - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -588,7 +610,7 @@ export class LangGraphOrchestrator {
             accountName: 'Bank Account',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Bank statement - ${document.fileName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -598,7 +620,7 @@ export class LangGraphOrchestrator {
             accountName: 'Miscellaneous Income',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Bank statement - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -612,7 +634,7 @@ export class LangGraphOrchestrator {
             accountName: 'Purchase Expense',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Purchase register - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -622,7 +644,7 @@ export class LangGraphOrchestrator {
             accountName: 'Accounts Payable',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Purchase register - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -636,7 +658,7 @@ export class LangGraphOrchestrator {
             accountName: 'Fixed Assets',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Fixed assets - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -646,7 +668,7 @@ export class LangGraphOrchestrator {
             accountName: 'Cash/Bank',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Fixed assets - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -660,7 +682,7 @@ export class LangGraphOrchestrator {
             accountName: 'TDS Receivable',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `TDS certificate - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -670,7 +692,7 @@ export class LangGraphOrchestrator {
             accountName: 'TDS Expense',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `TDS certificate - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];
@@ -684,7 +706,7 @@ export class LangGraphOrchestrator {
             accountName: 'Miscellaneous',
             debitAmount: amount,
             creditAmount: "0",
-            narration: `Document processing - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           },
           {
@@ -694,7 +716,7 @@ export class LangGraphOrchestrator {
             accountName: 'Miscellaneous',
             debitAmount: "0",
             creditAmount: amount,
-            narration: `Document processing - ${document.originalName}`,
+            narration: aiNarration,
             entity: vendorName,
           }
         ];

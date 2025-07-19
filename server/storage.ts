@@ -391,6 +391,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(journalEntries.date));
   }
 
+  async clearJournalEntriesByTenant(tenantId: string): Promise<number> {
+    const result = await db
+      .delete(journalEntries)
+      .where(eq(journalEntries.tenantId, tenantId));
+    return result.rowCount || 0;
+  }
+
   async getJournalEntriesByPeriod(period: string, tenantId?: string): Promise<JournalEntry[]> {
     const year = period.includes('_') ? period.split('_')[1] : period;
     console.log(`Fetching journal entries for year: ${year}, tenantId: ${tenantId}`);
