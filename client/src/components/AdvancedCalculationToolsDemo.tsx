@@ -29,6 +29,10 @@ export default function AdvancedCalculationToolsDemo() {
     'Trial Balance Calculators': [
       { value: 'generateTrialBalance', label: 'Generate Trial Balance', params: ['accounts'], icon: <Calculator className="w-4 h-4" /> },
       { value: 'calculateAccountBalance', label: 'Calculate Account Balance', params: ['transactions'], icon: <Calculator className="w-4 h-4" /> }
+    ],
+    'Validation Agents': [
+      { value: 'validateFinancialData', label: 'ValidatorAgent - Sanity Checks', params: ['data'], icon: <TrendingUp className="w-4 h-4" /> },
+      { value: 'identifyMissingProvisions', label: 'ProvisionBot - Missing Adjustments', params: ['financialData'], icon: <PieChart className="w-4 h-4" /> }
     ]
   };
 
@@ -70,6 +74,40 @@ export default function AdvancedCalculationToolsDemo() {
         { date: '2025-01-15', debit: 25000, credit: 0, description: 'Sale invoice payment' },
         { date: '2025-01-20', debit: 0, credit: 10000, description: 'Office rent payment' }
       ]
+    },
+    
+    // Validation Agents
+    validateFinancialData: {
+      data: {
+        transactions: [
+          { date: '2025-01-01', amount: 50000, description: 'Opening balance' },
+          { date: '2025-01-01', amount: 50000, description: 'Opening balance' }, // Duplicate
+          { date: '2025-01-15', amount: 25000000, description: 'Large transaction' }, // Warning
+          { date: '2025-01-20', amount: 0, description: 'Zero amount entry' } // Warning
+        ],
+        accounts: [
+          { code: '1100', name: 'Cash', balance: 100000, debit: 100000, credit: 0 },
+          { code: '1200', name: 'Receivables', debit: 75000, credit: 0 }, // Missing balance
+          { code: '2100', name: 'Payables', balance: -50000, debit: 0, credit: 50000 }
+        ],
+        totalDebits: 175000,
+        totalCredits: 175001 // Unbalanced
+      }
+    },
+    identifyMissingProvisions: {
+      financialData: {
+        fixedAssets: [
+          { name: 'Office Building', cost: 5000000, depreciation: 0 },
+          { name: 'Computers', cost: 500000, depreciation: 0 }
+        ],
+        receivables: [
+          { amount: 100000 },
+          { amount: 50000 }
+        ],
+        income: 2000000,
+        employees: 25,
+        salaryExpense: 1200000
+      }
     }
   };
 
@@ -111,7 +149,7 @@ export default function AdvancedCalculationToolsDemo() {
   const renderParameterInput = (param) => {
     const value = parameters[param] || '';
     
-    if (param === 'entries' || param === 'accounts' || param === 'transactions') {
+    if (param === 'entries' || param === 'accounts' || param === 'transactions' || param === 'data' || param === 'financialData') {
       return (
         <div key={param} className="space-y-2">
           <Label htmlFor={param} className="text-sm font-medium">
@@ -248,10 +286,11 @@ export default function AdvancedCalculationToolsDemo() {
       </div>
 
       <Tabs defaultValue="Financial Statement Calculators" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="Financial Statement Calculators">Financial Statements</TabsTrigger>
           <TabsTrigger value="Journal Entry & Bookkeeping">Journal & Bookkeeping</TabsTrigger>
           <TabsTrigger value="Trial Balance Calculators">Trial Balance</TabsTrigger>
+          <TabsTrigger value="Validation Agents">Validation Agents</TabsTrigger>
         </TabsList>
 
         {Object.entries(operationCategories).map(([category, operations]) => (

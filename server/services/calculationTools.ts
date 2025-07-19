@@ -656,6 +656,202 @@ export class CalculationTools {
       adequacy
     };
   }
+
+  /**
+   * ValidatorAgent - Sanity Checks and Duplicate Detection
+   */
+  validateFinancialData(data: any): {
+    isValid: boolean;
+    duplicateCount: number;
+    missingCount: number;
+    duplicates: any[];
+    missingBalances: string[];
+    errors: string[];
+    warnings: string[];
+    summary: string;
+    formula: string;
+    status: string;
+  } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const duplicates: any[] = [];
+    const missingBalances: string[] = [];
+
+    // Check for duplicate transactions
+    if (data.transactions) {
+      const seen = new Map();
+      data.transactions.forEach((txn: any, index: number) => {
+        const key = `${txn.date}-${txn.amount}-${txn.description}`;
+        if (seen.has(key)) {
+          duplicates.push({
+            original: seen.get(key),
+            duplicate: index,
+            transaction: txn
+          });
+        } else {
+          seen.set(key, index);
+        }
+      });
+    }
+
+    // Check for missing balances in accounts
+    if (data.accounts) {
+      data.accounts.forEach((acc: any) => {
+        if (!acc.balance && acc.balance !== 0) {
+          missingBalances.push(acc.name || acc.code);
+        }
+        if (acc.debit < 0 || acc.credit < 0) {
+          errors.push(`Negative balance detected in account: ${acc.name || acc.code}`);
+        }
+      });
+    }
+
+    // Sanity checks
+    if (data.totalDebits && data.totalCredits) {
+      const difference = Math.abs(data.totalDebits - data.totalCredits);
+      if (difference > 0.01) {
+        errors.push(`Trial balance unbalanced by ₹${difference.toFixed(2)}`);
+      }
+    }
+
+    // Check for unusual amounts (potential data entry errors)
+    if (data.transactions) {
+      data.transactions.forEach((txn: any) => {
+        if (txn.amount > 10000000) { // > 1 crore
+          warnings.push(`Large amount detected: ₹${txn.amount.toLocaleString('en-IN')} in ${txn.description}`);
+        }
+        if (txn.amount === 0) {
+          warnings.push(`Zero amount transaction: ${txn.description}`);
+        }
+      });
+    }
+
+    const isValid = errors.length === 0;
+    const duplicateCount = duplicates.length;
+    const missingCount = missingBalances.length;
+
+    return {
+      isValid,
+      duplicateCount,
+      missingCount,
+      duplicates,
+      missingBalances,
+      errors,
+      warnings,
+      summary: `Found ${duplicateCount} duplicates, ${missingCount} missing balances, ${errors.length} errors, ${warnings.length} warnings`,
+      formula: 'Validation = Duplicate Check + Balance Check + Sanity Check',
+      status: isValid ? 'Valid' : 'Invalid'
+    };
+  }
+
+  /**
+   * ProvisionBot - Missing Adjustments and Provisions
+   */
+  identifyMissingProvisions(financialData: any): {
+    missingProvisions: any[];
+    recommendations: string[];
+    adjustments: any[];
+    totalProvisions: number;
+    provisionCount: number;
+    summary: string;
+    formula: string;
+    status: string;
+  } {
+    const missingProvisions: any[] = [];
+    const recommendations: string[] = [];
+    const adjustments: any[] = [];
+
+    // Check for missing depreciation
+    if (financialData.fixedAssets) {
+      financialData.fixedAssets.forEach((asset: any) => {
+        if (!asset.depreciation || asset.depreciation === 0) {
+          missingProvisions.push({
+            type: 'Depreciation',
+            account: asset.name,
+            suggestedAmount: asset.cost * 0.15, // 15% depreciation rate
+            priority: 'High'
+          });
+          recommendations.push(`Provide depreciation for ${asset.name}: ₹${(asset.cost * 0.15).toFixed(2)}`);
+        }
+      });
+    }
+
+    // Check for missing bad debt provision
+    if (financialData.receivables) {
+      const totalReceivables = financialData.receivables.reduce((sum: number, rec: any) => sum + rec.amount, 0);
+      const badDebtProvision = totalReceivables * 0.05; // 5% provision
+      missingProvisions.push({
+        type: 'Bad Debt Provision',
+        account: 'Accounts Receivable',
+        suggestedAmount: badDebtProvision,
+        priority: 'Medium'
+      });
+      recommendations.push(`Create bad debt provision: ₹${badDebtProvision.toFixed(2)} (5% of receivables)`);
+    }
+
+    // Check for missing tax provisions
+    if (financialData.income && !financialData.taxProvision) {
+      const taxProvision = financialData.income * 0.30; // 30% tax rate
+      missingProvisions.push({
+        type: 'Income Tax Provision',
+        account: 'Tax Provision',
+        suggestedAmount: taxProvision,
+        priority: 'High'
+      });
+      recommendations.push(`Create income tax provision: ₹${taxProvision.toFixed(2)} (30% of income)`);
+    }
+
+    // Check for missing bonus/gratuity provisions
+    if (financialData.employees && financialData.salaryExpense) {
+      const bonusProvision = financialData.salaryExpense * 0.083; // 8.33% bonus
+      const gratuityProvision = financialData.salaryExpense * 0.048; // 4.8% gratuity
+      
+      missingProvisions.push({
+        type: 'Bonus Provision',
+        account: 'Employee Benefits',
+        suggestedAmount: bonusProvision,
+        priority: 'Medium'
+      });
+      
+      missingProvisions.push({
+        type: 'Gratuity Provision',
+        account: 'Employee Benefits',
+        suggestedAmount: gratuityProvision,
+        priority: 'Medium'
+      });
+
+      recommendations.push(`Create bonus provision: ₹${bonusProvision.toFixed(2)}`);
+      recommendations.push(`Create gratuity provision: ₹${gratuityProvision.toFixed(2)}`);
+    }
+
+    // Generate adjustment entries
+    missingProvisions.forEach(provision => {
+      adjustments.push({
+        description: `${provision.type} Adjustment`,
+        debit: {
+          account: `${provision.type} Expense`,
+          amount: provision.suggestedAmount
+        },
+        credit: {
+          account: `${provision.type} Payable`,
+          amount: provision.suggestedAmount
+        }
+      });
+    });
+
+    const totalProvisions = missingProvisions.reduce((sum, prov) => sum + prov.suggestedAmount, 0);
+
+    return {
+      missingProvisions,
+      recommendations,
+      adjustments,
+      totalProvisions,
+      provisionCount: missingProvisions.length,
+      summary: `Identified ${missingProvisions.length} missing provisions totaling ₹${totalProvisions.toLocaleString('en-IN')}`,
+      formula: 'Provisions = Depreciation + Bad Debt + Tax + Employee Benefits',
+      status: missingProvisions.length > 0 ? 'Provisions Required' : 'Complete'
+    };
+  }
 }
 
 // Export singleton instance
