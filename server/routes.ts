@@ -12,6 +12,8 @@ import jwt from 'jsonwebtoken';
 import { FinancialReportsService } from './services/financialReports';
 import { IntelligentDataExtractor } from './services/intelligentDataExtractor';
 import { AnthropicClient } from './services/anthropicClient';
+import { calculationTools } from './services/calculationTools';
+import { llmCalculationIntegration } from './services/llmCalculationIntegration';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
@@ -1094,6 +1096,112 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error generating test itemized data:', error);
       res.status(500).json({ error: 'Failed to generate test data' });
+    }
+  });
+
+  // Calculation Tools API endpoints
+  app.post('/api/calculations/execute', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { operation, parameters, context } = req.body;
+      
+      if (!operation || !parameters) {
+        return res.status(400).json({ error: 'Operation and parameters are required' });
+      }
+
+      const result = await llmCalculationIntegration.executeCalculation({
+        operation,
+        parameters,
+        context
+      });
+
+      res.json(result);
+
+    } catch (error) {
+      console.error('Calculation execution error:', error);
+      res.status(500).json({ error: 'Failed to execute calculation' });
+    }
+  });
+
+  app.get('/api/calculations/tools', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const tools = calculationTools.getAvailableTools();
+      res.json({
+        success: true,
+        tools,
+        count: tools.length
+      });
+    } catch (error) {
+      console.error('Error fetching calculation tools:', error);
+      res.status(500).json({ error: 'Failed to fetch calculation tools' });
+    }
+  });
+
+  app.post('/api/calculations/sequence', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { calculations } = req.body;
+      
+      if (!Array.isArray(calculations)) {
+        return res.status(400).json({ error: 'Calculations must be an array' });
+      }
+
+      const results = await llmCalculationIntegration.executeCalculationSequence(calculations);
+
+      res.json({
+        success: true,
+        results,
+        count: results.length
+      });
+
+    } catch (error) {
+      console.error('Calculation sequence error:', error);
+      res.status(500).json({ error: 'Failed to execute calculation sequence' });
+    }
+  });
+
+  app.post('/api/calculations/validate-financial-data', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { data } = req.body;
+      
+      if (!data) {
+        return res.status(400).json({ error: 'Data is required for validation' });
+      }
+
+      const validation = await llmCalculationIntegration.validateFinancialData(data);
+
+      res.json({
+        success: true,
+        validation
+      });
+
+    } catch (error) {
+      console.error('Financial data validation error:', error);
+      res.status(500).json({ error: 'Failed to validate financial data' });
+    }
+  });
+
+  app.post('/api/calculations/financial-query', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { query, context, availableData } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      const analysis = await llmCalculationIntegration.processFinancialQueryWithTools(
+        query,
+        context || {},
+        availableData || {}
+      );
+
+      res.json({
+        success: true,
+        analysis,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Financial query processing error:', error);
+      res.status(500).json({ error: 'Failed to process financial query' });
     }
   });
 

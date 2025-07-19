@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import PageLayout from "@/components/layout/PageLayout";
+import { CalculationToolsDemo } from "@/components/CalculationToolsDemo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,8 @@ import {
   EyeOff,
   AlertCircle,
   CheckCircle,
-  Info
+  Info,
+  Calculator
 } from "lucide-react";
 
 interface SettingsConfig {
@@ -410,7 +412,7 @@ export default function SettingsPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="api-keys" className="flex items-center gap-2">
                 <Key className="w-4 h-4" />
                 API Keys
@@ -418,6 +420,10 @@ export default function SettingsPage() {
               <TabsTrigger value="ai-settings" className="flex items-center gap-2">
                 <Brain className="w-4 h-4" />
                 AI Settings
+              </TabsTrigger>
+              <TabsTrigger value="calculation-tools" className="flex items-center gap-2">
+                <Calculator className="w-4 h-4" />
+                Calc Tools
               </TabsTrigger>
               <TabsTrigger value="agent-configs" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -505,6 +511,11 @@ export default function SettingsPage() {
                   ))}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Calculation Tools Tab */}
+            <TabsContent value="calculation-tools" className="space-y-6">
+              <CalculationToolsDemo />
             </TabsContent>
 
             {/* AI Settings Tab */}
