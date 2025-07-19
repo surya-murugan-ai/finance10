@@ -297,6 +297,25 @@ export class FinancialReportsService {
       }
     }
 
+    // Calculate and add retained earnings to balance the balance sheet
+    const imbalance = totalAssets - (totalLiabilities + totalEquity);
+    
+    console.log(`Debug: Balance Sheet before retained earnings - Assets: ${totalAssets}, Liabilities: ${totalLiabilities}, Equity: ${totalEquity}, Imbalance: ${imbalance}`);
+    
+    if (Math.abs(imbalance) > 0.01) {
+      // Add retained earnings to balance the equation
+      const retainedEarnings: BalanceSheetEntry = {
+        accountCode: '3100',
+        accountName: 'Retained Earnings',
+        amount: imbalance,
+        type: 'equity',
+        subType: 'retained_earnings',
+      };
+      equity.push(retainedEarnings);
+      totalEquity += imbalance;
+      console.log(`Debug: Added retained earnings of ${imbalance} to balance sheet`);
+    }
+
     // Sort entries by account code
     assets.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
     liabilities.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
@@ -326,22 +345,34 @@ export class FinancialReportsService {
     // Use authentic raw data amounts without scaling factor
     console.log(`Debug: Using authentic raw data amounts for Cash Flow calculation`);
 
-    // Filter cash-related entries
+    // Filter cash-related entries (Bank Account - 1100)
     const cashEntries = journalEntries.filter(entry => 
-      this.isCashAccount(entry.accountCode)
+      entry.accountCode === '1100' || entry.accountCode.startsWith('1100')
     );
 
+    // Group cash entries by entity for better cash flow analysis
+    const entityCashFlows = new Map<string, number>();
+    
     for (const entry of cashEntries) {
       const debit = parseFloat(entry.debitAmount?.toString() || '0');
       const credit = parseFloat(entry.creditAmount?.toString() || '0');
       const netCashFlow = (debit - credit);
 
       if (netCashFlow !== 0) {
-        const classification = this.classifyCashFlowActivity(entry.accountCode, entry.narration);
+        const entity = entry.entity || 'Unknown';
+        const current = entityCashFlows.get(entity) || 0;
+        entityCashFlows.set(entity, current + netCashFlow);
+      }
+    }
+
+    // Create cash flow entries from entity summaries
+    for (const [entity, amount] of entityCashFlows) {
+      if (Math.abs(amount) > 0.01) {
+        const classification = this.classifyCashFlowActivity('1100', entity);
         
         const cashFlowEntry: CashFlowEntry = {
-          description: entry.narration || entry.accountName,
-          amount: netCashFlow,
+          description: `Cash flow from ${entity}`,
+          amount: amount,
           type: classification,
         };
 

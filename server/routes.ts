@@ -867,7 +867,10 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       }
 
       const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
-      const reportData = await generateBalanceSheet(entries);
+      console.log(`Debug: Found ${entries.length} journal entries for balance sheet`);
+      const financialReportsService = new FinancialReportsService();
+      const reportData = await financialReportsService.generateBalanceSheet(entries);
+      console.log(`Debug: Balance sheet generated with ${reportData.equity.length} equity accounts`);
       
       res.json(reportData);
     } catch (error) {
@@ -884,7 +887,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       }
 
       const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
-      const reportData = await generateCashFlow(entries);
+      const financialReportsService = new FinancialReportsService();
+      const reportData = await financialReportsService.generateCashFlow(entries);
       
       res.json(reportData);
     } catch (error) {
