@@ -83,7 +83,7 @@ export interface DataFormatTemplate {
 
 export interface MasterData {
   id: string;
-  type: 'gl_codes' | 'tds_sections' | 'vendors' | 'cost_centers' | 'customers' | 'products';
+  type: 'gl_codes' | 'tds_sections';
   data: Record<string, any>[];
   last_updated: Date;
   source: string;
@@ -653,59 +653,6 @@ class DataSourceService {
         ],
         last_updated: new Date(),
         source: "income_tax_act_2025"
-      },
-      {
-        id: "vendors",
-        type: "vendors",
-        data: [
-          { id: "V001", name: "ABC Suppliers Ltd", gstin: "09ABCDE1234F1Z5", pan: "ABCDE1234F", category: "Raw Materials" },
-          { id: "V002", name: "XYZ Services Pvt Ltd", gstin: "09XYZAB1234F1Z5", pan: "XYZAB1234F", category: "Professional Services" },
-          { id: "V003", name: "Tech Solutions Inc", gstin: "09TECHP1234F1Z5", pan: "TECHP1234F", category: "IT Services" },
-          { id: "V004", name: "Office Supplies Co", gstin: "09OFFIC1234F1Z5", pan: "OFFIC1234F", category: "Office Supplies" },
-          { id: "V005", name: "Transport Services", gstin: "09TRANS1234F1Z5", pan: "TRANS1234F", category: "Transportation" }
-        ],
-        last_updated: new Date(),
-        source: "manual_entry"
-      },
-      {
-        id: "cost_centers",
-        type: "cost_centers",
-        data: [
-          { code: "SALES", name: "Sales Department", budget: 1000000, head: "Sales Manager" },
-          { code: "MARKETING", name: "Marketing Department", budget: 500000, head: "Marketing Manager" },
-          { code: "ADMIN", name: "Administration", budget: 300000, head: "Admin Manager" },
-          { code: "IT", name: "Information Technology", budget: 800000, head: "IT Manager" },
-          { code: "HR", name: "Human Resources", budget: 400000, head: "HR Manager" },
-          { code: "FINANCE", name: "Finance Department", budget: 200000, head: "Finance Manager" }
-        ],
-        last_updated: new Date(),
-        source: "system_setup"
-      },
-      {
-        id: "customers",
-        type: "customers",
-        data: [
-          { id: "C001", name: "ABC Corp Ltd", gstin: "09ABCCO1234F1Z5", pan: "ABCCO1234F", category: "Corporate" },
-          { id: "C002", name: "XYZ Industries", gstin: "09XYZIN1234F1Z5", pan: "XYZIN1234F", category: "Manufacturing" },
-          { id: "C003", name: "Tech Innovations", gstin: "09TECHI1234F1Z5", pan: "TECHI1234F", category: "Technology" },
-          { id: "C004", name: "Retail Solutions", gstin: "09RETAIL1234F1Z5", pan: "RETAIL1234F", category: "Retail" },
-          { id: "C005", name: "Service Providers", gstin: "09SERVIC1234F1Z5", pan: "SERVIC1234F", category: "Services" }
-        ],
-        last_updated: new Date(),
-        source: "manual_entry"
-      },
-      {
-        id: "products",
-        type: "products",
-        data: [
-          { id: "P001", name: "Software License", hsn_code: "998311", gst_rate: 18, category: "Software" },
-          { id: "P002", name: "Consulting Services", hsn_code: "998314", gst_rate: 18, category: "Services" },
-          { id: "P003", name: "Hardware Equipment", hsn_code: "847330", gst_rate: 18, category: "Hardware" },
-          { id: "P004", name: "Training Services", hsn_code: "924990", gst_rate: 18, category: "Education" },
-          { id: "P005", name: "Support Services", hsn_code: "998313", gst_rate: 18, category: "Support" }
-        ],
-        last_updated: new Date(),
-        source: "product_catalog"
       }
     ];
 
