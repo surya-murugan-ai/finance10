@@ -119,7 +119,7 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Value</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Gross Total</th>
                 {itemColumns.map((itemLabel, i) => (
-                  <th key={i} className="border border-gray-300 px-3 py-2 text-left font-semibold min-w-32">
+                  <th key={i} className="border border-gray-300 px-2 py-2 text-center font-semibold min-w-24 text-sm">
                     {itemLabel}
                   </th>
                 ))}
@@ -160,23 +160,17 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                     const item = group.items[colIndex];
 
                     if (item) {
-                      const itemDetails = extractItemDetails(item.particulars);
                       return (
-                        <td key={colIndex} className="border border-gray-300 px-3 py-2">
-                          <div className="text-sm space-y-1">
-                            <div className="font-medium text-gray-800">{itemDetails.description}</div>
-                            <div className="text-gray-600">{itemDetails.quantityUnit}</div>
-                            <div className="text-gray-800">Rate: ₹{itemDetails.rate}</div>
-                            <div className="text-green-700 font-medium">₹{parseFloat(item.netAmount).toLocaleString('en-IN')}</div>
-                            {itemDetails.hsnCode && (
-                              <div className="text-xs text-gray-500">HSN: {itemDetails.hsnCode}</div>
-                            )}
-                          </div>
+                        <td key={colIndex} className="border border-gray-300 px-2 py-1 text-right text-sm">
+                          {parseFloat(item.netAmount).toLocaleString('en-IN', { 
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2 
+                          })} Cr
                         </td>
                       );
                     } else {
                       return (
-                        <td key={colIndex} className="border border-gray-300 px-3 py-2"></td>
+                        <td key={colIndex} className="border border-gray-300 px-2 py-1"></td>
                       );
                     }
                   })}
