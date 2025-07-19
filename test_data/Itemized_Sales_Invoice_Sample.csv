@@ -1,0 +1,10 @@
+Company Name,Invoice Number,Invoice Date,Item Code,Item Description,Quantity,Unit,Rate,Amount,GST Rate,GST Amount,HSN Code,Total Amount
+Sapience Agribusiness Consulting LLP,INV-2025-001,08-Apr-25,FERT-NPK-001,Organic Fertilizer NPK 10:26:26,50,kg,1200.00,60000.00,18,10800.00,31051000,70800.00
+Sapience Agribusiness Consulting LLP,INV-2025-001,08-Apr-25,PEST-NEEM-002,Neem Oil Pesticide,25,ltr,800.00,20000.00,18,3600.00,38089390,23600.00
+Sapience Agribusiness Consulting LLP,INV-2025-001,08-Apr-25,COMP-VERM-003,Vermicompost Premium,100,kg,450.00,45000.00,5,2250.00,31010000,47250.00
+Bengal Animal Health & Nutrition Solutions,INV-2025-002,15-Apr-25,FEED-CATT-001,Cattle Feed Premium,200,kg,650.00,130000.00,5,6500.00,23099090,136500.00
+Bengal Animal Health & Nutrition Solutions,INV-2025-002,15-Apr-25,SUPP-MIN-002,Mineral Mixture,50,kg,1200.00,60000.00,18,10800.00,23099010,70800.00
+Bengal Animal Health & Nutrition Solutions,INV-2025-002,15-Apr-25,SUPP-CAL-003,Calcium Supplement,25,kg,900.00,22500.00,18,4050.00,23099020,26550.00
+Raavy Distributors Chennai,INV-2025-003,20-Apr-25,SEED-RICE-001,Hybrid Rice Seeds BR-101,100,kg,850.00,85000.00,5,4250.00,12019920,89250.00
+Raavy Distributors Chennai,INV-2025-003,20-Apr-25,SEED-WHEAT-002,Premium Wheat Seeds HW-304,75,kg,920.00,69000.00,5,3450.00,10019900,72450.00
+Raavy Distributors Chennai,INV-2025-003,20-Apr-25,FERT-URE-003,Urea Fertilizer 46% N,200,kg,580.00,116000.00,5,5800.00,31021000,121800.00
