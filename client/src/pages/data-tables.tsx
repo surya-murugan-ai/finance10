@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Search, Filter, FileText, Calendar, DollarSign, Building, Users, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ItemizedRegisterView } from "@/components/ItemizedRegisterView";
 
 interface ExtractedData {
   documentId: string;
@@ -234,45 +235,53 @@ export default function DataTables() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Date</TableHead>
-                      <TableHead className="min-w-[200px]">Particulars</TableHead>
-                      <TableHead className="w-[120px]">Voucher Type</TableHead>
-                      <TableHead className="w-[100px]">Voucher No.</TableHead>
-                      <TableHead className="min-w-[150px]">Narration</TableHead>
-                      <TableHead className="w-[120px] text-right">Value</TableHead>
-                      <TableHead className="w-[120px] text-right">Gross Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {item.data.slice(0, 15).map((row: any, idx: number) => {
-                      if (typeof row === 'object' && row !== null) {
-                        return (
-                          <ExpandableInvoiceRow key={`${item.documentId}-${idx}`} row={row} idx={idx} />
-                        );
-                      } else {
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell colSpan={7} className="text-center text-muted-foreground">
-                              {String(row)}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-                    })}
-                    {item.data.length > 15 && (
+              {/* Check if this is an itemized invoice to show special register format */}
+              {item.filename.includes("Itemized") && item.data.length > 0 ? (
+                <ItemizedRegisterView 
+                  transactions={item.data} 
+                  documentName={item.filename}
+                />
+              ) : (
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          ... and {item.data.length - 15} more rows
-                        </TableCell>
+                        <TableHead className="w-[100px]">Date</TableHead>
+                        <TableHead className="min-w-[200px]">Particulars</TableHead>
+                        <TableHead className="w-[120px]">Voucher Type</TableHead>
+                        <TableHead className="w-[100px]">Voucher No.</TableHead>
+                        <TableHead className="min-w-[150px]">Narration</TableHead>
+                        <TableHead className="w-[120px] text-right">Value</TableHead>
+                        <TableHead className="w-[120px] text-right">Gross Total</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {item.data.slice(0, 15).map((row: any, idx: number) => {
+                        if (typeof row === 'object' && row !== null) {
+                          return (
+                            <ExpandableInvoiceRow key={`${item.documentId}-${idx}`} row={row} idx={idx} />
+                          );
+                        } else {
+                          return (
+                            <TableRow key={idx}>
+                              <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                {String(row)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                      })}
+                      {item.data.length > 15 && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground">
+                            ... and {item.data.length - 15} more rows
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))
