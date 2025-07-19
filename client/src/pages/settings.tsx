@@ -819,7 +819,7 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="provider">Vector Database Provider</Label>
                       <Select
-                        value={formData.vectorDatabase.provider}
+                        value={formData.vectorDatabase?.provider || ""}
                         onValueChange={(value) => updateFormData("vectorDatabase", "provider", value)}
                       >
                         <SelectTrigger>
@@ -838,7 +838,7 @@ export default function SettingsPage() {
                       <Label htmlFor="indexName">Index Name</Label>
                       <Input
                         id="indexName"
-                        value={formData.vectorDatabase.indexName}
+                        value={formData.vectorDatabase?.indexName || ""}
                         onChange={(e) => updateFormData("vectorDatabase", "indexName", e.target.value)}
                         placeholder="financial-documents"
                       />
@@ -849,7 +849,7 @@ export default function SettingsPage() {
                       <Input
                         id="dimension"
                         type="number"
-                        value={formData.vectorDatabase.dimension}
+                        value={formData.vectorDatabase?.dimension || ""}
                         onChange={(e) => updateFormData("vectorDatabase", "dimension", parseInt(e.target.value))}
                         placeholder="1536"
                       />
@@ -858,7 +858,7 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="metric">Distance Metric</Label>
                       <Select
-                        value={formData.vectorDatabase.metric}
+                        value={formData.vectorDatabase?.metric || ""}
                         onValueChange={(value) => updateFormData("vectorDatabase", "metric", value)}
                       >
                         <SelectTrigger>
@@ -876,7 +876,7 @@ export default function SettingsPage() {
                       <Label htmlFor="namespace">Namespace</Label>
                       <Input
                         id="namespace"
-                        value={formData.vectorDatabase.namespace}
+                        value={formData.vectorDatabase?.namespace || ""}
                         onChange={(e) => updateFormData("vectorDatabase", "namespace", e.target.value)}
                         placeholder="default"
                       />
@@ -887,7 +887,7 @@ export default function SettingsPage() {
                       <Input
                         id="topK"
                         type="number"
-                        value={formData.vectorDatabase.topK}
+                        value={formData.vectorDatabase?.topK || ""}
                         onChange={(e) => updateFormData("vectorDatabase", "topK", parseInt(e.target.value))}
                         placeholder="10"
                         min="1"
@@ -899,7 +899,7 @@ export default function SettingsPage() {
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="enableHybridSearch"
-                      checked={formData.vectorDatabase.enableHybridSearch}
+                      checked={formData.vectorDatabase?.enableHybridSearch || false}
                       onCheckedChange={(checked) => updateFormData("vectorDatabase", "enableHybridSearch", checked)}
                     />
                     <Label htmlFor="enableHybridSearch">Enable Hybrid Search (Vector + Keyword)</Label>
