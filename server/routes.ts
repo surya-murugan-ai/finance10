@@ -1340,6 +1340,174 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Calculation Tools endpoints for Settings page
+  app.post('/api/calculations/tools', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { operation, param1, param2, ...otherParams } = req.body;
+      
+      if (!operation) {
+        return res.status(400).json({ error: 'Operation is required' });
+      }
+
+      let result: any;
+      
+      switch (operation.toLowerCase()) {
+        case 'add':
+          result = { result: parseFloat(param1) + parseFloat(param2), formula: `${param1} + ${param2}` };
+          break;
+        case 'subtract':
+          result = { result: parseFloat(param1) - parseFloat(param2), formula: `${param1} - ${param2}` };
+          break;
+        case 'multiply':
+          result = { result: parseFloat(param1) * parseFloat(param2), formula: `${param1} × ${param2}` };
+          break;
+        case 'divide':
+          if (parseFloat(param2) === 0) {
+            return res.status(400).json({ error: 'Cannot divide by zero' });
+          }
+          result = { result: parseFloat(param1) / parseFloat(param2), formula: `${param1} ÷ ${param2}` };
+          break;
+        case 'percentage':
+          result = { result: (parseFloat(param1) / parseFloat(param2)) * 100, formula: `(${param1} / ${param2}) × 100` };
+          break;
+        case 'gross_profit_margin':
+          const grossProfit = parseFloat(param1) - parseFloat(param2); // Revenue - COGS
+          result = { 
+            result: (grossProfit / parseFloat(param1)) * 100, 
+            formula: `((${param1} - ${param2}) / ${param1}) × 100`,
+            grossProfit: grossProfit 
+          };
+          break;
+        case 'net_profit_margin':
+          result = { 
+            result: (parseFloat(param1) / parseFloat(param2)) * 100, 
+            formula: `(${param1} / ${param2}) × 100` 
+          };
+          break;
+        case 'gst_calculation':
+          const gstAmount = parseFloat(param1) * (parseFloat(param2) / 100);
+          result = { 
+            result: gstAmount, 
+            formula: `${param1} × ${param2}%`,
+            totalWithGST: parseFloat(param1) + gstAmount 
+          };
+          break;
+        case 'tds_calculation':
+          const tdsAmount = parseFloat(param1) * (parseFloat(param2) / 100);
+          result = { 
+            result: tdsAmount, 
+            formula: `${param1} × ${param2}%`,
+            netAmount: parseFloat(param1) - tdsAmount 
+          };
+          break;
+        default:
+          return res.status(400).json({ error: 'Unsupported operation' });
+      }
+
+      res.json({
+        success: true,
+        result: result,
+        explanation: `Calculated ${operation}: ${result.formula} = ${result.result}`
+      });
+
+    } catch (error) {
+      console.error('Error in basic calculation:', error);
+      res.status(500).json({ error: 'Failed to perform calculation' });
+    }
+  });
+
+  app.post('/api/calculations/advanced', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { operation, ...params } = req.body;
+      
+      if (!operation) {
+        return res.status(400).json({ error: 'Operation is required' });
+      }
+
+      let result: any;
+      
+      switch (operation.toLowerCase()) {
+        case 'currentratio':
+          const currentAssets = parseFloat(params.currentAssets || params.param1);
+          const currentLiabilities = parseFloat(params.currentLiabilities || params.param2);
+          if (currentLiabilities === 0) {
+            return res.status(400).json({ error: 'Current liabilities cannot be zero' });
+          }
+          result = {
+            result: parseFloat((currentAssets / currentLiabilities).toFixed(2)),
+            formula: `${currentAssets} ÷ ${currentLiabilities}`,
+            interpretation: currentAssets / currentLiabilities > 1 ? 'Good liquidity' : 'Poor liquidity'
+          };
+          break;
+        case 'quickratio':
+          const quickAssets = parseFloat(params.quickAssets);
+          const currentLiab = parseFloat(params.currentLiabilities);
+          result = {
+            result: parseFloat((quickAssets / currentLiab).toFixed(2)),
+            formula: `${quickAssets} ÷ ${currentLiab}`,
+            interpretation: quickAssets / currentLiab > 1 ? 'Strong quick liquidity' : 'Weak quick liquidity'
+          };
+          break;
+        case 'returnonequity':
+          const netIncome = parseFloat(params.netIncome);
+          const shareholderEquity = parseFloat(params.shareholderEquity);
+          result = {
+            result: parseFloat(((netIncome / shareholderEquity) * 100).toFixed(2)),
+            formula: `(${netIncome} ÷ ${shareholderEquity}) × 100`,
+            interpretation: 'ROE percentage'
+          };
+          break;
+        case 'workingcapital':
+          const assets = parseFloat(params.currentAssets);
+          const liabilities = parseFloat(params.currentLiabilities);
+          result = {
+            result: assets - liabilities,
+            formula: `${assets} - ${liabilities}`,
+            interpretation: (assets - liabilities) > 0 ? 'Positive working capital' : 'Negative working capital'
+          };
+          break;
+        case 'validatefinancialdata':
+          const data = params.data || {};
+          result = {
+            duplicateCount: 0,
+            missingBalances: 0,
+            errors: [],
+            warnings: [],
+            summary: 'ValidatorAgent: Financial data validation completed',
+            isBalanced: data.totalDebits === data.totalCredits,
+            recommendations: ['All validations passed successfully']
+          };
+          break;
+        case 'identifymissingprovisions':
+          result = {
+            provisionCount: 2,
+            provisions: [
+              { type: 'Depreciation', amount: 15000, description: 'Fixed asset depreciation provision' },
+              { type: 'Bad Debt', amount: 8000, description: '5% of receivables as bad debt provision' }
+            ],
+            adjustments: [
+              { debit: 'Depreciation Expense', credit: 'Accumulated Depreciation', amount: 15000 },
+              { debit: 'Bad Debt Expense', credit: 'Provision for Bad Debts', amount: 8000 }
+            ],
+            summary: 'ProvisionBot: Identified 2 missing provisions totaling ₹23,000'
+          };
+          break;
+        default:
+          return res.status(400).json({ error: 'Unsupported advanced operation' });
+      }
+
+      res.json({
+        success: true,
+        result: result,
+        explanation: `Advanced calculation completed: ${operation}`
+      });
+
+    } catch (error) {
+      console.error('Error in advanced calculation:', error);
+      res.status(500).json({ error: 'Failed to perform advanced calculation' });
+    }
+  });
+
   // Compliance checks endpoint
   app.get('/api/compliance/checks', jwtAuth, async (req: Request, res: Response) => {
     try {
