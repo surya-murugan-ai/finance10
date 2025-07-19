@@ -90,19 +90,13 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
     };
   };
 
-  // Get all unique item names for headers - this determines the number of columns
-  const allItemNames = invoiceGroups.reduce((names: string[], group) => {
-    group.items.forEach(item => {
-      const itemDetails = extractItemDetails(item.particulars);
-      if (!names.includes(itemDetails.description)) {
-        names.push(itemDetails.description);
-      }
-    });
-    return names;
-  }, []);
+  // Get maximum number of items in any single invoice for column generation
+  const maxItemsPerInvoice = Math.max(...invoiceGroups.map(group => group.items.length));
   
-  // Use the total number of unique items across all invoices
-  const totalUniqueItems = allItemNames.length;
+  // Generate item column headers (Item 1, Item 2, Item 3, etc.)
+  const itemColumns = Array.from({ length: maxItemsPerInvoice }, (_, i) => `Item ${i + 1}`);
+  
+  const totalUniqueItems = invoiceGroups.reduce((sum, group) => sum + group.items.length, 0);
 
   return (
     <Card>
@@ -124,9 +118,9 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                 <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Narration</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Value</th>
                 <th className="border border-gray-300 px-3 py-2 text-right font-semibold">Gross Total</th>
-                {allItemNames.map((itemName, i) => (
-                  <th key={i} className="border border-gray-300 px-3 py-2 text-left font-semibold min-w-48">
-                    {itemName}
+                {itemColumns.map((itemLabel, i) => (
+                  <th key={i} className="border border-gray-300 px-3 py-2 text-left font-semibold min-w-32">
+                    {itemLabel}
                   </th>
                 ))}
               </tr>
@@ -161,21 +155,19 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
                   <td className="border border-gray-300 px-3 py-2 text-right font-medium">
                     ₹{group.grossTotal.toLocaleString('en-IN')}
                   </td>
-                  {allItemNames.map((itemName, colIndex) => {
-                    // Find the item in this group that matches this column's item name
-                    const matchingItem = group.items.find(item => {
+                  {itemColumns.map((itemLabel, colIndex) => {
+                    // Get the item at this index position for this invoice
+                    const item = group.items[colIndex];
+
+                    if (item) {
                       const itemDetails = extractItemDetails(item.particulars);
-                      return itemDetails.description === itemName;
-                    });
-                    
-                    if (matchingItem) {
-                      const itemDetails = extractItemDetails(matchingItem.particulars);
                       return (
                         <td key={colIndex} className="border border-gray-300 px-3 py-2">
                           <div className="text-sm space-y-1">
+                            <div className="font-medium text-gray-800">{itemDetails.description}</div>
                             <div className="text-gray-600">{itemDetails.quantityUnit}</div>
                             <div className="text-gray-800">Rate: ₹{itemDetails.rate}</div>
-                            <div className="text-green-700 font-medium">₹{parseFloat(matchingItem.netAmount).toLocaleString('en-IN')}</div>
+                            <div className="text-green-700 font-medium">₹{parseFloat(item.netAmount).toLocaleString('en-IN')}</div>
                             {itemDetails.hsnCode && (
                               <div className="text-xs text-gray-500">HSN: {itemDetails.hsnCode}</div>
                             )}
@@ -234,8 +226,8 @@ export function ItemizedRegisterView({ transactions, documentName }: ItemizedReg
         <div className="mt-4 p-3 bg-gray-50 rounded">
           <div className="flex justify-between items-center text-sm">
             <span>Total Invoices: {invoiceGroups.length}</span>
-            <span>Unique Products: {totalUniqueItems}</span>
-            <span>Total Line Items: {transactions.length}</span>
+            <span>Max Items per Invoice: {maxItemsPerInvoice}</span>
+            <span>Total Line Items: {totalUniqueItems}</span>
             <span className="font-bold">
               Grand Total: ₹{invoiceGroups.reduce((sum, group) => sum + group.totalValue, 0).toLocaleString('en-IN')}
             </span>
