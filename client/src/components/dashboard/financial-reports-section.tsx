@@ -24,7 +24,12 @@ export default function FinancialReportsSection() {
     queryKey: ['/api/reports/trial-balance', currentYear],
     queryFn: async () => {
       const token = localStorage.getItem('access_token');
-      if (!token) throw new Error('No authentication token found');
+      if (!token) {
+        console.log('No authentication token found in localStorage');
+        throw new Error('No authentication token found');
+      }
+      
+      console.log('Fetching trial balance with token:', token.substring(0, 20) + '...');
       
       const response = await fetch('/api/reports/trial-balance', {
         method: 'POST',
@@ -36,12 +41,19 @@ export default function FinancialReportsSection() {
         credentials: 'include',
       });
       
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return await response.json();
+      if (!response.ok) {
+        console.log('Trial balance API error:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Trial balance data received:', data.totalDebits, data.totalCredits);
+      return data;
     },
-    retry: 1,
+    retry: 3,
     enabled: !!localStorage.getItem('access_token'),
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: profitLoss, isLoading: profitLossLoading } = useQuery({
@@ -92,9 +104,9 @@ export default function FinancialReportsSection() {
     refetchOnWindowFocus: false,
   });
 
-  console.log('Trial balance report:', null);
-  console.log('Trial balance loading:', trialBalanceLoading);
+  console.log('Trial balance loading state:', trialBalanceLoading);
   console.log('Trial balance data:', trialBalance);
+  console.log('Authentication token available:', !!localStorage.getItem('access_token'));
 
   const getReportTitle = (type: string) => {
     switch (type) {

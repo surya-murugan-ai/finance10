@@ -13,11 +13,18 @@ export default function FinancialReports() {
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedPeriod] = useState("Q3_2025");
 
-  // Simple trial balance fetch with minimal error handling
-  const { data: trialBalanceData, isLoading: trialBalanceLoading } = useQuery({
-    queryKey: ["trial-balance"],
+  // Enhanced trial balance fetch with proper error handling
+  const { data: trialBalanceData, isLoading: trialBalanceLoading, error: trialBalanceError } = useQuery({
+    queryKey: ["trial-balance", selectedPeriod],
     queryFn: async () => {
       const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.log('No authentication token found');
+        throw new Error('No authentication token found');
+      }
+      
+      console.log('Fetching trial balance for Financial Reports page...');
+      
       const response = await fetch('/api/reports/trial-balance', {
         method: 'POST',
         headers: {
@@ -25,14 +32,27 @@ export default function FinancialReports() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ period: selectedPeriod }),
+        credentials: 'include',
       });
       
-      if (response.ok) {
-        return response.json();
+      if (!response.ok) {
+        console.log('Trial balance API error:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return { entries: [], totalDebits: 0, totalCredits: 0, isBalanced: false };
+      
+      const data = await response.json();
+      console.log('Trial balance data for Financial Reports:', {
+        entries: data.entries?.length || 0,
+        totalDebits: data.totalDebits,
+        totalCredits: data.totalCredits,
+        isBalanced: data.isBalanced
+      });
+      
+      return data;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!localStorage.getItem('access_token'),
+    retry: 3,
+    staleTime: 30000,
   });
 
   // Simple journal entries fetch
