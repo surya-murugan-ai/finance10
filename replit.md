@@ -32,6 +32,15 @@ Preferred communication style: Simple, everyday language.
   - **Performance Metrics**: Test execution time under 3.1 seconds with comprehensive coverage
   - **Production Ready**: Platform demonstrates excellent stability with 94.4% test success rate
 
+- **AGENT CONFIGS TAB CRITICAL FIX (July 19, 2025)**: **COMPLETED** - Successfully resolved critical issue where Agent Configs tab only displayed 2 agents instead of all 7 specialized financial agents:
+  - **Root Cause**: GET /api/settings endpoint in server/routes.ts was hardcoded to return only classifierBot and journalBot instead of reading complete agent configuration
+  - **Technical Fix**: Updated settings endpoint to include all 7 specialized agents with proper configurations, prompts, and model settings
+  - **Server Restart**: Required workflow restart to clear caching and ensure updated configuration is returned by API
+  - **Complete Agent Set**: All 7 agents now properly configured - ClassifierBot, JournalBot, GST Validator, TDS Validator, Data Extractor, ConsoAI, Audit Agent
+  - **Specialized Prompts**: Each agent configured with role-specific system prompts and optimized parameters for financial document processing
+  - **Model Consistency**: All agents configured with claude-sonnet-4-20250514 model for consistent AI processing capabilities
+  - **Production Ready**: Agent Configs tab now displays complete set of financial processing agents with individual configuration controls
+
 - **COMPREHENSIVE SETTINGS PAGE TESTING AND ENHANCEMENT (July 19, 2025)**: **COMPLETED** - Successfully tested and enhanced all 10 Settings page tabs with complete functionality:
   - **API Keys Tab**: GET/PUT settings endpoints working, connection testing for OpenAI/Anthropic/PostgreSQL functional
   - **AI Settings Tab**: Temperature, model selection, system prompts, and streaming controls operational
