@@ -1,0 +1,388 @@
+{
+  "summary": {
+    "total_tests": 18,
+    "tests_passed": 17,
+    "tests_failed": 1,
+    "success_rate": 94.44444444444444,
+    "duration": 3.2357866764068604,
+    "timestamp": "2025-07-19 14:30:45"
+  },
+  "test_details": [
+    {
+      "test": "User Authentication",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "id": "f3QU73Wv_fTgKZ7e71Uto",
+        "email": "mkonchada0@gmail.com",
+        "first_name": "Mahesh",
+        "last_name": "Konchada",
+        "company_name": "Local Development",
+        "role": "admin",
+        "tenant_id": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+        "tenant_role": "admin",
+        "is_active": true
+      }
+    },
+    {
+      "test": "Settings Retrieval",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "id": "7a94a175-cb13-47a6-b050-b2719d2ca004",
+        "apiKeys": {
+          "openai": "***configured***",
+          "anthropic": "***configured***",
+          "pinecone": "",
+          "postgres": "***configured***"
+        },
+        "aiSettings": {
+          "temperature": 0.7,
+          "maxTokens": 4000,
+          "model": "claude-sonnet-4-20250514",
+          "systemPrompt": "You are a helpful AI assistant specialized in financial document processing and analysis.",
+          "enableStreaming": true,
+          "responseFormat": "json"
+        },
+        "agentConfigs": {
+          "classifierBot": {
+            "temperature": 0.1,
+            "maxTokens": 2000,
+            "model": "claude-sonnet-4-20250514",
+            "systemPrompt": "You are ClassifierBot, an expert at identifying and classifying financial documents.",
+            "enabled": true
+          },
+          "journalBot": {
+            "temperature": 0.3,
+            "maxTokens": 3000,
+            "model": "claude-sonnet-4-20250514",
+            "systemPrompt": "You are JournalBot, specialized in creating accurate double-entry journal entries.",
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "test": "Basic Calculation (Add)",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "success": true,
+        "result": {
+          "result": 300,
+          "formula": "100 + 200 = 300",
+          "precision": 2,
+          "currency": "INR"
+        },
+        "explanation": "Added 100 and 200"
+      }
+    },
+    {
+      "test": "Advanced Financial Calculation (Current Ratio)",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "success": true,
+        "result": {
+          "result": 1.67,
+          "formula": "500000 \u00f7 300000 = 1.67",
+          "precision": 2,
+          "currency": "INR"
+        },
+        "explanation": "Calculated current ratio: 500000 \u00f7 300000 = 1.67"
+      }
+    },
+    {
+      "test": "ValidatorAgent - Duplicate Detection",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "success": true,
+        "result": {
+          "duplicateCount": 1,
+          "missingBalances": 0,
+          "errors": [
+            "Found 1 duplicate transactions"
+          ],
+          "warnings": [],
+          "summary": "ValidatorAgent checked 2 transactions, found 1 duplicates"
+        },
+        "explanation": "ValidatorAgent analyzed financial data and found 1 issues"
+      }
+    },
+    {
+      "test": "ProvisionBot - Missing Adjustments",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "success": true,
+        "result": {
+          "provisionCount": 2,
+          "provisions": [
+            {
+              "type": "Depreciation",
+              "asset": "Office Building",
+              "amount": 750000,
+              "rate": "15%"
+            },
+            {
+              "type": "Bad Debt Provision",
+              "baseAmount": 100000,
+              "amount": 5000,
+              "rate": "5%"
+            }
+          ],
+          "adjustments": [
+            {
+              "debit": {
+                "account": "5600",
+                "name": "Depreciation Expense",
+                "amount": 750000
+              },
+              "credit": {
+                "account": "1590",
+                "name": "Accumulated Depreciation",
+                "amount": 750000
+              }
+            },
+            {
+              "debit": {
+                "account": "5700",
+                "name": "Bad Debt Expense",
+                "amount": 5000
+              },
+              "credit": {
+                "account": "1590",
+                "name": "Provision for Bad Debts",
+                "amount": 5000
+              }
+            }
+          ],
+          "summary": "ProvisionBot identified 2 missing provisions requiring total adjustment of \u20b9755000.00"
+        },
+        "explanation": "ProvisionBot analyzed financial data and identified 2 missing provisions"
+      }
+    },
+    {
+      "test": "Document List (Clean State)",
+      "status": "FAIL",
+      "details": "Expected 0 documents, found 5",
+      "response_data": null
+    },
+    {
+      "test": "Document Upload",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "message": "File uploaded successfully",
+        "document": {
+          "id": "d15a23fa-cfb2-4712-81c5-70c84856393c",
+          "originalName": "test_sample.csv",
+          "documentType": "other",
+          "status": "uploaded"
+        }
+      }
+    },
+    {
+      "test": "Data Extraction",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "message": "Data extracted successfully",
+        "totalDocuments": 6,
+        "extractedData": [
+          {
+            "documentId": "d15a23fa-cfb2-4712-81c5-70c84856393c",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          },
+          {
+            "documentId": "cb744985-d353-4fab-832a-f4c8ee46b2a0",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          },
+          {
+            "documentId": "18d729c9-d3ac-4cf0-bb79-d7bffd6c004a",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          },
+          {
+            "documentId": "beea2420-1709-412e-91be-58ba63c776d7",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          },
+          {
+            "documentId": "1d301267-53fa-41ac-bca2-486b5e829765",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          },
+          {
+            "documentId": "a0d93d3e-cd5a-493d-b339-a799b088edec",
+            "filename": "test_sample.csv",
+            "documentType": "other",
+            "extractedRows": 0,
+            "data": []
+          }
+        ]
+      }
+    },
+    {
+      "test": "Journal Entries List",
+      "status": "PASS",
+      "details": "Found 10 entries",
+      "response_data": null
+    },
+    {
+      "test": "Journal Entry Generation",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "message": "Journal entries generated successfully",
+        "totalEntries": 2,
+        "processedDocuments": 1,
+        "totalDocuments": 6
+      }
+    },
+    {
+      "test": "Trial Balance Report",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "entries": [
+          {
+            "accountCode": "1100",
+            "accountName": "Bank Account - Default",
+            "debitBalance": 600000,
+            "creditBalance": 0,
+            "entity": "Default",
+            "narration": "test_sample.csv"
+          },
+          {
+            "accountCode": "4100",
+            "accountName": "Sales Revenue - Default",
+            "debitBalance": 0,
+            "creditBalance": 600000,
+            "entity": "Default",
+            "narration": "test_sample.csv"
+          }
+        ],
+        "totalDebits": 600000,
+        "totalCredits": 600000,
+        "isBalanced": true
+      }
+    },
+    {
+      "test": "Profit & Loss Report",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "revenue": [
+          {
+            "accountCode": "4100",
+            "accountName": "Sales Revenue",
+            "amount": 600000
+          }
+        ],
+        "expenses": [],
+        "totalRevenue": 600000,
+        "totalExpenses": 0,
+        "netIncome": 600000
+      }
+    },
+    {
+      "test": "Balance Sheet Report",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "assets": [
+          {
+            "accountCode": "1100",
+            "accountName": "Bank Account",
+            "amount": 600000
+          }
+        ],
+        "liabilities": [],
+        "equity": [],
+        "totalAssets": 600000,
+        "totalLiabilities": 0,
+        "totalEquity": 0,
+        "isBalanced": false
+      }
+    },
+    {
+      "test": "Cash Flow Report",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "operatingActivities": [
+          {
+            "accountCode": "4100",
+            "accountName": "Sales Revenue",
+            "amount": 600000
+          },
+          {
+            "accountCode": "1100",
+            "accountName": "Bank Account",
+            "amount": 600000
+          }
+        ],
+        "investingActivities": [],
+        "financingActivities": [],
+        "netCashFlow": 0
+      }
+    },
+    {
+      "test": "AI Agent Chat",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "response": "I received your message. All agents are currently operational. Use 'start' to begin processing documents.",
+        "agentName": "StatusBot",
+        "timestamp": "2025-07-19T14:30:45.155Z"
+      }
+    },
+    {
+      "test": "Compliance Checks",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "gstCompliance": {
+          "status": "compliant",
+          "lastChecked": "2025-07-19T14:30:45.226Z",
+          "issues": [],
+          "suggestions": []
+        },
+        "tdsCompliance": {
+          "status": "compliant",
+          "lastChecked": "2025-07-19T14:30:45.226Z",
+          "issues": [],
+          "suggestions": []
+        },
+        "auditTrail": {
+          "status": "active",
+          "lastUpdated": "2025-07-19T14:30:45.226Z",
+          "totalEntries": 0
+        }
+      }
+    },
+    {
+      "test": "System Health",
+      "status": "PASS",
+      "details": "",
+      "response_data": {
+        "status": "ok",
+        "timestamp": "2025-07-19T14:30:45.230Z"
+      }
+    }
+  ]
+}

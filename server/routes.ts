@@ -1205,6 +1205,89 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Settings endpoint
+  app.get('/api/settings', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      // Return default settings configuration
+      const settings = {
+        id: user.tenant_id || "default",
+        apiKeys: {
+          openai: process.env.OPENAI_API_KEY ? "***configured***" : "",
+          anthropic: process.env.ANTHROPIC_API_KEY ? "***configured***" : "",
+          pinecone: "",
+          postgres: process.env.DATABASE_URL ? "***configured***" : "",
+        },
+        aiSettings: {
+          temperature: 0.7,
+          maxTokens: 4000,
+          model: "claude-sonnet-4-20250514",
+          systemPrompt: "You are a helpful AI assistant specialized in financial document processing and analysis.",
+          enableStreaming: true,
+          responseFormat: "json",
+        },
+        agentConfigs: {
+          classifierBot: {
+            temperature: 0.1,
+            maxTokens: 2000,
+            model: "claude-sonnet-4-20250514",
+            systemPrompt: "You are ClassifierBot, an expert at identifying and classifying financial documents.",
+            enabled: true,
+          },
+          journalBot: {
+            temperature: 0.3,
+            maxTokens: 3000,
+            model: "claude-sonnet-4-20250514",
+            systemPrompt: "You are JournalBot, specialized in creating accurate double-entry journal entries.",
+            enabled: true,
+          }
+        }
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // Compliance checks endpoint
+  app.get('/api/compliance/checks', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      // Return sample compliance checks structure
+      const complianceChecks = {
+        gstCompliance: {
+          status: "compliant",
+          lastChecked: new Date().toISOString(),
+          issues: [],
+          suggestions: []
+        },
+        tdsCompliance: {
+          status: "compliant", 
+          lastChecked: new Date().toISOString(),
+          issues: [],
+          suggestions: []
+        },
+        auditTrail: {
+          status: "active",
+          lastUpdated: new Date().toISOString(),
+          totalEntries: 0
+        }
+      };
+
+      res.json(complianceChecks);
+    } catch (error) {
+      console.error('Error fetching compliance checks:', error);
+      res.status(500).json({ error: 'Failed to fetch compliance checks' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

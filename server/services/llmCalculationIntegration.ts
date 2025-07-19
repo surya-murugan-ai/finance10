@@ -35,40 +35,180 @@ export class LLMCalculationIntegration {
     try {
       const { operation, parameters } = request;
 
+      // Handle both array and object parameter formats
+      const getParam = (index: number, name?: string) => {
+        if (Array.isArray(parameters)) {
+          return parameters[index];
+        } else if (parameters && typeof parameters === 'object' && name && parameters[name] !== undefined) {
+          return parameters[name];
+        } else if (parameters && typeof parameters === 'object') {
+          const keys = Object.keys(parameters);
+          const key = keys[index];
+          return parameters[key];
+        } else {
+          return undefined;
+        }
+      };
+
       switch (operation.toLowerCase()) {
         case 'add':
+          const a = getParam(0, 'a');
+          const b = getParam(1, 'b');
           return {
             success: true,
-            result: calculationTools.add(parameters[0], parameters[1]),
-            explanation: `Added ${parameters[0]} and ${parameters[1]}`
+            result: calculationTools.add(a, b),
+            explanation: `Added ${a} and ${b}`
           };
 
         case 'subtract':
+          const subA = getParam(0, 'a');
+          const subB = getParam(1, 'b');
           return {
             success: true,
-            result: calculationTools.subtract(parameters[0], parameters[1]),
-            explanation: `Subtracted ${parameters[1]} from ${parameters[0]}`
+            result: calculationTools.subtract(subA, subB),
+            explanation: `Subtracted ${subB} from ${subA}`
           };
 
         case 'multiply':
+          const mulA = getParam(0, 'a');
+          const mulB = getParam(1, 'b');
           return {
             success: true,
-            result: calculationTools.multiply(parameters[0], parameters[1]),
-            explanation: `Multiplied ${parameters[0]} by ${parameters[1]}`
+            result: calculationTools.multiply(mulA, mulB),
+            explanation: `Multiplied ${mulA} by ${mulB}`
           };
 
         case 'divide':
+          const divA = getParam(0, 'a');
+          const divB = getParam(1, 'b');
           return {
             success: true,
-            result: calculationTools.divide(parameters[0], parameters[1]),
-            explanation: `Divided ${parameters[0]} by ${parameters[1]}`
+            result: calculationTools.divide(divA, divB),
+            explanation: `Divided ${divA} by ${divB}`
           };
 
         case 'percentage':
+          const pctValue = getParam(0, 'value');
+          const pctTotal = getParam(1, 'total');
           return {
             success: true,
-            result: calculationTools.percentage(parameters[0], parameters[1]),
-            explanation: `Calculated ${parameters[0]} as percentage of ${parameters[1]}`
+            result: calculationTools.percentage(pctValue, pctTotal),
+            explanation: `Calculated ${pctValue} as percentage of ${pctTotal}`
+          };
+
+        case 'currentratio':
+          const currentAssets = getParam(0, 'currentAssets');
+          const currentLiabilities = getParam(1, 'currentLiabilities');
+          if (currentLiabilities === 0) {
+            throw new Error('Current liabilities cannot be zero for current ratio calculation');
+          }
+          const ratio = parseFloat((currentAssets / currentLiabilities).toFixed(2));
+          return {
+            success: true,
+            result: {
+              result: ratio,
+              formula: `${currentAssets} ÷ ${currentLiabilities} = ${ratio}`,
+              precision: 2,
+              currency: 'INR'
+            },
+            explanation: `Calculated current ratio: ${currentAssets} ÷ ${currentLiabilities} = ${ratio}`
+          };
+
+        case 'validatefinancialdata':
+          const data = getParam(0, 'data');
+          if (!data || !data.transactions || !data.accounts) {
+            return {
+              success: true,
+              result: {
+                duplicateCount: 0,
+                missingBalances: 0,
+                errors: ['No valid data provided for validation'],
+                warnings: [],
+                summary: 'No data to validate'
+              },
+              explanation: 'ValidatorAgent: No data provided for validation'
+            };
+          }
+          
+          // Simulate duplicate detection
+          const duplicates = data.transactions.filter((t, i, arr) => 
+            arr.findIndex(x => x.date === t.date && x.amount === t.amount && x.description === t.description) !== i
+          );
+          
+          return {
+            success: true,
+            result: {
+              duplicateCount: duplicates.length,
+              missingBalances: 0,
+              errors: duplicates.length > 0 ? [`Found ${duplicates.length} duplicate transactions`] : [],
+              warnings: [],
+              summary: `ValidatorAgent checked ${data.transactions.length} transactions, found ${duplicates.length} duplicates`
+            },
+            explanation: `ValidatorAgent analyzed financial data and found ${duplicates.length} issues`
+          };
+
+        case 'identifymissingprovisions':
+          const financialData = getParam(0, 'financialData');
+          if (!financialData) {
+            return {
+              success: true,
+              result: {
+                provisionCount: 0,
+                provisions: [],
+                adjustments: [],
+                summary: 'No financial data provided for provision analysis'
+              },
+              explanation: 'ProvisionBot: No data provided for analysis'
+            };
+          }
+          
+          const provisions = [];
+          const adjustments = [];
+          
+          // Check for missing depreciation
+          if (financialData.fixedAssets && financialData.fixedAssets.length > 0) {
+            financialData.fixedAssets.forEach(asset => {
+              if (asset.depreciation === 0 && asset.cost > 0) {
+                const depreciationAmount = asset.cost * 0.15; // 15% depreciation rate
+                provisions.push({
+                  type: 'Depreciation',
+                  asset: asset.name,
+                  amount: depreciationAmount,
+                  rate: '15%'
+                });
+                adjustments.push({
+                  debit: { account: '5600', name: 'Depreciation Expense', amount: depreciationAmount },
+                  credit: { account: '1590', name: 'Accumulated Depreciation', amount: depreciationAmount }
+                });
+              }
+            });
+          }
+          
+          // Check for bad debt provision
+          if (financialData.receivables && financialData.receivables.length > 0) {
+            const totalReceivables = financialData.receivables.reduce((sum, r) => sum + r.amount, 0);
+            const badDebtAmount = totalReceivables * 0.05; // 5% bad debt provision
+            provisions.push({
+              type: 'Bad Debt Provision',
+              baseAmount: totalReceivables,
+              amount: badDebtAmount,
+              rate: '5%'
+            });
+            adjustments.push({
+              debit: { account: '5700', name: 'Bad Debt Expense', amount: badDebtAmount },
+              credit: { account: '1590', name: 'Provision for Bad Debts', amount: badDebtAmount }
+            });
+          }
+          
+          return {
+            success: true,
+            result: {
+              provisionCount: provisions.length,
+              provisions: provisions,
+              adjustments: adjustments,
+              summary: `ProvisionBot identified ${provisions.length} missing provisions requiring total adjustment of ₹${adjustments.reduce((sum, adj) => sum + adj.debit.amount, 0).toFixed(2)}`
+            },
+            explanation: `ProvisionBot analyzed financial data and identified ${provisions.length} missing provisions`
           };
 
         case 'gross_profit_margin':
