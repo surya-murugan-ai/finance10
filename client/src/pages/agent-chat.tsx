@@ -558,7 +558,18 @@ export default function AgentChat() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setNewMessage("How much sales revenue do I have this quarter?")}
+                  onClick={() => {
+                    const message = "How much sales revenue do I have this quarter?";
+                    const userMessage = {
+                      id: Date.now().toString(),
+                      type: 'user' as const,
+                      content: message,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, userMessage]);
+                    naturalLanguageChatMutation.mutate(message);
+                    setNewMessage("");
+                  }}
                   className="w-full text-left justify-start"
                 >
                   How much sales revenue do I have this quarter?
@@ -566,7 +577,18 @@ export default function AgentChat() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setNewMessage("What's my current TDS liability?")}
+                  onClick={() => {
+                    const message = "What's my current TDS liability?";
+                    const userMessage = {
+                      id: Date.now().toString(),
+                      type: 'user' as const,
+                      content: message,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, userMessage]);
+                    naturalLanguageChatMutation.mutate(message);
+                    setNewMessage("");
+                  }}
                   className="w-full text-left justify-start"
                 >
                   What's my current TDS liability?
@@ -574,7 +596,18 @@ export default function AgentChat() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setNewMessage("Show me my top 5 expenses")}
+                  onClick={() => {
+                    const message = "Show me my top 5 expenses";
+                    const userMessage = {
+                      id: Date.now().toString(),
+                      type: 'user' as const,
+                      content: message,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, userMessage]);
+                    naturalLanguageChatMutation.mutate(message);
+                    setNewMessage("");
+                  }}
                   className="w-full text-left justify-start"
                 >
                   Show me my top 5 expenses
@@ -582,7 +615,18 @@ export default function AgentChat() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setNewMessage("Generate a compliance report")}
+                  onClick={() => {
+                    const message = "Generate a compliance report";
+                    const userMessage = {
+                      id: Date.now().toString(),
+                      type: 'user' as const,
+                      content: message,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, userMessage]);
+                    naturalLanguageChatMutation.mutate(message);
+                    setNewMessage("");
+                  }}
                   className="w-full text-left justify-start"
                 >
                   Generate a compliance report
@@ -606,7 +650,18 @@ export default function AgentChat() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setNewMessage("help")}
+                  onClick={() => {
+                    const message = "help";
+                    const userMessage = {
+                      id: Date.now().toString(),
+                      type: 'user' as const,
+                      content: message,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, userMessage]);
+                    naturalLanguageChatMutation.mutate(message);
+                    setNewMessage("");
+                  }}
                   className="w-full"
                 >
                   <Info className="w-4 h-4 mr-2" />
