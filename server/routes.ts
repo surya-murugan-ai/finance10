@@ -1262,9 +1262,36 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       const journalEntries = await storage.getJournalEntriesByTenant(user.tenant_id);
       const documents = await storage.getDocumentsByTenant(user.tenant_id);
       
-      // Generate financial reports for context
-      const financialReportsService = new FinancialReportsService(storage);
-      const trialBalance = await financialReportsService.generateTrialBalance(user.tenant_id);
+      // Debug: log data
+      console.log("Debug: Chat user tenant_id:", user.tenant_id);
+      console.log("Debug: Journal entries count:", journalEntries.length);
+      console.log("Debug: Documents count:", documents.length);
+      
+      // Analyze journal entries directly instead of trial balance
+      const accountSummary = {};
+      journalEntries.forEach(entry => {
+        if (!accountSummary[entry.accountCode]) {
+          accountSummary[entry.accountCode] = {
+            accountCode: entry.accountCode,
+            accountName: entry.accountName || entry.accountCode,
+            entity: entry.entity || 'Unknown',
+            totalDebits: 0,
+            totalCredits: 0,
+            netBalance: 0
+          };
+        }
+        accountSummary[entry.accountCode].totalDebits += entry.debitAmount || 0;
+        accountSummary[entry.accountCode].totalCredits += entry.creditAmount || 0;
+        accountSummary[entry.accountCode].netBalance = accountSummary[entry.accountCode].totalDebits - accountSummary[entry.accountCode].totalCredits;
+      });
+      
+      const accounts = Object.values(accountSummary);
+      const totalDebits = journalEntries.reduce((sum, entry) => sum + (entry.debitAmount || 0), 0);
+      const totalCredits = journalEntries.reduce((sum, entry) => sum + (entry.creditAmount || 0), 0);
+      
+      console.log("Debug: Accounts processed:", accounts.length);
+      console.log("Debug: Sample accounts:", accounts.slice(0, 3).map(a => `${a.accountCode}: ₹${a.netBalance}`));
+      console.log("Debug: Total debits/credits:", totalDebits, totalCredits);
       
       // Analyze query and provide relevant response
       let response = "";
@@ -1274,32 +1301,62 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       const queryLower = query.toLowerCase();
       
       if (queryLower.includes('sales') || queryLower.includes('revenue')) {
-        const salesAccounts = trialBalance.entries.filter(entry => entry.accountCode.startsWith('41'));
-        const totalSales = salesAccounts.reduce((sum, acc) => sum + acc.creditBalance, 0);
-        response = `Your total sales revenue is ₹${totalSales.toLocaleString('en-IN')}. You have ${salesAccounts.length} sales account(s) with activity. The main contributors are: ${salesAccounts.slice(0, 3).map(acc => `${acc.entity} (₹${acc.creditBalance.toLocaleString('en-IN')})`).join(', ')}.`;
+        // Look for sales accounts using direct journal analysis
+        const salesAccounts = accounts.filter(acc => 
+          acc.accountCode.startsWith('41') || 
+          acc.accountCode.startsWith('4100') ||
+          acc.accountName.toLowerCase().includes('sales') ||
+          acc.accountName.toLowerCase().includes('revenue')
+        );
+        const totalSales = salesAccounts.reduce((sum, acc) => sum + Math.abs(acc.totalCredits), 0);
+        response = `Your total sales revenue is ₹${totalSales.toLocaleString('en-IN')}. You have ${salesAccounts.length} sales account(s) with activity. The main contributors are: ${salesAccounts.slice(0, 3).map(acc => `${acc.entity} (₹${Math.abs(acc.totalCredits).toLocaleString('en-IN')})`).join(', ')}.`;
         suggestedActions = ["View detailed P&L report", "Analyze sales by entity", "Check monthly trends"];
       } else if (queryLower.includes('tds') || queryLower.includes('liability')) {
-        const tdsAccounts = trialBalance.entries.filter(entry => entry.accountCode.includes('TDS') || entry.accountName.toLowerCase().includes('tds'));
-        const totalTDS = tdsAccounts.reduce((sum, acc) => sum + acc.creditBalance, 0);
+        const tdsAccounts = accounts.filter(acc => 
+          acc.accountCode.includes('TDS') || 
+          acc.accountName.toLowerCase().includes('tds') ||
+          acc.accountName.toLowerCase().includes('tax')
+        );
+        const totalTDS = tdsAccounts.reduce((sum, acc) => sum + Math.abs(acc.totalCredits), 0);
         response = `Your TDS liability is ₹${totalTDS.toLocaleString('en-IN')}. You have ${tdsAccounts.length} TDS-related account(s). ${totalTDS > 0 ? 'You have outstanding TDS payments to make.' : 'Your TDS accounts are currently balanced.'}`;
         suggestedActions = ["Generate TDS compliance report", "Review TDS deductions", "Check payment deadlines"];
       } else if (queryLower.includes('expenses') || queryLower.includes('top')) {
-        const expenseAccounts = trialBalance.entries.filter(entry => entry.accountCode.startsWith('5')).sort((a, b) => b.debitBalance - a.debitBalance);
+        // Look for expense accounts using direct analysis
+        const expenseAccounts = accounts.filter(acc => 
+          acc.accountCode.startsWith('5') || 
+          acc.accountName.toLowerCase().includes('expense') ||
+          acc.accountName.toLowerCase().includes('cost') ||
+          (acc.totalDebits > 0 && !acc.accountCode.startsWith('1'))
+        ).sort((a, b) => b.totalDebits - a.totalDebits);
         const topExpenses = expenseAccounts.slice(0, 5);
-        response = `Your top 5 expenses are: ${topExpenses.map((acc, i) => `${i+1}. ${acc.entity} - ₹${acc.debitBalance.toLocaleString('en-IN')}`).join(', ')}. Total expenses: ₹${expenseAccounts.reduce((sum, acc) => sum + acc.debitBalance, 0).toLocaleString('en-IN')}.`;
+        const totalExpenses = expenseAccounts.reduce((sum, acc) => sum + acc.totalDebits, 0);
+        response = `Your top 5 expenses are: ${topExpenses.map((acc, i) => `${i+1}. ${acc.entity} - ₹${acc.totalDebits.toLocaleString('en-IN')}`).join(', ')}. Total expenses: ₹${totalExpenses.toLocaleString('en-IN')}.`;
         suggestedActions = ["Analyze expense trends", "Review cost optimization", "Compare with budget"];
+      } else if (queryLower.includes('assets') || queryLower.includes('bank')) {
+        // Look for asset accounts using direct analysis
+        const assetAccounts = accounts.filter(acc => 
+          acc.accountCode.startsWith('1') || 
+          acc.accountName.toLowerCase().includes('bank') ||
+          acc.accountName.toLowerCase().includes('asset')
+        ).sort((a, b) => b.totalDebits - a.totalDebits);
+        const topAssets = assetAccounts.slice(0, 5);
+        const totalAssets = assetAccounts.reduce((sum, acc) => sum + acc.totalDebits, 0);
+        response = `Your top 5 assets are: ${topAssets.map((acc, i) => `${i+1}. ${acc.entity} - ₹${acc.totalDebits.toLocaleString('en-IN')}`).join(', ')}. Total assets: ₹${totalAssets.toLocaleString('en-IN')}.`;
+        suggestedActions = ["Review asset allocation", "Check bank balances", "Analyze asset trends"];
       } else if (queryLower.includes('compliance') || queryLower.includes('report')) {
-        response = `You have ${documents.length} document(s) processed and ${journalEntries.length} journal entries. Your trial balance is ${Math.abs(trialBalance.totalDebits - trialBalance.totalCredits) < 1 ? 'balanced' : 'unbalanced'}. Total debits: ₹${trialBalance.totalDebits.toLocaleString('en-IN')}, Total credits: ₹${trialBalance.totalCredits.toLocaleString('en-IN')}.`;
+        response = `You have ${documents.length} document(s) processed and ${journalEntries.length} journal entries. Your books are ${Math.abs(totalDebits - totalCredits) < 1 ? 'balanced' : 'unbalanced'}. Total debits: ₹${totalDebits.toLocaleString('en-IN')}, Total credits: ₹${totalCredits.toLocaleString('en-IN')}.`;
         suggestedActions = ["Generate GST compliance report", "Review TDS compliance", "Export financial statements"];
       } else if (queryLower.includes('help')) {
-        response = `I can help you with financial analysis and insights. I have access to your ${journalEntries.length} journal entries, ${documents.length} documents, and can analyze sales revenue (₹${trialBalance.entries.filter(e => e.accountCode.startsWith('41')).reduce((s,a) => s + a.creditBalance, 0).toLocaleString('en-IN')}), expenses, TDS liabilities, and compliance status.`;
-        suggestedActions = ["Ask about sales revenue", "Check TDS liability", "Review top expenses", "Generate compliance report"];
+        const salesTotal = accounts.filter(acc => acc.accountCode.startsWith('41') || acc.accountName.toLowerCase().includes('sales')).reduce((s,acc) => s + Math.abs(acc.totalCredits), 0);
+        response = `I can help you with financial analysis and insights. I have access to your ${journalEntries.length} journal entries, ${documents.length} documents, and ${accounts.length} accounts. I can analyze sales revenue (₹${salesTotal.toLocaleString('en-IN')}), expenses, assets, and compliance status.`;
+        suggestedActions = ["Ask about sales revenue", "Check TDS liability", "Review top expenses", "Show top assets"];
       } else {
-        // Default financial overview
-        const totalAssets = trialBalance.entries.filter(entry => entry.accountCode.startsWith('1')).reduce((sum, acc) => sum + acc.debitBalance, 0);
-        const totalRevenue = trialBalance.entries.filter(entry => entry.accountCode.startsWith('4')).reduce((sum, acc) => sum + acc.creditBalance, 0);
-        response = `Based on your current financial data: Total assets: ₹${totalAssets.toLocaleString('en-IN')}, Total revenue: ₹${totalRevenue.toLocaleString('en-IN')}. You have ${journalEntries.length} journal entries from ${documents.length} processed documents. Your trial balance shows ₹${trialBalance.totalDebits.toLocaleString('en-IN')} in debits and credits.`;
-        suggestedActions = ["View trial balance", "Check P&L summary", "Review cash flow"];
+        // Default financial overview using direct account analysis
+        const bankAccounts = accounts.filter(acc => acc.accountName.toLowerCase().includes('bank'));
+        const totalBankBalance = bankAccounts.reduce((sum, acc) => sum + acc.totalDebits, 0);
+        const accountTypes = [...new Set(accounts.map(acc => acc.accountCode.substring(0,2)))].join(', ');
+        response = `Financial Overview: You have ${accounts.length} accounts with total balance of ₹${totalDebits.toLocaleString('en-IN')}. Bank accounts total: ₹${totalBankBalance.toLocaleString('en-IN')}. Account types: ${accountTypes}. Data from ${journalEntries.length} journal entries across ${documents.length} documents.`;
+        suggestedActions = ["View trial balance", "Check P&L summary", "Review bank accounts", "Show top accounts"];
       }
       
       res.json({
