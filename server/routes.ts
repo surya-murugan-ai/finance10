@@ -1258,20 +1258,57 @@ export async function registerRoutes(app: express.Express): Promise<any> {
         return res.status(400).json({ error: 'Query is required' });
       }
 
-      // Simple conversational AI response
-      const response = {
-        response: `I understand you're asking: "${query}". I'm processing your financial data and can help with analysis, reports, and compliance questions. Based on your current data, I can provide insights about your financial position.`,
-        confidence: 0.8,
-        suggestedActions: [
-          "Review your financial reports",
-          "Check compliance status",
-          "Analyze transaction trends"
-        ]
-      };
+      // Get actual financial data for intelligent responses
+      const journalEntries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const documents = await storage.getDocumentsByTenant(user.tenant_id);
+      
+      // Generate financial reports for context
+      const financialReportsService = new FinancialReportsService(storage);
+      const trialBalance = await financialReportsService.generateTrialBalance(user.tenant_id);
+      
+      // Analyze query and provide relevant response
+      let response = "";
+      let confidence = 0.9;
+      let suggestedActions = [];
+      
+      const queryLower = query.toLowerCase();
+      
+      if (queryLower.includes('sales') || queryLower.includes('revenue')) {
+        const salesAccounts = trialBalance.entries.filter(entry => entry.accountCode.startsWith('41'));
+        const totalSales = salesAccounts.reduce((sum, acc) => sum + acc.creditBalance, 0);
+        response = `Your total sales revenue is ₹${totalSales.toLocaleString('en-IN')}. You have ${salesAccounts.length} sales account(s) with activity. The main contributors are: ${salesAccounts.slice(0, 3).map(acc => `${acc.entity} (₹${acc.creditBalance.toLocaleString('en-IN')})`).join(', ')}.`;
+        suggestedActions = ["View detailed P&L report", "Analyze sales by entity", "Check monthly trends"];
+      } else if (queryLower.includes('tds') || queryLower.includes('liability')) {
+        const tdsAccounts = trialBalance.entries.filter(entry => entry.accountCode.includes('TDS') || entry.accountName.toLowerCase().includes('tds'));
+        const totalTDS = tdsAccounts.reduce((sum, acc) => sum + acc.creditBalance, 0);
+        response = `Your TDS liability is ₹${totalTDS.toLocaleString('en-IN')}. You have ${tdsAccounts.length} TDS-related account(s). ${totalTDS > 0 ? 'You have outstanding TDS payments to make.' : 'Your TDS accounts are currently balanced.'}`;
+        suggestedActions = ["Generate TDS compliance report", "Review TDS deductions", "Check payment deadlines"];
+      } else if (queryLower.includes('expenses') || queryLower.includes('top')) {
+        const expenseAccounts = trialBalance.entries.filter(entry => entry.accountCode.startsWith('5')).sort((a, b) => b.debitBalance - a.debitBalance);
+        const topExpenses = expenseAccounts.slice(0, 5);
+        response = `Your top 5 expenses are: ${topExpenses.map((acc, i) => `${i+1}. ${acc.entity} - ₹${acc.debitBalance.toLocaleString('en-IN')}`).join(', ')}. Total expenses: ₹${expenseAccounts.reduce((sum, acc) => sum + acc.debitBalance, 0).toLocaleString('en-IN')}.`;
+        suggestedActions = ["Analyze expense trends", "Review cost optimization", "Compare with budget"];
+      } else if (queryLower.includes('compliance') || queryLower.includes('report')) {
+        response = `You have ${documents.length} document(s) processed and ${journalEntries.length} journal entries. Your trial balance is ${Math.abs(trialBalance.totalDebits - trialBalance.totalCredits) < 1 ? 'balanced' : 'unbalanced'}. Total debits: ₹${trialBalance.totalDebits.toLocaleString('en-IN')}, Total credits: ₹${trialBalance.totalCredits.toLocaleString('en-IN')}.`;
+        suggestedActions = ["Generate GST compliance report", "Review TDS compliance", "Export financial statements"];
+      } else if (queryLower.includes('help')) {
+        response = `I can help you with financial analysis and insights. I have access to your ${journalEntries.length} journal entries, ${documents.length} documents, and can analyze sales revenue (₹${trialBalance.entries.filter(e => e.accountCode.startsWith('41')).reduce((s,a) => s + a.creditBalance, 0).toLocaleString('en-IN')}), expenses, TDS liabilities, and compliance status.`;
+        suggestedActions = ["Ask about sales revenue", "Check TDS liability", "Review top expenses", "Generate compliance report"];
+      } else {
+        // Default financial overview
+        const totalAssets = trialBalance.entries.filter(entry => entry.accountCode.startsWith('1')).reduce((sum, acc) => sum + acc.debitBalance, 0);
+        const totalRevenue = trialBalance.entries.filter(entry => entry.accountCode.startsWith('4')).reduce((sum, acc) => sum + acc.creditBalance, 0);
+        response = `Based on your current financial data: Total assets: ₹${totalAssets.toLocaleString('en-IN')}, Total revenue: ₹${totalRevenue.toLocaleString('en-IN')}. You have ${journalEntries.length} journal entries from ${documents.length} processed documents. Your trial balance shows ₹${trialBalance.totalDebits.toLocaleString('en-IN')} in debits and credits.`;
+        suggestedActions = ["View trial balance", "Check P&L summary", "Review cash flow"];
+      }
       
       res.json({
         success: true,
-        result: response,
+        result: {
+          response,
+          confidence,
+          suggestedActions
+        },
         timestamp: new Date().toISOString()
       });
 
