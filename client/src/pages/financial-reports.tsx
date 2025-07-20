@@ -6,16 +6,175 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { RefreshCw, Plus, ChevronDown, ChevronRight, Info, AlertTriangle, CheckCircle, Calculator } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+
+// Interfaces for detailed calculation logs
+interface CalculationLog {
+  step: string;
+  description: string;
+  assumptions: string[];
+  missingData: string[];
+  calculationDetails: string;
+  timestamp: string;
+}
+
+interface DetailedFinancialReport {
+  data: any;
+  calculationLogs: CalculationLog[];
+  summary: {
+    totalSteps: number;
+    dataQuality: 'excellent' | 'good' | 'fair' | 'poor';
+    assumptionCount: number;
+    missingDataCount: number;
+  };
+}
+
+// Calculation Logs Display Component
+function CalculationLogsDisplay({ logs, summary, title }: { 
+  logs: CalculationLog[], 
+  summary: any, 
+  title: string 
+}) {
+  const [openSteps, setOpenSteps] = useState<Set<string>>(new Set());
+  
+  const toggleStep = (step: string) => {
+    const newOpenSteps = new Set(openSteps);
+    if (newOpenSteps.has(step)) {
+      newOpenSteps.delete(step);
+    } else {
+      newOpenSteps.add(step);
+    }
+    setOpenSteps(newOpenSteps);
+  };
+
+  const getDataQualityColor = (quality: string) => {
+    switch (quality) {
+      case 'excellent': return 'bg-green-100 text-green-800 border-green-200';
+      case 'good': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'fair': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'poor': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calculator className="w-5 h-5" />
+          {title} - Calculation Transparency
+        </CardTitle>
+        <div className="flex gap-2 flex-wrap">
+          <Badge className={getDataQualityColor(summary.dataQuality)}>
+            Data Quality: {summary.dataQuality.toUpperCase()}
+          </Badge>
+          <Badge variant="outline">
+            {summary.totalSteps} Calculation Steps
+          </Badge>
+          <Badge variant="outline">
+            {summary.assumptionCount} Assumptions
+          </Badge>
+          {summary.missingDataCount > 0 && (
+            <Badge variant="destructive">
+              {summary.missingDataCount} Missing Data Points
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {logs.map((log, index) => (
+          <Collapsible key={index} open={openSteps.has(log.step)}>
+            <CollapsibleTrigger 
+              onClick={() => toggleStep(log.step)}
+              className="flex items-center justify-between w-full p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                {openSteps.has(log.step) ? 
+                  <ChevronDown className="w-4 h-4" /> : 
+                  <ChevronRight className="w-4 h-4" />
+                }
+                <span className="font-medium">{log.step}</span>
+              </div>
+              <div className="flex gap-2">
+                {log.assumptions.length > 0 && (
+                  <Badge variant="secondary">
+                    {log.assumptions.length} assumptions
+                  </Badge>
+                )}
+                {log.missingData.length > 0 && (
+                  <Badge variant="destructive">
+                    {log.missingData.length} missing
+                  </Badge>
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 ml-6 space-y-3">
+              <p className="text-sm text-gray-600">{log.description}</p>
+              
+              {log.assumptions.length > 0 && (
+                <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-blue-800">Assumptions Made</span>
+                  </div>
+                  <ul className="text-sm space-y-1">
+                    {log.assumptions.map((assumption, i) => (
+                      <li key={i} className="text-blue-700">• {assumption}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {log.missingData.length > 0 && (
+                <div className="bg-orange-50 p-3 rounded border-l-4 border-orange-400">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-600" />
+                    <span className="font-medium text-orange-800">Missing Data Handled</span>
+                  </div>
+                  <ul className="text-sm space-y-1">
+                    {log.missingData.map((missing, i) => (
+                      <li key={i} className="text-orange-700">• {missing}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {log.calculationDetails && (
+                <div className="bg-green-50 p-3 rounded border-l-4 border-green-400">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-green-800">Calculation Details</span>
+                  </div>
+                  <pre className="text-sm text-green-700 whitespace-pre-wrap font-mono">
+                    {log.calculationDetails}
+                  </pre>
+                </div>
+              )}
+              
+              <div className="text-xs text-gray-500">
+                Calculated at: {new Date(log.timestamp).toLocaleString()}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function FinancialReports() {
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedPeriod] = useState("Q3_2025");
+  const [showDetailedLogs, setShowDetailedLogs] = useState(false);
 
-  // Enhanced trial balance fetch with proper error handling
+  // Enhanced trial balance fetch with detailed logs option
   const { data: trialBalanceData, isLoading: trialBalanceLoading, error: trialBalanceError } = useQuery({
-    queryKey: ["trial-balance", selectedPeriod],
+    queryKey: ["trial-balance", selectedPeriod, showDetailedLogs],
     queryFn: async () => {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -25,7 +184,8 @@ export default function FinancialReports() {
       
       console.log('Fetching trial balance for Financial Reports page...');
       
-      const response = await fetch('/api/reports/trial-balance', {
+      const endpoint = showDetailedLogs ? '/api/reports/trial-balance/detailed' : '/api/reports/trial-balance';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -42,10 +202,9 @@ export default function FinancialReports() {
       
       const data = await response.json();
       console.log('Trial balance data for Financial Reports:', {
-        entries: data.entries?.length || 0,
-        totalDebits: data.totalDebits,
-        totalCredits: data.totalCredits,
-        isBalanced: data.isBalanced
+        entries: showDetailedLogs ? data.data?.entries?.length || 0 : data.entries?.length || 0,
+        hasLogs: showDetailedLogs ? !!data.calculationLogs : false,
+        totalSteps: showDetailedLogs ? data.summary?.totalSteps : 0
       });
       
       return data;
@@ -53,6 +212,60 @@ export default function FinancialReports() {
     enabled: isAuthenticated && !!localStorage.getItem('access_token'),
     retry: 3,
     staleTime: 30000,
+  });
+
+  // Detailed P&L query
+  const { data: detailedPLData, isLoading: detailedPLLoading } = useQuery({
+    queryKey: ["profit-loss-detailed", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/reports/profit-loss/detailed', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+      });
+      return response.ok ? response.json() : null;
+    },
+    enabled: isAuthenticated && showDetailedLogs,
+  });
+
+  // Detailed Balance Sheet query  
+  const { data: detailedBSData, isLoading: detailedBSLoading } = useQuery({
+    queryKey: ["balance-sheet-detailed", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/reports/balance-sheet/detailed', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+      });
+      return response.ok ? response.json() : null;
+    },
+    enabled: isAuthenticated && showDetailedLogs,
+  });
+
+  // Detailed Cash Flow query
+  const { data: detailedCFData, isLoading: detailedCFLoading } = useQuery({
+    queryKey: ["cash-flow-detailed", selectedPeriod],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/reports/cash-flow/detailed', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+      });
+      return response.ok ? response.json() : null;
+    },
+    enabled: isAuthenticated && showDetailedLogs,
   });
 
   // Simple journal entries fetch
@@ -173,6 +386,16 @@ export default function FinancialReports() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
+                <Switch
+                  id="detailed-logs"
+                  checked={showDetailedLogs}
+                  onCheckedChange={setShowDetailedLogs}
+                />
+                <Label htmlFor="detailed-logs" className="text-sm font-medium">
+                  Show Calculation Logs
+                </Label>
+              </div>
               <Button
                 onClick={async () => {
                   try {
@@ -290,6 +513,15 @@ export default function FinancialReports() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Detailed calculation logs for Trial Balance */}
+            {showDetailedLogs && trialBalanceData?.calculationLogs && (
+              <CalculationLogsDisplay 
+                logs={trialBalanceData.calculationLogs}
+                summary={trialBalanceData.summary}
+                title="Trial Balance"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="profit-loss" className="space-y-6">
@@ -394,6 +626,15 @@ export default function FinancialReports() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Detailed calculation logs for P&L */}
+            {showDetailedLogs && detailedPLData?.calculationLogs && (
+              <CalculationLogsDisplay 
+                logs={detailedPLData.calculationLogs}
+                summary={detailedPLData.summary}
+                title="Profit & Loss Statement"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="balance-sheet" className="space-y-6">
@@ -521,6 +762,15 @@ export default function FinancialReports() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Detailed calculation logs for Balance Sheet */}
+            {showDetailedLogs && detailedBSData?.calculationLogs && (
+              <CalculationLogsDisplay 
+                logs={detailedBSData.calculationLogs}
+                summary={detailedBSData.summary}
+                title="Balance Sheet"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="cash-flow" className="space-y-6">
@@ -646,6 +896,15 @@ export default function FinancialReports() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Detailed calculation logs for Cash Flow */}
+            {showDetailedLogs && detailedCFData?.calculationLogs && (
+              <CalculationLogsDisplay 
+                logs={detailedCFData.calculationLogs}
+                summary={detailedCFData.summary}
+                title="Cash Flow Statement"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="journal-entries" className="space-y-6">

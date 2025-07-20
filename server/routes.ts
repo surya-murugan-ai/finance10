@@ -842,6 +842,25 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Enhanced financial report endpoints with detailed calculation logs
+  app.post('/api/reports/trial-balance/detailed', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const financialReportsService = new FinancialReportsService();
+      const detailedReport = await financialReportsService.generateTrialBalanceWithLogs(entries);
+      
+      res.json(detailedReport);
+    } catch (error) {
+      console.error('Error generating detailed trial balance:', error);
+      res.status(500).json({ error: 'Failed to generate detailed trial balance' });
+    }
+  });
+
   app.post('/api/reports/profit-loss', jwtAuth, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -856,6 +875,24 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error generating profit loss:', error);
       res.status(500).json({ error: 'Failed to generate profit loss' });
+    }
+  });
+
+  app.post('/api/reports/profit-loss/detailed', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const financialReportsService = new FinancialReportsService();
+      const detailedReport = await financialReportsService.generateProfitLossWithLogs(entries);
+      
+      res.json(detailedReport);
+    } catch (error) {
+      console.error('Error generating detailed P&L:', error);
+      res.status(500).json({ error: 'Failed to generate detailed P&L' });
     }
   });
 
@@ -879,6 +916,24 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  app.post('/api/reports/balance-sheet/detailed', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const financialReportsService = new FinancialReportsService();
+      const detailedReport = await financialReportsService.generateBalanceSheetWithLogs(entries);
+      
+      res.json(detailedReport);
+    } catch (error) {
+      console.error('Error generating detailed balance sheet:', error);
+      res.status(500).json({ error: 'Failed to generate detailed balance sheet' });
+    }
+  });
+
   app.post('/api/reports/cash-flow', jwtAuth, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -894,6 +949,24 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error generating cash flow:', error);
       res.status(500).json({ error: 'Failed to generate cash flow' });
+    }
+  });
+
+  app.post('/api/reports/cash-flow/detailed', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const financialReportsService = new FinancialReportsService();
+      const detailedReport = await financialReportsService.generateCashFlowWithLogs(entries);
+      
+      res.json(detailedReport);
+    } catch (error) {
+      console.error('Error generating detailed cash flow:', error);
+      res.status(500).json({ error: 'Failed to generate detailed cash flow' });
     }
   });
 
