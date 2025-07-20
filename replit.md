@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **CALCULATION LOGS UI INTEGRATION COMPLETE (July 20, 2025)**: **COMPLETED** - Successfully integrated comprehensive calculation transparency feature across all financial reports:
+  - **Toggle Switch Enhancement**: Added "Show Calculation Logs" toggle switch to Financial Reports page header for real-time visibility control
+  - **Multi-Report Integration**: Integrated CalculationLogsDisplay component across Trial Balance, P&L, Balance Sheet, and Cash Flow tabs with expandable sections
+  - **Data Structure Fix**: Resolved trial balance display issue by implementing flexible data access pattern to handle both regular and detailed API response structures
+  - **Enhanced UI Components**: Added sophisticated calculation logs display with step-by-step transparency, data quality indicators, and assumption tracking
+  - **Real-time Calculation Transparency**: Users can now toggle detailed calculation logs on/off to see comprehensive step-by-step financial statement generation process
+  - **Production Ready**: Complete calculation transparency system operational with 40 trial balance entries, detailed logging for all financial statements, and comprehensive audit trail visibility
+
 - **COMPREHENSIVE DOCUMENTATION UPDATE (July 19, 2025)**: **COMPLETED** - Successfully updated all platform documentation to reflect current production-ready status:
   - **Platform Status Summary**: Complete system health overview with 100% operational status, financial metrics, and performance data
   - **User Manual v2.0**: Comprehensive guide covering all features, AI agents, settings, troubleshooting, and best practices

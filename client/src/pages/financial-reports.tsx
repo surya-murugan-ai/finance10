@@ -477,37 +477,54 @@ export default function FinancialReports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {trialBalanceData?.entries?.length > 0 ? (
-                        trialBalanceData.entries.map((entry: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-mono">{entry.accountCode || 'N/A'}</TableCell>
-                            <TableCell>{entry.accountName || 'N/A'}</TableCell>
-                            <TableCell className="text-right font-mono">
-                              {entry.debitBalance > 0 ? formatCurrency(entry.debitBalance) : '-'}
-                            </TableCell>
-                            <TableCell className="text-right font-mono">
-                              {entry.creditBalance > 0 ? formatCurrency(entry.creditBalance) : '-'}
+                      {(() => {
+                        // Handle both regular and detailed response structures
+                        const entries = trialBalanceData?.data?.entries || trialBalanceData?.entries;
+                        const totalDebits = trialBalanceData?.data?.totalDebits || trialBalanceData?.totalDebits;
+                        const totalCredits = trialBalanceData?.data?.totalCredits || trialBalanceData?.totalCredits;
+                        
+                        console.log('Trial Balance Debug:', {
+                          hasData: !!trialBalanceData,
+                          hasEntries: !!entries,
+                          entriesLength: entries?.length || 0,
+                          showDetailedLogs,
+                          structure: Object.keys(trialBalanceData || {})
+                        });
+                        
+                        return entries?.length > 0 ? (
+                          <>
+                            {entries.map((entry: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-mono">{entry.accountCode || 'N/A'}</TableCell>
+                                <TableCell>{entry.accountName || 'N/A'}</TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {entry.debitBalance > 0 ? formatCurrency(entry.debitBalance) : '-'}
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {entry.creditBalance > 0 ? formatCurrency(entry.creditBalance) : '-'}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {totalDebits && (
+                              <TableRow className="border-t-2 font-semibold">
+                                <TableCell colSpan={2}>Total</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(totalDebits)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(totalCredits)}
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              {trialBalanceLoading ? "Loading trial balance..." : "No trial balance data found"}
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            {trialBalanceLoading ? "Loading trial balance..." : "No trial balance data found"}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {trialBalanceData?.totalDebits && (
-                        <TableRow className="border-t-2 font-semibold">
-                          <TableCell colSpan={2}>Total</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(trialBalanceData.totalDebits)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(trialBalanceData.totalCredits)}
-                          </TableCell>
-                        </TableRow>
-                      )}
+                        );
+                      })()}
                     </TableBody>
                   </Table>
                 </div>
