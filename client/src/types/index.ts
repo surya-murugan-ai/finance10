@@ -1,4 +1,16 @@
 export interface DashboardStats {
+  totalDocuments: number;
+  totalJournalEntries: number;
+  totalDebits: number;
+  totalCredits: number;
+  auditTrailEntries: number;
+  financialBalance: number;
+  lastActivity: number | null;
+  complianceStatus: string;
+  processingStatus: string;
+  systemHealth: string;
+  
+  // Legacy fields for compatibility
   documentsProcessed: number;
   activeAgents: number;
   validationErrors: number;

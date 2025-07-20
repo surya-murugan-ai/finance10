@@ -123,6 +123,49 @@ export async function registerRoutes(app: express.Express): Promise<any> {
   // Get current user endpoint
   app.get('/api/auth/user', jwtAuth, getCurrentUser);
 
+  // Dashboard stats endpoint
+  app.get('/api/dashboard/stats', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      // Get real data counts for dashboard
+      const documents = await storage.getDocumentsByTenant(user.tenant_id);
+      const journalEntries = await storage.getJournalEntriesByTenant(user.tenant_id);
+      const auditTrail = await storage.getAuditTrail(user.tenant_id);
+      
+      // Calculate total amounts from journal entries
+      let totalDebits = 0;
+      let totalCredits = 0;
+      
+      journalEntries.forEach(entry => {
+        totalDebits += parseFloat(entry.debitAmount?.toString() || '0');
+        totalCredits += parseFloat(entry.creditAmount?.toString() || '0');
+      });
+
+      const stats = {
+        totalDocuments: documents.length,
+        totalJournalEntries: journalEntries.length,
+        totalDebits: totalDebits,
+        totalCredits: totalCredits,
+        auditTrailEntries: auditTrail.length,
+        financialBalance: totalDebits - totalCredits,
+        lastActivity: journalEntries.length > 0 ? 
+          Math.max(...journalEntries.map(e => new Date(e.createdAt || 0).getTime())) : null,
+        complianceStatus: 'compliant',
+        processingStatus: documents.length > 0 ? 'active' : 'idle',
+        systemHealth: 'operational'
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+    }
+  });
+
   // Intelligent data extraction endpoint
   app.post('/api/documents/extract-intelligent', jwtAuth, async (req: Request, res: Response) => {
     try {
