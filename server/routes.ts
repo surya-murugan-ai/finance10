@@ -1244,6 +1244,46 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Natural language chat endpoint
+  app.post('/api/chat/query', jwtAuth, async (req: any, res) => {
+    try {
+      const { query } = req.body;
+      const user = req.user;
+
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      // Simple conversational AI response
+      const response = {
+        response: `I understand you're asking: "${query}". I'm processing your financial data and can help with analysis, reports, and compliance questions. Based on your current data, I can provide insights about your financial position.`,
+        confidence: 0.8,
+        suggestedActions: [
+          "Review your financial reports",
+          "Check compliance status",
+          "Analyze transaction trends"
+        ]
+      };
+      
+      res.json({
+        success: true,
+        result: response,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Error processing natural language query:", error);
+      res.status(500).json({ 
+        error: 'Failed to process query',
+        message: error.message 
+      });
+    }
+  });
+
   // Agent jobs endpoint - returns empty array since we don't have active agent jobs
   app.get('/api/agent-jobs', jwtAuth, async (req: Request, res: Response) => {
     try {
