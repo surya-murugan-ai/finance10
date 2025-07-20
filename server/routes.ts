@@ -15,6 +15,7 @@ import { AnthropicClient } from './services/anthropicClient';
 import { calculationTools } from './services/calculationTools';
 import { llmCalculationIntegration } from './services/llmCalculationIntegration';
 import { dataSourceService } from './services/dataSourceService';
+import { purchaseRegisterService } from './services/purchaseRegisterService';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
@@ -1901,6 +1902,155 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     } catch (error) {
       console.error('Error fetching compliance checks:', error);
       res.status(500).json({ error: 'Failed to fetch compliance checks' });
+    }
+  });
+
+  // Purchase Register API Endpoints
+
+  // Get all purchase register entries
+  app.get('/api/purchase-register', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const entries = await purchaseRegisterService.getPurchaseRegisterEntries(user.tenant_id);
+      res.json(entries);
+    } catch (error) {
+      console.error('Error fetching purchase register entries:', error);
+      res.status(500).json({ error: 'Failed to fetch purchase register entries' });
+    }
+  });
+
+  // Get all invoices
+  app.get('/api/invoices', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const invoices = await purchaseRegisterService.getInvoices(user.tenant_id);
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      res.status(500).json({ error: 'Failed to fetch invoices' });
+    }
+  });
+
+  // Process individual invoice
+  app.post('/api/invoices/process/:documentId', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const { documentId } = req.params;
+      const result = await purchaseRegisterService.processInvoice(documentId, user.tenant_id);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: result.isDuplicate ? 'Invoice processed but marked as duplicate' : 'Invoice processed successfully',
+          invoiceId: result.invoiceId,
+          purchaseRegisterEntryId: result.purchaseRegisterEntryId,
+          isDuplicate: result.isDuplicate
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      console.error('Error processing invoice:', error);
+      res.status(500).json({ error: 'Failed to process invoice' });
+    }
+  });
+
+  // Process manual purchase register upload
+  app.post('/api/purchase-register/process/:documentId', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const { documentId } = req.params;
+      const result = await purchaseRegisterService.processManualPurchaseRegister(documentId, user.tenant_id);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: `Purchase register processed successfully. ${result.entriesCount} entries created.`,
+          entriesCount: result.entriesCount
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      console.error('Error processing manual purchase register:', error);
+      res.status(500).json({ error: 'Failed to process manual purchase register' });
+    }
+  });
+
+  // Generate purchase register from invoices
+  app.post('/api/purchase-register/generate-from-invoices', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const result = await purchaseRegisterService.generateFromInvoices(user.tenant_id);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: `Purchase register generated successfully. ${result.entriesGenerated} entries created from invoices.`,
+          entriesGenerated: result.entriesGenerated
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      console.error('Error generating purchase register from invoices:', error);
+      res.status(500).json({ error: 'Failed to generate purchase register from invoices' });
+    }
+  });
+
+  // Perform reconciliation
+  app.post('/api/purchase-register/reconcile', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const result = await purchaseRegisterService.performReconciliation(user.tenant_id);
+      res.json({
+        success: true,
+        message: `Reconciliation completed. Found ${result.duplicatesFound} duplicates and ${result.unmatchedEntries} unmatched entries.`,
+        ...result
+      });
+    } catch (error) {
+      console.error('Error performing reconciliation:', error);
+      res.status(500).json({ error: 'Failed to perform reconciliation' });
+    }
+  });
+
+  // Get reconciliation history
+  app.get('/api/purchase-register/reconciliation-history', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      const history = await purchaseRegisterService.getReconciliationHistory(user.tenant_id);
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching reconciliation history:', error);
+      res.status(500).json({ error: 'Failed to fetch reconciliation history' });
     }
   });
 

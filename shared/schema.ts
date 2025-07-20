@@ -477,7 +477,111 @@ export const standardizedTransactionsRelations = relations(standardizedTransacti
   }),
 }));
 
-// Insert schemas
+// Purchase register table for manual uploads and generated registers
+export const purchaseRegister = pgTable("purchase_register", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  invoiceNumber: varchar("invoice_number").notNull(),
+  invoiceDate: timestamp("invoice_date").notNull(),
+  vendorName: varchar("vendor_name").notNull(),
+  vendorGstin: varchar("vendor_gstin"),
+  itemDescription: text("item_description"),
+  hsnCode: varchar("hsn_code"),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }),
+  rate: decimal("rate", { precision: 10, scale: 2 }),
+  taxableAmount: decimal("taxable_amount", { precision: 12, scale: 2 }).notNull(),
+  cgstRate: decimal("cgst_rate", { precision: 5, scale: 2 }),
+  cgstAmount: decimal("cgst_amount", { precision: 10, scale: 2 }),
+  sgstRate: decimal("sgst_rate", { precision: 5, scale: 2 }),
+  sgstAmount: decimal("sgst_amount", { precision: 10, scale: 2 }),
+  igstRate: decimal("igst_rate", { precision: 5, scale: 2 }),
+  igstAmount: decimal("igst_amount", { precision: 10, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  sourceType: varchar("source_type").notNull(), // 'manual_upload' | 'generated_from_invoices'
+  sourceDocumentId: uuid("source_document_id").references(() => documents.id),
+  isDuplicate: boolean("is_duplicate").default(false),
+  duplicateOfId: uuid("duplicate_of_id").references(() => purchaseRegister.id),
+  reconciliationStatus: varchar("reconciliation_status").default("pending"), // 'pending' | 'matched' | 'unmatched'
+  isValidated: boolean("is_validated").default(false),
+  validationNotes: text("validation_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Individual invoices table for detailed invoice tracking
+export const invoices = pgTable("invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  documentId: uuid("document_id").references(() => documents.id).notNull(),
+  invoiceNumber: varchar("invoice_number").notNull(),
+  invoiceDate: timestamp("invoice_date").notNull(),
+  vendorName: varchar("vendor_name").notNull(),
+  vendorGstin: varchar("vendor_gstin"),
+  vendorAddress: text("vendor_address"),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 12, scale: 2 }),
+  lineItems: jsonb("line_items"), // Array of line items with HSN, quantity, rate, etc.
+  extractedData: jsonb("extracted_data"),
+  processingStatus: varchar("processing_status").default("pending"), // 'pending' | 'processed' | 'error'
+  addedToPurchaseRegister: boolean("added_to_purchase_register").default(false),
+  purchaseRegisterEntryId: uuid("purchase_register_entry_id").references(() => purchaseRegister.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Purchase register reconciliation table
+export const purchaseRegisterReconciliation = pgTable("purchase_register_reconciliation", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  reconciliationDate: timestamp("reconciliation_date").defaultNow(),
+  manualEntriesCount: integer("manual_entries_count").default(0),
+  generatedEntriesCount: integer("generated_entries_count").default(0),
+  duplicatesFound: integer("duplicates_found").default(0),
+  totalEntries: integer("total_entries").default(0),
+  unmatchedEntries: integer("unmatched_entries").default(0),
+  reconciliationSummary: jsonb("reconciliation_summary"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for purchase register tables
+export const purchaseRegisterRelations = relations(purchaseRegister, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [purchaseRegister.tenantId],
+    references: [tenants.id],
+  }),
+  sourceDocument: one(documents, {
+    fields: [purchaseRegister.sourceDocumentId],
+    references: [documents.id],
+  }),
+  duplicateOf: one(purchaseRegister, {
+    fields: [purchaseRegister.duplicateOfId],
+    references: [purchaseRegister.id],
+  }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [invoices.tenantId],
+    references: [tenants.id],
+  }),
+  document: one(documents, {
+    fields: [invoices.documentId],
+    references: [documents.id],
+  }),
+  purchaseRegisterEntry: one(purchaseRegister, {
+    fields: [invoices.purchaseRegisterEntryId],
+    references: [purchaseRegister.id],
+  }),
+}));
+
+export const purchaseRegisterReconciliationRelations = relations(purchaseRegisterReconciliation, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [purchaseRegisterReconciliation.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
 // Insert schemas
 export const insertStandardizedTransactionSchema = createInsertSchema(standardizedTransactions).omit({
   id: true,
@@ -529,6 +633,24 @@ export const insertDataSourceSchema = createInsertSchema(dataSources).omit({
   updatedAt: true,
 });
 
+export const insertPurchaseRegisterSchema = createInsertSchema(purchaseRegister).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPurchaseRegisterReconciliationSchema = createInsertSchema(purchaseRegisterReconciliation).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -567,6 +689,15 @@ export type InsertIntercompanyTransaction = typeof intercompanyTransactions.$inf
 
 export type ReconciliationReport = typeof reconciliationReports.$inferSelect;
 export type InsertReconciliationReport = typeof reconciliationReports.$inferInsert;
+
+export type PurchaseRegister = typeof purchaseRegister.$inferSelect;
+export type InsertPurchaseRegister = z.infer<typeof insertPurchaseRegisterSchema>;
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+
+export type PurchaseRegisterReconciliation = typeof purchaseRegisterReconciliation.$inferSelect;
+export type InsertPurchaseRegisterReconciliation = z.infer<typeof insertPurchaseRegisterReconciliationSchema>;
 
 export type InsertDataSource = z.infer<typeof insertDataSourceSchema>;
 export type DataSource = typeof dataSources.$inferSelect;
