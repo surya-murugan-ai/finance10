@@ -9,6 +9,7 @@ The QRT Closure Agent Platform is a comprehensive, AI-powered financial intellig
 
 ### Key Achievements
 - ✅ **Perfect Financial Balance**: ₹80.8 crores balanced across 790 journal entries
+- ✅ **Intelligent Chat System**: Real-time financial analysis with authentic data processing
 - ✅ **AI-Powered Processing**: Claude 4.0 integration for intelligent document analysis
 - ✅ **Indian Compliance**: 96 GL codes + 27 TDS sections for FY 2025-26
 - ✅ **Multi-Tenant Architecture**: Complete data isolation and role-based access
@@ -27,6 +28,7 @@ The QRT Closure Agent Platform is a comprehensive, AI-powered financial intellig
 - **Intelligent Data Extraction**: Handles any Excel format with dynamic column mapping
 - **Contextual Narrations**: AI-generated transaction descriptions for business context
 - **Validation Agents**: Automated data integrity checks and provision identification
+- **Conversational AI**: Real-time financial analysis with natural language queries
 
 ### Indian Compliance Management
 - **Chart of Accounts**: Complete 96 GL codes following Indian Accounting Standards

@@ -1,5 +1,5 @@
 # QRT Closure Agent Platform - User Manual
-**Version**: 2.0 | **Date**: July 19, 2025
+**Version**: 2.1 | **Date**: July 20, 2025
 
 ## 📋 Quick Start Guide
 
@@ -86,6 +86,19 @@ Upon login, you'll see the main dashboard with:
 - **Column Mapping**: Identifies headers, data rows, company names, dates
 - **Fallback Protection**: Robust handling of unusual document formats
 - **Quality Assurance**: Confidence scores and validation checks
+
+### Conversational AI Chat System
+- **Real-Time Analysis**: Query your financial data using natural language
+- **Authentic Data Processing**: Analyzes actual data from 790 journal entries and 3 documents
+- **Query Types Supported**:
+  - Sales revenue analysis ("What are my sales?")
+  - Expense breakdown ("Show me top expenses")
+  - TDS liability status ("What's my TDS liability?")
+  - Asset reviews ("What are my bank accounts?")
+  - Compliance status ("Show compliance status")
+  - Financial overview ("Give me a financial summary")
+- **Intelligent Responses**: Context-aware answers with actionable suggestions
+- **Balanced Data Confirmation**: Shows ₹80.8 crores perfectly balanced books
 
 ## ⚙️ Settings & Configuration
 
