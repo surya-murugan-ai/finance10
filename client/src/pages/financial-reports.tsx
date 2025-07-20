@@ -359,6 +359,36 @@ export default function FinancialReports() {
     enabled: isAuthenticated,
   });
 
+  // Bank Reconciliation Report fetch
+  const { data: bankReconciliationData, isLoading: bankReconciliationLoading } = useQuery({
+    queryKey: ["bank-reconciliation"],
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/reports/bank-reconciliation', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period: selectedPeriod }),
+      });
+      
+      if (response.ok) {
+        return response.json();
+      }
+      return { 
+        reconciliationItems: [], 
+        adjustments: [],
+        bookBalance: 0,
+        bankBalance: 0,
+        variance: 0,
+        isReconciled: false,
+        summary: {}
+      };
+    },
+    enabled: isAuthenticated,
+  });
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -447,11 +477,12 @@ export default function FinancialReports() {
         </div>
 
         <Tabs defaultValue="trial-balance" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
             <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>
             <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
             <TabsTrigger value="cash-flow">Cash Flow</TabsTrigger>
+            <TabsTrigger value="bank-reconciliation">Bank Reconciliation</TabsTrigger>
             <TabsTrigger value="journal-entries">Journal Entries</TabsTrigger>
           </TabsList>
 
@@ -922,6 +953,161 @@ export default function FinancialReports() {
                 title="Cash Flow Statement"
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="bank-reconciliation" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Bank Reconciliation - {selectedPeriod}</CardTitle>
+                  <div className="flex items-center gap-4">
+                    <div className={`px-3 py-1 text-xs rounded-full ${
+                      bankReconciliationData?.isReconciled 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {bankReconciliationLoading ? "Loading..." : 
+                       bankReconciliationData?.isReconciled ? "Reconciled" : "Variance Found"}
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        if (bankReconciliationData) {
+                          const csvData = [
+                            ['Account Code', 'Description', 'Debit Amount', 'Credit Amount', 'Entity', 'Status'],
+                            ...bankReconciliationData.reconciliationItems.map((item: any) => [
+                              item.accountCode || '',
+                              item.description || '',
+                              item.debitAmount || 0,
+                              item.creditAmount || 0,
+                              item.entity || '',
+                              item.status || ''
+                            ])
+                          ];
+                          const csvContent = csvData.map(row => row.map(cell => 
+                            typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+                          ).join(',')).join('\n');
+                          const blob = new Blob([csvContent], { type: 'text/csv' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `bank-reconciliation-${selectedPeriod}.csv`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Download CSV
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Summary Section */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-blue-600">Book Balance</h3>
+                    <p className="text-lg font-bold text-blue-800">
+                      {formatCurrency(bankReconciliationData?.bookBalance || 0)}
+                    </p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-green-600">Bank Balance</h3>
+                    <p className="text-lg font-bold text-green-800">
+                      {formatCurrency(bankReconciliationData?.bankBalance || 0)}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-yellow-600">Variance</h3>
+                    <p className="text-lg font-bold text-yellow-800">
+                      {formatCurrency(bankReconciliationData?.variance || 0)}
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-purple-600">Total Items</h3>
+                    <p className="text-lg font-bold text-purple-800">
+                      {bankReconciliationData?.reconciliationItems?.length || 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reconciliation Items Table */}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Entity</TableHead>
+                        <TableHead>Account Code</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Debit Amount</TableHead>
+                        <TableHead className="text-right">Credit Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bankReconciliationData?.reconciliationItems?.length > 0 ? (
+                        bankReconciliationData.reconciliationItems.map((item: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{item.entity || 'N/A'}</TableCell>
+                            <TableCell className="font-mono">{item.accountCode || 'N/A'}</TableCell>
+                            <TableCell className="max-w-xs">
+                              <div className="truncate">{item.description || item.narration || 'N/A'}</div>
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              {item.debitAmount > 0 ? formatCurrency(item.debitAmount) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              {item.creditAmount > 0 ? formatCurrency(item.creditAmount) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={item.status === 'reconciled' ? 'default' : 'secondary'}>
+                                {item.status || 'pending'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            {bankReconciliationLoading ? "Loading bank reconciliation..." : "No reconciliation data found"}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Adjustments Section */}
+                {bankReconciliationData?.adjustments?.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-4 text-orange-600">Reconciliation Adjustments</h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bankReconciliationData.adjustments.map((adjustment: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{adjustment.type || 'N/A'}</TableCell>
+                              <TableCell>{adjustment.description || 'N/A'}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                {formatCurrency(adjustment.amount || 0)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="journal-entries" className="space-y-6">
