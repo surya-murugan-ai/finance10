@@ -583,6 +583,37 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Delete document endpoint
+  app.delete('/api/documents/:id', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const user = (req as any).user;
+      
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      // Verify document exists and belongs to user's tenant
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      
+      if (document.tenantId !== user.tenant_id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Delete the document and related data
+      await storage.deleteDocument(id);
+      
+      // Return success response
+      res.status(200).json({ success: true, message: 'Document deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      res.status(500).json({ error: 'Failed to delete document' });
+    }
+  });
+
   // AI-powered intelligent data extraction endpoint
   app.post('/api/extract-intelligent', jwtAuth, async (req: Request, res: Response) => {
     try {

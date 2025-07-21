@@ -54,7 +54,19 @@ export async function apiRequest(
   console.log('API Response:', { url, status: res.status, ok: res.ok });
   
   await throwIfResNotOk(res);
-  return await res.json();
+  
+  // Handle empty responses (like DELETE operations)
+  const text = await res.text();
+  if (!text) {
+    return {}; // Return empty object for empty responses
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    // If it's not valid JSON, return the text as is
+    return { message: text };
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
