@@ -39,7 +39,23 @@ export default function DocumentManagement() {
 
   const { data: documents, isLoading: documentsLoading, refetch } = useQuery<Document[]>({
     queryKey: ["/api/documents"],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/documents', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
+    enabled: isAuthenticated,
   });
 
   const deleteMutation = useMutation({

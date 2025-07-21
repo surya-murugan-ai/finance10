@@ -37,17 +37,65 @@ export default function Dashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/dashboard/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
+    enabled: isAuthenticated,
   });
 
   const { data: workflows, isLoading: workflowsLoading } = useQuery({
     queryKey: ["/api/workflows"],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/workflows', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
+    enabled: isAuthenticated,
   });
 
   const { data: auditTrail, isLoading: auditLoading } = useQuery({
     queryKey: ["/api/audit-trail"],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/audit-trail', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     retry: false,
+    enabled: isAuthenticated,
   });
 
   if (isLoading || !isAuthenticated) {
