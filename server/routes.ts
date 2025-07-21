@@ -2496,7 +2496,8 @@ async function generateProfitLoss(journalEntries: any[]): Promise<any> {
     expenses,
     totalRevenue,
     totalExpenses,
-    netIncome: totalRevenue - totalExpenses
+    netIncome: totalRevenue - totalExpenses,
+    netProfit: totalRevenue - totalExpenses  // Add netProfit for frontend compatibility
   };
 }
 
