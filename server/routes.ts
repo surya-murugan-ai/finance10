@@ -307,8 +307,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
       // Check if we already have processed transactions for this tenant
       const existingTransactions = await storage.getStandardizedTransactionsByTenant(user.tenant_id);
       
-      // If we already have processed transactions, return them directly instead of reprocessing
-      if (existingTransactions.length > 0) {
+      // TEMPORARILY BYPASS CACHE to debug data extraction - force reprocessing
+      if (false && existingTransactions.length > 0) {
         console.log(`Found ${existingTransactions.length} existing transactions, skipping reprocessing`);
         
         // Group transactions by document
@@ -500,6 +500,9 @@ export async function registerRoutes(app: express.Express): Promise<any> {
                 // Only add valid entries with company name and amount
                 if (entry.company && entry.amount) {
                   data.push(entry);
+                  console.log(`Added valid entry: ${entry.company} - ₹${entry.amount}`);
+                } else {
+                  console.log(`Skipped invalid entry - Company: ${entry.company}, Amount: ${entry.amount}`);
                 }
               }
             } else {
@@ -532,8 +535,10 @@ export async function registerRoutes(app: express.Express): Promise<any> {
           // Check if this document has already been processed
           const existingTransactions = await storage.getStandardizedTransactionsByDocument(doc.id);
           
+          console.log(`Document ${doc.originalName}: extracted ${data.length} entries, existing transactions: ${existingTransactions.length}`);
+          
           // Store extracted data in standardized_transactions table (only if not already processed)
-          if (existingTransactions.length === 0) {
+          if (existingTransactions.length === 0 && data.length > 0) {
             try {
               for (const entry of data) {
                 if (entry.amount && entry.company) {
