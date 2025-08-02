@@ -614,6 +614,40 @@ export async function registerRoutes(app: express.Express): Promise<any> {
     }
   });
 
+  // Bulk delete all documents for a tenant
+  app.delete('/api/documents', jwtAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user?.tenant_id) {
+        return res.status(403).json({ error: 'User must be assigned to a tenant' });
+      }
+
+      // Get all documents for the tenant
+      const documents = await storage.getDocumentsByTenant(user.tenant_id);
+      
+      let deletedCount = 0;
+      for (const document of documents) {
+        try {
+          await storage.deleteDocument(document.id);
+          deletedCount++;
+        } catch (error) {
+          console.error(`Failed to delete document ${document.id}:`, error);
+        }
+      }
+      
+      // Return success response
+      res.status(200).json({ 
+        success: true, 
+        message: `Successfully deleted ${deletedCount} documents`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error('Error bulk deleting documents:', error);
+      res.status(500).json({ error: 'Failed to delete documents' });
+    }
+  });
+
   // AI-powered intelligent data extraction endpoint
   app.post('/api/extract-intelligent', jwtAuth, async (req: Request, res: Response) => {
     try {

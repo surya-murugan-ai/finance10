@@ -95,6 +95,43 @@ export default function DocumentManagement() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('/api/documents', {
+        method: 'DELETE'
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `All documents deleted successfully (${data.deletedCount || 'all'} documents)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      // Force a refetch to ensure immediate UI update
+      refetch();
+    },
+    onError: (error) => {
+      console.error("Bulk deletion error:", error);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: `Failed to delete all documents: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const getDocumentTypeIcon = (type: string) => {
     switch (type) {
       case 'journal':
@@ -287,6 +324,44 @@ export default function DocumentManagement() {
               >
                 Reset
               </Button>
+              
+              {/* Bulk Delete Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={!documents || documents.length === 0 || bulkDeleteMutation.isPending}
+                    className="ml-4"
+                  >
+                    {bulkDeleteMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Delete All Documents
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete All Documents</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all {documents?.length || 0} documents and their associated data including journal entries, extracted data, and AI processing results. This action cannot be undone.
+                      
+                      Are you sure you want to proceed with fresh testing?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => bulkDeleteMutation.mutate()}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Yes, Delete All Documents
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
