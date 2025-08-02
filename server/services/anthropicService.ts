@@ -316,6 +316,24 @@ export class AnthropicService {
     }
   }
 
+  /**
+   * Analyze document content for classification
+   */
+  async analyzeDocument(content: string, fileName: string, prompt: string): Promise<string> {
+    try {
+      const response = await anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      return response.content[0].text;
+    } catch (error) {
+      console.error('Error analyzing document:', error);
+      throw error;
+    }
+  }
+
   private getCommonVarianceReasons(matches: ReconciliationMatch[]): string[] {
     const reasonCounts = new Map<string, number>();
     

@@ -16,6 +16,7 @@ import { calculationTools } from './services/calculationTools';
 import { llmCalculationIntegration } from './services/llmCalculationIntegration';
 import { dataSourceService } from './services/dataSourceService';
 import { purchaseRegisterService } from './services/purchaseRegisterService';
+import { ContentBasedClassifier } from './services/contentBasedClassifier';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const jwtAuth = localAuth;
@@ -230,20 +231,51 @@ export async function registerRoutes(app: express.Express): Promise<any> {
         return res.status(403).json({ error: 'User must be assigned to a tenant' });
       }
 
+      console.log(`Processing uploaded file: ${req.file.originalname} (${req.file.mimetype})`);
+
+      // Step 1: Perform content-based classification
+      const classifier = new ContentBasedClassifier();
+      let documentType = 'other';
+      let classificationConfidence = 0.3;
+
+      try {
+        const analysis = await classifier.analyzeDocumentContent(req.file.path, req.file.originalname);
+        documentType = analysis.documentType;
+        classificationConfidence = analysis.confidence;
+        
+        console.log(`Document classified as: ${documentType} (confidence: ${classificationConfidence})`);
+        console.log(`Classification reasoning: ${analysis.reasoning}`);
+      } catch (classificationError) {
+        console.error('Content classification failed:', classificationError);
+        console.log('Falling back to filename-based classification');
+        // Fallback to simple filename analysis
+        const filename = req.file.originalname.toLowerCase();
+        if (filename.includes('sales') || filename.includes('revenue')) {
+          documentType = 'sales_register';
+        } else if (filename.includes('purchase') || filename.includes('vendor')) {
+          documentType = 'purchase_register';
+        } else if (filename.includes('bank') || filename.includes('statement')) {
+          documentType = 'bank_statement';
+        } else if (filename.includes('salary') || filename.includes('payroll')) {
+          documentType = 'salary_register';
+        }
+      }
+
+      // Step 2: Create document record with proper classification
       const document = await storage.createDocument({
         fileName: req.file.filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
         filePath: req.file.path,
-        documentType: 'other',
-        status: 'uploaded',
+        documentType: documentType,
+        status: 'classified',
         uploadedBy: user.id,
         tenantId: user.tenant_id
       });
 
       res.json({
-        message: 'File uploaded successfully',
+        message: 'File uploaded and classified successfully',
         document: {
           id: document.id,
           filename: document.filename,
@@ -251,7 +283,8 @@ export async function registerRoutes(app: express.Express): Promise<any> {
           size: document.size,
           documentType: document.documentType,
           status: document.status,
-          tenant_id: document.tenant_id
+          tenant_id: document.tenant_id,
+          classificationConfidence: classificationConfidence
         }
       });
     } catch (error) {
@@ -340,13 +373,24 @@ export async function registerRoutes(app: express.Express): Promise<any> {
               defval: '' 
             });
             
-            // Find the header row (usually row 4 or 6 depending on document structure)
+            // Find the header row - look for common header patterns
             let headerRowIndex = -1;
-            for (let i = 0; i < rawData.length; i++) {
+            for (let i = 0; i < Math.min(rawData.length, 10); i++) {
               const row = rawData[i] as any[];
-              if (row && row.length > 5 && row[0] && row[0].toString().toLowerCase().includes('date')) {
-                headerRowIndex = i;
-                break;
+              if (row && row.length > 3) {
+                const rowText = row.join(' ').toLowerCase();
+                // Check for common header patterns across different document types
+                if (rowText.includes('date') || 
+                    rowText.includes('particulars') || 
+                    rowText.includes('amount') ||
+                    rowText.includes('voucher') ||
+                    rowText.includes('company') ||
+                    rowText.includes('transaction') ||
+                    (row[0] && row[0].toString().toLowerCase().includes('date'))) {
+                  headerRowIndex = i;
+                  console.log(`Found header row at index ${i} for ${doc.documentType}: ${row.slice(0, 5).join(', ')}`);
+                  break;
+                }
               }
             }
             
@@ -364,40 +408,74 @@ export async function registerRoutes(app: express.Express): Promise<any> {
                   continue;
                 }
                 
-                // Create standardized entry with proper column mapping
+                // Create flexible entry mapping based on document type and available columns
                 const entry: any = {
                   rowNumber: i + 1,
                   date: row[0] || '',
-                  particulars: row[1] || '',
-                  voucherType: row[2] || '',
-                  voucherNumber: row[3] || '',
-                  narration: row[4] || '',
-                  value: row[5] || '',
-                  grossTotal: row[6] || ''
+                  particulars: row[1] || row[2] || '', // Sometimes particulars are in column 2
+                  voucherType: '',
+                  voucherNumber: '',
+                  narration: '',
+                  value: '',
+                  grossTotal: ''
                 };
+
+                // Adaptive column mapping based on document type and available data
+                if (doc.documentType === 'sales_register' || doc.documentType === 'purchase_register') {
+                  entry.particulars = row[1] || '';
+                  entry.voucherType = row[2] || '';
+                  entry.voucherNumber = row[3] || '';
+                  entry.narration = row[4] || '';
+                  entry.value = row[5] || row[6] || '';
+                  entry.grossTotal = row[6] || row[7] || '';
+                } else if (doc.documentType === 'bank_statement') {
+                  entry.particulars = row[1] || row[2] || '';
+                  entry.narration = row[2] || row[3] || '';
+                  entry.value = row[3] || row[4] || row[5] || '';
+                  entry.voucherType = 'Bank Transaction';
+                } else {
+                  // Generic mapping for other document types
+                  for (let col = 0; col < row.length; col++) {
+                    const cellValue = row[col]?.toString() || '';
+                    if (cellValue && cellValue.match(/[0-9,]+\.?[0-9]*/)) {
+                      entry.value = cellValue;
+                      break;
+                    }
+                  }
+                  entry.particulars = row[1] || row[0] || '';
+                }
                 
-                // Extract and format amount from Value or Gross Total column
+                // Extract and format amount from available columns
                 let amountSource = entry.value || entry.grossTotal;
-                if (!amountSource && entry.grossTotal) {
-                  amountSource = entry.grossTotal;
+                // Look for amount in any column if not found
+                if (!amountSource) {
+                  for (let col = 0; col < row.length; col++) {
+                    const cellValue = row[col]?.toString() || '';
+                    if (cellValue.match(/[0-9,]+\.?[0-9]*/)) {
+                      amountSource = cellValue;
+                      break;
+                    }
+                  }
                 }
                 
                 if (amountSource) {
                   const valueStr = amountSource.toString();
-                  // Handle formats like "25000.00 Cr" or "44430.00 Dr"
+                  // Handle various amount formats
                   const numericMatch = valueStr.match(/([0-9,]+\.?[0-9]*)/);
                   if (numericMatch) {
                     const numericValue = parseFloat(numericMatch[1].replace(/,/g, ''));
-                    if (!isNaN(numericValue)) {
+                    if (!isNaN(numericValue) && numericValue > 0) {
                       entry.amount = numericValue;
                       entry.formattedAmount = `₹${numericValue.toLocaleString('en-IN')}`;
                     }
                   }
                 }
                 
-                // Clean up company name from Particulars
+                // Clean up company/entity name from Particulars
                 if (entry.particulars) {
                   entry.company = entry.particulars.toString().trim();
+                  // Remove common prefixes/suffixes
+                  entry.company = entry.company.replace(/^(dr\.?|cr\.?|to|by)\s+/i, '').trim();
                 }
                 
                 // Format date
